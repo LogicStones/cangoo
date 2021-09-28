@@ -212,6 +212,11 @@
     <Compile Include="App_Start\SwaggerConfig.cs" />
     <Compile Include="App_Start\WebApiConfig.cs" />
     <Compile Include="Controllers\BaseController.cs" />
+    <Compile Include="Controllers\InvoiceController.cs" />
+    <Compile Include="Controllers\KarhooController.cs" />
+    <Compile Include="Controllers\CronJobsController.cs" />
+    <Compile Include="Controllers\DriverController.cs" />
+    <Compile Include="Controllers\ReportsController.cs" />
     <Compile Include="Controllers\UserController.cs" />
     <Compile Include="Filters\ResponseWrapperInitializer.cs" />
     <Compile Include="Filters\ExceptionHandling.cs" />
@@ -246,6 +251,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
+    <Folder Include="Views\Driver\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="ConnectionStrings.config" />

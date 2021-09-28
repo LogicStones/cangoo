@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Web.Http;
 using API.Filters;
 using DTOs.API;
+using System.Threading.Tasks;
 
 namespace API.Controllers
 {
@@ -30,34 +31,10 @@ namespace API.Controllers
 
         public ResponseWrapper ResponseWrapper { get; set; }
 
-        //public Dictionary<dynamic, dynamic> dic;
-        //ResponseEntity response = new ResponseEntity();
-
-        // GET: api/Base
-        //public IEnumerable<string> Get()
-        //{
-        //    return new string[] { "value1", "value2" };
-        //}
-
-        //// GET: api/Base/5
-        //public string Get(int id)
-        //{
-        //    return "value";
-        //}
-
-        //// POST: api/Base
-        //public void Post([FromBody]string value)
-        //{
-        //}
-
-        //// PUT: api/Base/5
-        //public void Put(int id, [FromBody]string value)
-        //{
-        //}
-
-        //// DELETE: api/Base/5
-        //public void Delete(int id)
-        //{
-        //}
+        [HttpGet]
+        public async Task<HttpResponseMessage> TokenValidation()
+        {
+            return Request.CreateResponse(HttpStatusCode.OK);
+        }
     }
 }

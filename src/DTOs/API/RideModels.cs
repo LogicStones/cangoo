@@ -7,6 +7,12 @@ using System.Threading.Tasks;
 
 namespace DTOs.API
 {
+	public class EstimateFareRequest
+	{
+		public string PickUpLocationLatitude { get; set; } = "0";
+		public List<TripOverView> Trips { get; set; } = new List<TripOverView>();
+	}
+
 	public class PassengerTripsListResponse
 	{
 		public string TotalRecords { get; set; } = "0";
