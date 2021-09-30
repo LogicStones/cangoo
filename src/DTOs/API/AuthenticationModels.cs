@@ -92,4 +92,17 @@ namespace DTOs.API
 		[Required]
 		public string NewPassword { get; set; }
 	}
+
+	public class PassengerVerifyDeviceTokenRequest
+	{
+		[Required]
+		public string PassengerId { get; set; }
+		[Required]
+		public string DeviceToken { get; set; }
+	}
+
+	public class PassengerVerifyDeviceTokenResponse
+	{
+		public string IsTokenVerified { get; set; } = "";
+	}
 }

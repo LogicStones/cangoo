@@ -61,13 +61,9 @@ namespace API.Controllers
             }
             else
             {
-                string verificationCode = AuthenticationService.GenerateOTP();
-
-                TextMessageService.SendSms(string.Format("Deine cangoo-TAN lautet\n{0}", verificationCode), model.PhoneNumber);
-
                 ResponseWrapper.Data = new GenerateOTPResponse
                 {
-                    OTP = verificationCode,
+                    OTP = await TextMessageService.SendAuthenticationOTP(model.PhoneNumber),
                     IsUserProfileUpdated = isUserProfileUpdated.ToString()
                 };
             }
@@ -127,7 +123,7 @@ namespace API.Controllers
                     await UserService.CreateUserProfileAsync(user.Id, verificationCode, model.CountryCode, model.DeviceToken, ApplicationID, ResellerID);
 
                     //SendSMS.SendSms("Herzlich willkommen bei cangoo!", model.PhoneNumber);
-                    TextMessageService.SendSms("Herzlich willkommen bei cangoo!", model.PhoneNumber);
+                   await TextMessageService.SendWelcomeSMS(model.PhoneNumber);
 
                     //EmailManager.SendEmail(pasngr.email, "Welcome to Cangoo !!<br /> Your Cangoo account veification code is:" + verificationCode, "New User Welcome Email Subject", "support@cangoo.at", "Support Cangoo");
 
@@ -184,7 +180,7 @@ namespace API.Controllers
                 return Request.CreateResponse(HttpStatusCode.Unauthorized, new ResponseWrapper { Message = ResponseKeys.authenticationFailed });
             }
 
-            if ((await UserService.GetProfileAsync(user.Id)) == null)
+            if ((await UserService.GetProfileAsync(user.Id, ApplicationID, ResellerID)) == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper { Message = ResponseKeys.userProfileNotFound });
             }
@@ -222,7 +218,7 @@ namespace API.Controllers
             await store.SetPasswordHashAsync(user, hashedNewPassword);
             await store.UpdateAsync(user);
 
-            TextMessageService.SendSms(string.Format("Das Passwort für dein cangoo - Konto wurde nun zurückgesetzt.\nDein neues Passwort lautet {0}", newPassword), model.PhoneNumber);
+            await TextMessageService.SendForgotPasswordSMS(newPassword, model.PhoneNumber);
 
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper { Error = false, Message = ResponseKeys.msgSuccess });
         }
@@ -261,30 +257,25 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("verify-device-token")]
-        public async Task<HttpResponseMessage>  VerifyDeviceToken([FromBody] PassengerLogOutRequest model)
+        public async Task<HttpResponseMessage>  VerifyDeviceToken([FromBody] PassengerVerifyDeviceTokenRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
-            //if (model != null && !string.IsNullOrEmpty(model.driverID) && !string.IsNullOrEmpty(model.DeviceToken))
-            //{
-            //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //    {
-            //        var cap = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.driverID)
-            //        && c.ApplicationID.ToString().ToLower().Equals(this.ApplicationID.ToLower())
-            //        && c.ResellerID.ToString().ToLower().Equals(this.ResellerID.ToLower())
-            //        ).FirstOrDefault();
+            var userProfile = await UserService.GetProfileAsync(model.PassengerId, ApplicationID, ResellerID);
 
-            //        response.error = false;
-            //        response.message = AppMessage.msgSuccess;
-            //        dic = new Dictionary<dynamic, dynamic>
-            //            {
-            //                //{ "isTokenVerified", cap.DeviceToken == null ? true : cap.DeviceToken.ToLower().Equals(model.DeviceToken.ToLower()) }
-            //                { "isTokenVerified", cap.DeviceToken.ToLower().Equals(model.DeviceToken.ToLower()) }
+            if ((await UserService.GetProfileAsync(model.PassengerId, ApplicationID, ResellerID)) == null)
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper { Message = ResponseKeys.userProfileNotFound });
+            }
 
-            //            };
-            //        response.data = dic;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
-            //}
+            return Request.CreateResponse(HttpStatusCode.OK,
+                new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    Data = new PassengerVerifyDeviceTokenResponse
+                    {
+                        IsTokenVerified = userProfile.DeviceToken.Equals(model.DeviceToken).ToString()
+                    }
+                });
         }
 
         #endregion
@@ -453,6 +444,21 @@ namespace API.Controllers
             });
         }
 
+        [HttpGet]
+        [Route("update-email-otp")]
+        public async Task<HttpResponseMessage> GetUpdateEmailOTP([FromUri]UpdatePassengerEmailOTPRequest model)
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new UpdatePassengerEmailOTPResponse
+                {
+                    OTP = await EmailService.SendEmailOTPAsync(model.Email)
+                }
+            });
+        }
+
         [HttpPost]
         [Route("update-email")]
         public async Task<HttpResponseMessage> UpdateEmail(UpdatePassengerEmailRequest model)
@@ -465,6 +471,21 @@ namespace API.Controllers
                 Data = new UpdatePassengerEmailResponse
                 {
                     Email = model.Email
+                }
+            });
+        }
+
+        [HttpGet]
+        [Route("update-phone-number-otp")]
+        public async Task<HttpResponseMessage> UpdatePhoneNumberOTP([FromUri] UpdatePassengerPhoneNumberOTPRequest model)
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new UpdatePassengerPhoneNumberOTPResponse
+                {
+                    OTP = await TextMessageService.SendAChangePhoneNumberOTP(model.PhoneNumber)
                 }
             });
         }
@@ -636,19 +657,118 @@ namespace API.Controllers
 
         #region Favorites
 
-        [HttpPost]
-        [Route("add-fav-captain")]
-        public async Task<HttpResponseMessage> AddFavCaptain(UpdatePassengerPhoneNumberRequest model)
-        {
-            return Request.CreateResponse(HttpStatusCode.OK);
-        }
+        //[HttpPost]
+        //[Route("add-fav-captain")]
+        //public async Task<HttpResponseMessage> AddFavCaptain(UpdatePassengerPhoneNumberRequest model)
+        //{
+        //    {
+        //        var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
+        //        if (tp == null)
+        //        {
+        //            response.error = true;
+        //            response.message = AppMessage.tripNotFound;
+        //            return Request.CreateResponse(HttpStatusCode.OK, response);
+        //        }
+        //        var user = context.UserProfiles.Where(c => c.UserID.ToString().Equals(model.pID)).FirstOrDefault();
+        //        var fav = context.UserFavoriteCaptains.Where(u => u.CaptainID == tp.CaptainID && u.UserID == model.pID).FirstOrDefault();
 
-        [HttpPost]
-        [Route("del-fav-captain")]
-        public async Task<HttpResponseMessage> DelFavCaptain(UpdatePassengerPhoneNumberRequest model)
-        {
-            return Request.CreateResponse(HttpStatusCode.OK);
-        }
+        //        if (fav == null)
+        //        {
+        //            UserFavoriteCaptain uf = new UserFavoriteCaptain
+        //            {
+        //                ID = Guid.NewGuid(),
+        //                UserID = model.pID.ToString(),
+        //                CaptainID = tp.CaptainID,
+        //                IsFavByPassenger = true,
+        //                IsFavByCaptain = false,
+        //                ApplicationID = Guid.Parse(this.ApplicationID)
+        //            };
+        //            context.UserFavoriteCaptains.Add(uf);
+
+        //            user.NumberDriverFavourites = user.NumberDriverFavourites == null ? 1 : (int)user.NumberDriverFavourites + 1;
+        //        }
+        //        else
+        //        {
+        //            if ((bool)fav.IsFavByCaptain && (bool)fav.IsFavByPassenger)
+        //            {
+        //                fav.IsFavByPassenger = false;
+        //                user.NumberDriverFavourites = user.NumberDriverFavourites == 1 ? 0 : (int)user.NumberDriverFavourites - 1;
+        //            }
+        //            else if ((bool)fav.IsFavByPassenger)
+        //            {
+        //                context.UserFavoriteCaptains.Remove(fav);
+        //                user.NumberDriverFavourites = user.NumberDriverFavourites == 1 ? 0 : (int)user.NumberDriverFavourites - 1;
+        //            }
+        //            else
+        //            {
+        //                fav.IsFavByPassenger = true;
+        //                user.NumberDriverFavourites = user.NumberDriverFavourites == null ? 1 : (int)user.NumberDriverFavourites + 1;
+        //            }
+        //        }
+        //        context.SaveChanges();
+        //        response.error = false;
+        //        response.message = AppMessage.msgSuccess;
+        //        return Request.CreateResponse(HttpStatusCode.OK, response);
+        //    }
+
+        //    return Request.CreateResponse(HttpStatusCode.OK);
+        //}
+
+        //[HttpPost]
+        //[Route("del-fav-captain")]
+        //public async Task<HttpResponseMessage> DelFavCaptain(UpdatePassengerPhoneNumberRequest model)
+        //{
+        //    {
+        //        var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
+        //        if (tp == null)
+        //        {
+        //            response.error = true;
+        //            response.message = AppMessage.tripNotFound;
+        //            return Request.CreateResponse(HttpStatusCode.OK, response);
+        //        }
+        //        var user = context.UserProfiles.Where(c => c.UserID.ToString().Equals(model.pID)).FirstOrDefault();
+        //        var fav = context.UserFavoriteCaptains.Where(u => u.CaptainID == tp.CaptainID && u.UserID == model.pID).FirstOrDefault();
+
+        //        if (fav == null)
+        //        {
+        //            UserFavoriteCaptain uf = new UserFavoriteCaptain
+        //            {
+        //                ID = Guid.NewGuid(),
+        //                UserID = model.pID.ToString(),
+        //                CaptainID = tp.CaptainID,
+        //                IsFavByPassenger = true,
+        //                IsFavByCaptain = false,
+        //                ApplicationID = Guid.Parse(this.ApplicationID)
+        //            };
+        //            context.UserFavoriteCaptains.Add(uf);
+
+        //            user.NumberDriverFavourites = user.NumberDriverFavourites == null ? 1 : (int)user.NumberDriverFavourites + 1;
+        //        }
+        //        else
+        //        {
+        //            if ((bool)fav.IsFavByCaptain && (bool)fav.IsFavByPassenger)
+        //            {
+        //                fav.IsFavByPassenger = false;
+        //                user.NumberDriverFavourites = user.NumberDriverFavourites == 1 ? 0 : (int)user.NumberDriverFavourites - 1;
+        //            }
+        //            else if ((bool)fav.IsFavByPassenger)
+        //            {
+        //                context.UserFavoriteCaptains.Remove(fav);
+        //                user.NumberDriverFavourites = user.NumberDriverFavourites == 1 ? 0 : (int)user.NumberDriverFavourites - 1;
+        //            }
+        //            else
+        //            {
+        //                fav.IsFavByPassenger = true;
+        //                user.NumberDriverFavourites = user.NumberDriverFavourites == null ? 1 : (int)user.NumberDriverFavourites + 1;
+        //            }
+        //        }
+        //        context.SaveChanges();
+        //        response.error = false;
+        //        response.message = AppMessage.msgSuccess;
+        //        return Request.CreateResponse(HttpStatusCode.OK, response);
+        //    }
+        //    return Request.CreateResponse(HttpStatusCode.OK);
+        //}
 
         [HttpPost]
         [Route("get-fav-captains")]
@@ -699,77 +819,56 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("completed-trips")]
-        public async Task<HttpResponseMessage> CompletedTrips(string passengerId, int offSet, int limit)
+        public async Task<HttpResponseMessage> CompletedTrips([FromUri] PassengerTripsListRequest model)
         {
-            if (passengerId != string.Empty && offSet > 0 && limit > 0)
-            {
-                var lstTrips = await TripsManagerService.GetPassengerCompletedTrips(passengerId, offSet, limit);
+            var lstTrips = await TripsManagerService.GetPassengerCompletedTrips(model.PassengerId, int.Parse(model.OffSet), int.Parse(model.Limit));
 
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                    Data = new PassengerTripsListResponse
-                    {
-                        TotalRecords = lstTrips.Count > 0 ? lstTrips.FirstOrDefault().TotalRecord.ToString() : "0",
-                        Trips = lstTrips
-                    }
-                });
-            }
-            else
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
-            }
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new PassengerTripsListResponse
+                {
+                    TotalRecords = lstTrips.Count > 0 ? lstTrips.FirstOrDefault().TotalRecord.ToString() : "0",
+                    Trips = lstTrips
+                }
+            });
         }
 
         [HttpGet]
         [Route("cancelled-trips")]
-        public async Task<HttpResponseMessage> CancelledTrips(string passengerId, int offSet, int limit)
+        public async Task<HttpResponseMessage> CancelledTrips([FromUri] PassengerTripsListRequest model)
         {
-            if (passengerId != string.Empty && offSet > 0 && limit > 0)
-            {
-                var lstTrips = await TripsManagerService.GetPassengerCancelledTrips(passengerId, offSet, limit);
+            var lstTrips = await TripsManagerService.GetPassengerCancelledTrips(model.PassengerId, int.Parse(model.OffSet), int.Parse(model.Limit));
 
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                    Data = new PassengerTripsListResponse
-                    {
-                        TotalRecords = lstTrips.Count > 0 ? lstTrips.FirstOrDefault().TotalRecord.ToString() : "0",
-                        Trips = lstTrips
-                    }
-                });
-            }
-            else
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
-            }
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new PassengerTripsListResponse
+                {
+                    TotalRecords = lstTrips.Count > 0 ? lstTrips.FirstOrDefault().TotalRecord.ToString() : "0",
+                    Trips = lstTrips
+                }
+            });
         }
 
         [HttpGet]
         [Route("scheduled-trips")]
-        public async Task<HttpResponseMessage> ScheduledTrips(string passengerId, int offSet, int limit)
+        public async Task<HttpResponseMessage> ScheduledTrips([FromUri] PassengerTripsListRequest model)
         {
-            if (passengerId != string.Empty && offSet > 0 && limit > 0)
-            {
-                var lstTrips = await TripsManagerService.GetPassengerScheduledTrips(passengerId, offSet, limit);
+            var lstTrips = await TripsManagerService.GetPassengerScheduledTrips(model.PassengerId, int.Parse(model.OffSet), int.Parse(model.Limit));
 
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                    Data = new PassengerTripsListResponse
-                    {
-                        TotalRecords = lstTrips.Count > 0 ? lstTrips.FirstOrDefault().TotalRecord.ToString() : "0",
-                        Trips = lstTrips
-                    }
-                });
-            }
-            else
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
-            }
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new PassengerTripsListResponse
+                {
+                    TotalRecords = lstTrips.Count > 0 ? lstTrips.FirstOrDefault().TotalRecord.ToString() : "0",
+                    Trips = lstTrips
+                }
+            });
         }
 
         [HttpGet]

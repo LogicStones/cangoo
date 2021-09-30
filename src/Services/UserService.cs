@@ -65,11 +65,14 @@ namespace Services
             }
         }
 
-        public static async Task<PassengerProfileDTO> GetProfileAsync(string userId)
+        public static async Task<PassengerProfileDTO> GetProfileAsync(string userId, string applicationId, string resellerId)
         {
             using (var dbContext = new CangooEntities())
             {
-               var profile = await dbContext.UserProfiles.Where(up => up.UserID.Equals(userId)).FirstOrDefaultAsync();
+               var profile = await dbContext.UserProfiles.Where(up => up.UserID.Equals(userId) 
+               && up.ApplicationID.ToString().ToLower().Equals(applicationId)
+               && up.ResellerID.ToString().ToLower().Equals(resellerId)).FirstOrDefaultAsync();
+
                 return AutoMapperConfig._mapper.Map<UserProfile, PassengerProfileDTO>(profile);
             }
         }
@@ -191,7 +194,7 @@ Update Userprofile Set CountryCode = {1} where UserID = {2};", phoneNumber, coun
         {
             using (var context = new CangooEntities())
             {
-                var userProfile = await GetProfileAsync(userId);
+                var userProfile = await GetProfileAsync(userId, applicationId, resellerId);
 
                 if (isExistingUser)
                 {

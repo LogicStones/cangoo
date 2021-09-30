@@ -1,6 +1,7 @@
 ﻿using DTOs.Shared;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -11,6 +12,16 @@ namespace DTOs.API
 	{
 		public string PickUpLocationLatitude { get; set; } = "0";
 		public List<TripOverView> Trips { get; set; } = new List<TripOverView>();
+	}
+
+	public class PassengerTripsListRequest
+	{
+		[Required]
+		public string PassengerId { get; set; }
+		[Required]
+		public string OffSet { get; set; }
+		[Required]
+		public string Limit { get; set; }
 	}
 
 	public class PassengerTripsListResponse
