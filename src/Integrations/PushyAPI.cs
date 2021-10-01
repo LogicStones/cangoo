@@ -15,53 +15,52 @@ namespace Integrations
     {
         public static async Task SendPush(PushyPushRequest push)
         {
-
-            string SECRET_API_KEY = string.Empty;
-
-            if (((Dictionary<string, string>)push.data)["messageKey"].ToLower().Contains("cap_"))
-                SECRET_API_KEY = ConfigurationManager.AppSettings["PushyCaptainAPISecret"].ToString();
-            else if (((Dictionary<string, string>)push.data)["messageKey"].ToLower().Contains("pas_"))
-                SECRET_API_KEY = ConfigurationManager.AppSettings["PushyPassengerAPISecret"].ToString();
-            else //if(((Dictionary<string, string>)push.data)["messageKey"].ToLower().Contains("cap_"))
-                SECRET_API_KEY = ConfigurationManager.AppSettings["PushyGo4ModuleAPISecret"].ToString();
-
-            // Create an HTTP request to the Pushy API
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://api.pushy.me/push?api_key=" + SECRET_API_KEY);
-
-            // Send a JSON content-type header
-            request.ContentType = "application/json";
-
-            // Set request method to POST
-            request.Method = "POST";
-
-            // Convert request post body to JSON (using JSON.NET package from Nuget)
-            string postData = JsonConvert.SerializeObject(push);
-
-            // Convert post data to a byte array
-            byte[] byteArray = Encoding.UTF8.GetBytes(postData);
-
-            // Set the ContentLength property of the WebRequest
-            request.ContentLength = byteArray.Length;
-
-            // Get the request stream
-            Stream dataStream = request.GetRequestStream();
-
-            // Write the data to the request stream
-            dataStream.Write(byteArray, 0, byteArray.Length);
-
-            // Close the stream
-            dataStream.Close();
-
-            // Proceed with caution
-            WebResponse response;
-
             try
             {
+                string SECRET_API_KEY = string.Empty;
+
+                if (((Dictionary<string, string>)push.data)["messageKey"].ToLower().Contains("cap_"))
+                    SECRET_API_KEY = ConfigurationManager.AppSettings["PushyCaptainAPISecret"].ToString();
+                else if (((Dictionary<string, string>)push.data)["messageKey"].ToLower().Contains("pas_"))
+                    SECRET_API_KEY = ConfigurationManager.AppSettings["PushyPassengerAPISecret"].ToString();
+                else //if(((Dictionary<string, string>)push.data)["messageKey"].ToLower().Contains("cap_"))
+                    SECRET_API_KEY = ConfigurationManager.AppSettings["PushyGo4ModuleAPISecret"].ToString();
+
+                // Create an HTTP request to the Pushy API
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create("https://api.pushy.me/push?api_key=" + SECRET_API_KEY);
+
+                // Send a JSON content-type header
+                request.ContentType = "application/json";
+
+                // Set request method to POST
+                request.Method = "POST";
+
+                // Convert request post body to JSON (using JSON.NET package from Nuget)
+                string postData = JsonConvert.SerializeObject(push);
+
+                // Convert post data to a byte array
+                byte[] byteArray = Encoding.UTF8.GetBytes(postData);
+
+                // Set the ContentLength property of the WebRequest
+                request.ContentLength = byteArray.Length;
+
+                // Get the request stream
+                Stream dataStream = request.GetRequestStream();
+
+                // Write the data to the request stream
+                dataStream.Write(byteArray, 0, byteArray.Length);
+
+                // Close the stream
+                dataStream.Close();
+
+                // Proceed with caution
+                WebResponse response;
+
                 // Execute the request
-                response = request.GetResponse();
+                response = await request.GetResponseAsync();
 
                 /*IN LAST VERSION FOLLOWING BLOCK OF CODE WAS COMMENTED AND PLACED AFTER CATCH BLOCK*/
-                
+
                 // Open the stream using a StreamReader for easy access
                 StreamReader reader = new StreamReader(response.GetResponseStream());
 
@@ -83,7 +82,7 @@ namespace Integrations
                 // Parse into object
                 PushyAPIError error = JsonConvert.DeserializeObject<PushyAPIError>(errorJSON);
                 // Throw error
-                Log.Warning("Failed to send push notification. {0} ", error.error);
+                Log.Error("Failed to send push notification. {0} ", error.error);
                 //throw new Exception();
             }
         }

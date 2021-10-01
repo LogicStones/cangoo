@@ -13,7 +13,7 @@ namespace Integrations
 {
     public class Twilio
     {
-        public static bool SendSms(string msg, string receiverNumber)
+        public static async Task SendSms(string msg, string receiverNumber)
         {
             try
             {
@@ -27,14 +27,10 @@ namespace Integrations
                     body: msg,
                     to: new PhoneNumber(receiverNumber)
                 );
-                //return message.Status;
-                return true;
             }
             catch (Exception ex)
             {
                 Log.Warning("Message sending failed to {0}. Message details {1}. Error details {2}", receiverNumber, msg, ex);
-                return false;
-                //return MessageResource.StatusEnum.Failed;
             }
         }
     }

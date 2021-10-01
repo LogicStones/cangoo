@@ -69,12 +69,14 @@
     <Compile Include="AuthenticationService.cs" />
     <Compile Include="Automapper\AutoMapperConfig.cs" />
     <Compile Include="Automapper\AutoMapperProfile.cs" />
+    <Compile Include="FavoritesService.cs" />
     <Compile Include="FacilitiesManagerService.cs" />
     <Compile Include="LanguageService.cs" />
     <Compile Include="PassengerPlacesService.cs" />
     <Compile Include="FilesManagerService.cs" />
     <Compile Include="NotificationService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="EmailService.cs" />
     <Compile Include="TextMessageService.cs" />
     <Compile Include="TripsManagerService.cs" />
     <Compile Include="UserService.cs" />

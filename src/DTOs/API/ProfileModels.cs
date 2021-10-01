@@ -60,6 +60,17 @@ namespace DTOs.API
 		public string LastName { get; set; } = "";
 	}
 
+	public class UpdatePassengerPhoneNumberOTPRequest
+	{
+		[Required]
+		public string PhoneNumber { get; set; }
+	}
+
+	public class UpdatePassengerPhoneNumberOTPResponse
+	{
+		public string OTP { get; set; }
+	}
+
 	public class UpdatePassengerPhoneNumberRequest
 	{
 		[Required]
@@ -74,6 +85,16 @@ namespace DTOs.API
 	{
 		public string PhoneNumber { get; set; } = "";
 		public string CountryCode { get; set; } = "";
+	}
+
+	public class UpdatePassengerEmailOTPRequest
+	{
+		[Required]
+		public string Email { get; set; }
+	}
+	public class UpdatePassengerEmailOTPResponse
+	{
+		public string OTP { get; set; }
 	}
 
 	public class UpdatePassengerEmailRequest
