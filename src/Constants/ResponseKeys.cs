@@ -34,6 +34,7 @@ namespace Constants
         public const string feedNotFound = "feedNotFound";
         public const string failedToResetPassword = "failedToResetPassword";    //If oldPassword and phone number don't match.
         public const string vehicleNotFound = "vehicleNotFound";
+        public const string failedToUpdate = "failedToUpdate";
         public const string userInTrip = "userInTrip";
         public const string driverInTrip = "driverInTrip";
         public const string invalidUser = "invalidUser";  //user don't belong to current application

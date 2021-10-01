@@ -262,6 +262,10 @@
       <Project>{be3f6c0c-1a13-4967-850c-34e73904c690}</Project>
       <Name>Constants</Name>
     </ProjectReference>
+    <ProjectReference Include="..\DatabaseModel\DatabaseModel.csproj">
+      <Project>{888FAC67-8CB1-40A3-A980-B29E5CD0F311}</Project>
+      <Name>DatabaseModel</Name>
+    </ProjectReference>
     <ProjectReference Include="..\DTOs\DTOs.csproj">
       <Project>{8e47866c-81e6-42b7-ae04-a466f7d41afd}</Project>
       <Name>DTOs</Name>

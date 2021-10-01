@@ -51,8 +51,7 @@
         <EntityTypeShape EntityType="CangooModel.ReportsLog" Width="1.5" PointX="4.75" PointY="20.75" IsExpanded="true" />
         <EntityTypeShape EntityType="CangooModel.ReroutedRidesLog" Width="1.5" PointX="20.75" PointY="5.75" IsExpanded="true" />
         <EntityTypeShape EntityType="CangooModel.Reseller" Width="1.5" PointX="20.75" PointY="9.75" IsExpanded="true" />
-        <EntityTypeShape EntityType="CangooModel.RewardPointsManager" Width="1.5" PointX="20.75" PointY="17.75" IsExpanded="true" />
-        <EntityTypeShape EntityType="CangooModel.Setting" Width="1.5" PointX="20.75" PointY="20.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="CangooModel.Setting" Width="1.5" PointX="20.5" PointY="22.5" IsExpanded="true" />
         <EntityTypeShape EntityType="CangooModel.SharedRideBlockedUser" Width="1.5" PointX="16.75" PointY="21.75" IsExpanded="true" />
         <EntityTypeShape EntityType="CangooModel.SharedRideParticipant" Width="1.5" PointX="22.75" PointY="0.75" IsExpanded="true" />
         <EntityTypeShape EntityType="CangooModel.SubscriptionHistory" Width="1.5" PointX="22.75" PointY="3.75" IsExpanded="true" />
@@ -74,6 +73,8 @@
         <AssociationConnector Association="CangooModel.AspNetUserRoles" ManuallyRouted="false" />
         <EntityTypeShape EntityType="CangooModel.Trip" Width="1.5" PointX="23.375" PointY="20.75" />
         <EntityTypeShape EntityType="CangooModel.UserProfile" Width="1.5" PointX="17.375" PointY="24.75" />
+        <EntityTypeShape EntityType="CangooModel.PassengerPlace" Width="1.5" PointX="5.375" PointY="25.75" />
+        <EntityTypeShape EntityType="CangooModel.Language" Width="1.5" PointX="25.375" PointY="19.75" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

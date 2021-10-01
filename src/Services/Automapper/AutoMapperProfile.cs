@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using DatabaseModel;
+using DTOs.API;
 using DTOs.Shared;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,7 @@ namespace Services.Automapper
             CreateMap<AspNetUser, PassengerIdentityDTO>();
             CreateMap<UserProfile, PassengerProfileDTO>();
             CreateMap<Facility, FacilitiyDTO>();
+            CreateMap<PassengerPlace, AddPassengerPlaceRequest>().ReverseMap();
             //CreateMap<UserDTO, UserJson>().ReverseMap();
             //CreateMap<UserDTO, UserProfileModelJson>().ReverseMap();
             //CreateMap<UserDTO, RegistrationModelJson>().ReverseMap();

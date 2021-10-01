@@ -613,27 +613,64 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("add-place")]
-        public async Task<HttpResponseMessage> AddPlace(UpdatePassengerPhoneNumberRequest model)
+        public async Task<HttpResponseMessage> AddPlace(AddPassengerPlaceRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var result = await PassengerPlacesService.AddPlace(model);
+            if (result > 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
+            }
         }
 
         [HttpPost]
         [Route("update-place")]
-        public async Task<HttpResponseMessage> UpdatePlace(UpdatePassengerPhoneNumberRequest model)
+        public async Task<HttpResponseMessage> UpdatePlace(UpdatePassengerPlaceRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var result = await PassengerPlacesService.UpdatePassengerPlaces(model);
+
+            if (result == 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Message = ResponseKeys.failedToUpdate
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess
+                });
+            }
         }
 
         [HttpGet]
         [Route("get-places")]
-        public async Task<HttpResponseMessage> GetPlaces(UpdatePassengerPhoneNumberRequest model)
+        public async Task<HttpResponseMessage> GetPlaces(string passengerId)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var lstPassengerPlaces = await PassengerPlacesService.GetPassengerPlaces(passengerId);
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new GetPassengerPlacesResponse
+                {
+                    Places = lstPassengerPlaces
+                }
+            });
         }
 
         #endregion
-
+         
         #region Favorites
 
         [HttpPost]
@@ -663,16 +700,40 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("get-languages")]
-        public async Task<HttpResponseMessage> GetLanguages(UpdatePassengerPhoneNumberRequest model)
+        public async Task<HttpResponseMessage> GetLanguages()
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new GetLanguageRequestRespose
+                {
+                    Languages = await LanguageService.GetAllLanguages()
+                }
+            });
         }
 
         [HttpPost]
         [Route("update-language")]
-        public async Task<HttpResponseMessage> UpdateLanguage(UpdatePassengerPhoneNumberRequest model)
+        public async Task<HttpResponseMessage> UpdateLanguage(UpdateLanguageRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var result = await LanguageService.UpdatePassengerLanguage(model);
+
+            if (result == 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.NotModified, new ResponseWrapper
+                {
+                    Message = ResponseKeys.failedToUpdate
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess
+                });
+            }
         }
 
         #endregion

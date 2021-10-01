@@ -45,5 +45,6 @@ namespace DatabaseModel
         public Nullable<double> CaptainMinAcceptanceRate { get; set; }
         public Nullable<int> RequestRadiusInterval { get; set; }
         public Nullable<int> CaptainAllowedIdleTimeInSeconds { get; set; }
+        public Nullable<int> WishCarRadius { get; set; }
     }
 }

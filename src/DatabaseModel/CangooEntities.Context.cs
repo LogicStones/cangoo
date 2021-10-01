@@ -73,7 +73,6 @@ namespace DatabaseModel
         public virtual DbSet<ReportsLog> ReportsLogs { get; set; }
         public virtual DbSet<ReroutedRidesLog> ReroutedRidesLogs { get; set; }
         public virtual DbSet<Reseller> Resellers { get; set; }
-        public virtual DbSet<RewardPointsManager> RewardPointsManagers { get; set; }
         public virtual DbSet<Setting> Settings { get; set; }
         public virtual DbSet<SharedRideBlockedUser> SharedRideBlockedUsers { get; set; }
         public virtual DbSet<SharedRideParticipant> SharedRideParticipants { get; set; }
@@ -93,6 +92,8 @@ namespace DatabaseModel
         public virtual DbSet<WalletTransfer> WalletTransfers { get; set; }
         public virtual DbSet<Trip> Trips { get; set; }
         public virtual DbSet<UserProfile> UserProfiles { get; set; }
+        public virtual DbSet<PassengerPlace> PassengerPlaces { get; set; }
+        public virtual DbSet<Language> Languages { get; set; }
     
         public virtual int AddApplication(Nullable<System.Guid> resellerID, Nullable<System.Guid> applicationID, string ownerName, string companyName, string logo, string originalLogo, string contractFile, string originalContractFile, string authorizedArea, Nullable<double> percentagePayable, Nullable<double> percentageReceiveable, Nullable<int> subscriptionPlanID, Nullable<System.DateTime> subscriptionDate, Nullable<System.DateTime> paymentDueDate, Nullable<int> subscriptionTypeID, Nullable<int> paymentModeID, Nullable<int> paymentTypeID, Nullable<int> paymentStatusID, string paypalAccountNumber, string address, string taxNumber, string subscribedModules, string paypalEmail, string paypalNationalNumber, string paypalCountryCode, string paypalPhoneExt, Nullable<System.Guid> transactionID, Nullable<System.DateTime> dateTime, Nullable<System.Guid> debitFrom, Nullable<System.Guid> creditTo, string reference, Nullable<decimal> amount)
         {
@@ -3747,7 +3748,7 @@ namespace DatabaseModel
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<string>("TransferFundToBenificiary", guardianIDParameter, childIDParameter, voucherAmountParameter, descriptionParameter, transactionDateParameter, detailIDParameter, appliactionIDParameter, resellerIDParameter);
         }
     
-        public virtual ObjectResult<UpdateApplicationSettings_Result> UpdateApplicationSettings(Nullable<System.Guid> applicationID, Nullable<double> perKmAwardPoints, Nullable<double> priorityAreaRange, Nullable<double> requestResponseTime, Nullable<double> requestSearchRange, Nullable<double> requestWaitingTime, Nullable<double> awardpointsDeduction, Nullable<double> awardPointsThreshold, Nullable<int> arrivedTime, string originalPicture, string profilePicture, Nullable<double> laterBookingRequestSearchRange, Nullable<double> captainMinRating, Nullable<double> captainMinAcceptanceRate, Nullable<int> requestRadiusInterval, Nullable<int> captainAllowedIdleTimeInSeconds)
+        public virtual ObjectResult<UpdateApplicationSettings_Result> UpdateApplicationSettings(Nullable<System.Guid> applicationID, Nullable<double> perKmAwardPoints, Nullable<double> priorityAreaRange, Nullable<double> requestResponseTime, Nullable<double> requestSearchRange, Nullable<double> requestWaitingTime, Nullable<double> awardpointsDeduction, Nullable<double> awardPointsThreshold, Nullable<int> arrivedTime, string originalPicture, string profilePicture, Nullable<double> laterBookingRequestSearchRange, Nullable<double> captainMinRating, Nullable<double> captainMinAcceptanceRate, Nullable<int> requestRadiusInterval, Nullable<int> captainAllowedIdleTimeInSeconds, Nullable<int> wishCarRadius)
         {
             var applicationIDParameter = applicationID.HasValue ?
                 new ObjectParameter("applicationID", applicationID) :
@@ -3813,7 +3814,11 @@ namespace DatabaseModel
                 new ObjectParameter("CaptainAllowedIdleTimeInSeconds", captainAllowedIdleTimeInSeconds) :
                 new ObjectParameter("CaptainAllowedIdleTimeInSeconds", typeof(int));
     
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<UpdateApplicationSettings_Result>("UpdateApplicationSettings", applicationIDParameter, perKmAwardPointsParameter, priorityAreaRangeParameter, requestResponseTimeParameter, requestSearchRangeParameter, requestWaitingTimeParameter, awardpointsDeductionParameter, awardPointsThresholdParameter, arrivedTimeParameter, originalPictureParameter, profilePictureParameter, laterBookingRequestSearchRangeParameter, captainMinRatingParameter, captainMinAcceptanceRateParameter, requestRadiusIntervalParameter, captainAllowedIdleTimeInSecondsParameter);
+            var wishCarRadiusParameter = wishCarRadius.HasValue ?
+                new ObjectParameter("wishCarRadius", wishCarRadius) :
+                new ObjectParameter("wishCarRadius", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<UpdateApplicationSettings_Result>("UpdateApplicationSettings", applicationIDParameter, perKmAwardPointsParameter, priorityAreaRangeParameter, requestResponseTimeParameter, requestSearchRangeParameter, requestWaitingTimeParameter, awardpointsDeductionParameter, awardPointsThresholdParameter, arrivedTimeParameter, originalPictureParameter, profilePictureParameter, laterBookingRequestSearchRangeParameter, captainMinRatingParameter, captainMinAcceptanceRateParameter, requestRadiusIntervalParameter, captainAllowedIdleTimeInSecondsParameter, wishCarRadiusParameter);
         }
     
         public virtual int UpdateUserProfileInfo(string userId, string firstName, string lastName, string email, string userImage, string originalImage, string paypalAccountNumber, string paypalEmail, string paypalNationalNumber, string paypalCountryCode, string paypalPhoneExt)

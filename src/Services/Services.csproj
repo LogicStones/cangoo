@@ -70,6 +70,8 @@
     <Compile Include="Automapper\AutoMapperConfig.cs" />
     <Compile Include="Automapper\AutoMapperProfile.cs" />
     <Compile Include="FacilitiesManagerService.cs" />
+    <Compile Include="LanguageService.cs" />
+    <Compile Include="PassengerPlacesService.cs" />
     <Compile Include="FilesManagerService.cs" />
     <Compile Include="NotificationService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

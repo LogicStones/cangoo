@@ -30,4 +30,11 @@ namespace Constants
 		LaterBookingAccepted = 9,
 		PaymentRequested = 10
 	}
+
+	public enum PassengerPlacesTypes
+    {
+		Home = 1,
+		Work = 2,
+		Other = 3
+    }
 }

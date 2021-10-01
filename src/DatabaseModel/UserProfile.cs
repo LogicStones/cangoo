@@ -38,5 +38,6 @@ namespace DatabaseModel
         public Nullable<bool> isSharedBookingEnabled { get; set; }
         public System.DateTime MemberSince { get; set; }
         public int RewardPoints { get; set; }
+        public Nullable<int> LanguageID { get; set; }
     }
 }

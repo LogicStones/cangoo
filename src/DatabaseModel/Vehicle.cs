@@ -35,6 +35,6 @@ namespace DatabaseModel
         public string RegistrationYear { get; set; }
         public string RegistrationCertificate { get; set; }
         public string OriginalRegistrationCertificate { get; set; }
-        public Nullable<int> CategoryID { get; set; }
+        public string Categories { get; set; }
     }
 }

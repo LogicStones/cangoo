@@ -458,6 +458,9 @@
     <Compile Include="KarhooQuote.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="Language.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="LogCaptainOnlineVehicle.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
@@ -465,6 +468,9 @@
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="NewsFeed.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="PassengerPlace.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="PaymentMode.cs">
@@ -490,9 +496,6 @@
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="Reseller.cs">
-      <DependentUpon>CangooEntities.tt</DependentUpon>
-    </Compile>
-    <Compile Include="RewardPointsManager.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="rpt_GetTripsOverviewInDateRange_Result.cs">

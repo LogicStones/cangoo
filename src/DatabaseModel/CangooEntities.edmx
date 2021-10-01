@@ -88,6 +88,7 @@
           <Property Name="CaptainMinAcceptanceRate" Type="float" />
           <Property Name="RequestRadiusInterval" Type="int" />
           <Property Name="CaptainAllowedIdleTimeInSeconds" Type="int" />
+          <Property Name="WishCarRadius" Type="int" />
         </EntityType>
         <EntityType Name="ApplicationUserType">
           <Key>
@@ -639,6 +640,17 @@
           <Property Name="TrainNumber" Type="varchar" MaxLength="100" />
           <Property Name="Comments" Type="varchar" MaxLength="100" />
         </EntityType>
+        <EntityType Name="Languages">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Language" Type="varchar" MaxLength="50" />
+          <Property Name="ShortName" Type="varchar" MaxLength="50" />
+          <Property Name="Format" Type="varchar" MaxLength="50" />
+          <Property Name="ApplicationId" Type="uniqueidentifier" />
+          <Property Name="ResellerId" Type="uniqueidentifier" />
+        </EntityType>
         <EntityType Name="LogCaptainOnlineVehicle">
           <Key>
             <PropertyRef Name="ID" />
@@ -670,6 +682,20 @@
           <Property Name="ExpiryDate" Type="datetime" Nullable="false" />
           <Property Name="ApplicationUserTypeID" Type="int" Nullable="false" />
           <Property Name="ApplicationID" Type="uniqueidentifier" Nullable="false" />
+        </EntityType>
+        <EntityType Name="PassengerPlaces">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="PlacesTypesID" Type="int" Nullable="false" />
+          <Property Name="Name" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="Address" Type="varchar(max)" Nullable="false" />
+          <Property Name="Latitude" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="Longitutde" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="PassengerId" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="ApplicationID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="ResellerID" Type="uniqueidentifier" Nullable="false" />
         </EntityType>
         <EntityType Name="PaymentModes">
           <Key>
@@ -776,15 +802,6 @@
           <Property Name="ProfileImage" Type="varchar" MaxLength="250" />
           <Property Name="OriginalProfileImage" Type="varchar" MaxLength="250" />
           <Property Name="PercentageReceiveable" Type="float" Nullable="false" />
-        </EntityType>
-        <EntityType Name="RewardPointsManager">
-          <Key>
-            <PropertyRef Name="ID" />
-          </Key>
-          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="Deduction" Type="int" Nullable="false" />
-          <Property Name="RedeemAmount" Type="int" Nullable="false" />
-          <Property Name="Description" Type="varchar" MaxLength="250" Nullable="false" />
         </EntityType>
         <EntityType Name="Settings">
           <Key>
@@ -1035,6 +1052,7 @@
           <Property Name="isSharedBookingEnabled" Type="bit" />
           <Property Name="MemberSince" Type="datetime" Nullable="false" />
           <Property Name="RewardPoints" Type="int" Nullable="false" />
+          <Property Name="LanguageID" Type="int" />
         </EntityType>
         <EntityType Name="UserPromos">
           <Key>
@@ -1068,11 +1086,11 @@
           <Property Name="DeviceToken" Type="varchar(max)" />
           <Property Name="ApplicationID" Type="uniqueidentifier" />
           <Property Name="ResellerID" Type="uniqueidentifier" />
+          <Property Name="Categories" Type="varchar" MaxLength="100" />
           <Property Name="Facilities" Type="varchar" MaxLength="100" Nullable="false" />
           <Property Name="RegistrationYear" Type="varchar" MaxLength="10" />
           <Property Name="RegistrationCertificate" Type="varchar" MaxLength="250" />
           <Property Name="OriginalRegistrationCertificate" Type="varchar" MaxLength="250" />
-          <Property Name="CategoryID" Type="int" />
         </EntityType>
         <EntityType Name="VehicleCategory">
           <Key>
@@ -2248,6 +2266,7 @@
           <Parameter Name="CaptainMinAcceptanceRate" Type="float" Mode="In" />
           <Parameter Name="RequestRadiusInterval" Type="int" Mode="In" />
           <Parameter Name="CaptainAllowedIdleTimeInSeconds" Type="int" Mode="In" />
+          <Parameter Name="wishCarRadius" Type="int" Mode="In" />
         </Function>
         <Function Name="UpdateUserProfileInfo" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="userId" Type="nvarchar" Mode="In" />
@@ -2306,9 +2325,11 @@
           <EntitySet Name="FareRanges" EntityType="Self.FareRanges" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Go4SystemLocations" EntityType="Self.Go4SystemLocations" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="KarhooQuotes" EntityType="Self.KarhooQuotes" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Languages" EntityType="Self.Languages" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="LogCaptainOnlineVehicle" EntityType="Self.LogCaptainOnlineVehicle" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Modules" EntityType="Self.Modules" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="NewsFeed" EntityType="Self.NewsFeed" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="PassengerPlaces" EntityType="Self.PassengerPlaces" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PaymentModes" EntityType="Self.PaymentModes" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PaymentStatus" EntityType="Self.PaymentStatus" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PaymentTypes" EntityType="Self.PaymentTypes" Schema="dbo" store:Type="Tables" />
@@ -2317,7 +2338,6 @@
           <EntitySet Name="ReportsLog" EntityType="Self.ReportsLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ReroutedRidesLog" EntityType="Self.ReroutedRidesLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Resellers" EntityType="Self.Resellers" Schema="dbo" store:Type="Tables" />
-          <EntitySet Name="RewardPointsManager" EntityType="Self.RewardPointsManager" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Settings" EntityType="Self.Settings" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="SharedRideBlockedUsers" EntityType="Self.SharedRideBlockedUsers" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="SharedRideParticipants" EntityType="Self.SharedRideParticipants" Schema="dbo" store:Type="Tables" />
@@ -2441,6 +2461,7 @@
           <Property Name="CaptainMinAcceptanceRate" Type="Double" />
           <Property Name="RequestRadiusInterval" Type="Int32" />
           <Property Name="CaptainAllowedIdleTimeInSeconds" Type="Int32" />
+          <Property Name="WishCarRadius" Type="Int32" />
         </EntityType>
         <EntityType Name="ApplicationUserType">
           <Key>
@@ -3128,15 +3149,6 @@
           <Property Name="OriginalProfileImage" Type="String" MaxLength="250" FixedLength="false" Unicode="false" />
           <Property Name="PercentageReceiveable" Type="Double" Nullable="false" />
         </EntityType>
-        <EntityType Name="RewardPointsManager">
-          <Key>
-            <PropertyRef Name="ID" />
-          </Key>
-          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="Deduction" Type="Int32" Nullable="false" />
-          <Property Name="RedeemAmount" Type="Int32" Nullable="false" />
-          <Property Name="Description" Type="String" MaxLength="250" FixedLength="false" Unicode="false" Nullable="false" />
-        </EntityType>
         <EntityType Name="Setting">
           <Key>
             <PropertyRef Name="SettingsID" />
@@ -3302,7 +3314,7 @@
           <Property Name="RegistrationYear" Type="String" MaxLength="10" FixedLength="false" Unicode="false" />
           <Property Name="RegistrationCertificate" Type="String" MaxLength="250" FixedLength="false" Unicode="false" />
           <Property Name="OriginalRegistrationCertificate" Type="String" MaxLength="250" FixedLength="false" Unicode="false" />
-          <Property Name="CategoryID" Type="Int32" />
+          <Property Name="Categories" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
         </EntityType>
         <EntityType Name="VehicleCategory">
           <Key>
@@ -3432,7 +3444,6 @@
           <EntitySet Name="ReportsLogs" EntityType="Self.ReportsLog" />
           <EntitySet Name="ReroutedRidesLogs" EntityType="Self.ReroutedRidesLog" />
           <EntitySet Name="Resellers" EntityType="Self.Reseller" />
-          <EntitySet Name="RewardPointsManagers" EntityType="Self.RewardPointsManager" />
           <EntitySet Name="Settings" EntityType="Self.Setting" />
           <EntitySet Name="SharedRideBlockedUsers" EntityType="Self.SharedRideBlockedUser" />
           <EntitySet Name="SharedRideParticipants" EntityType="Self.SharedRideParticipant" />
@@ -4501,6 +4512,7 @@
             <Parameter Name="CaptainMinAcceptanceRate" Mode="In" Type="Double" />
             <Parameter Name="RequestRadiusInterval" Mode="In" Type="Int32" />
             <Parameter Name="CaptainAllowedIdleTimeInSeconds" Mode="In" Type="Int32" />
+            <Parameter Name="wishCarRadius" Mode="In" Type="Int32" />
           </FunctionImport>
           <FunctionImport Name="UpdateUserProfileInfo">
             <Parameter Name="userId" Mode="In" Type="String" />
@@ -4524,6 +4536,8 @@
           </FunctionImport>
           <EntitySet Name="Trips" EntityType="CangooModel.Trip" />
           <EntitySet Name="UserProfiles" EntityType="CangooModel.UserProfile" />
+          <EntitySet Name="PassengerPlaces" EntityType="CangooModel.PassengerPlace" />
+          <EntitySet Name="Languages" EntityType="CangooModel.Language" />
         </EntityContainer>
         <ComplexType Name="FetchAdminAnnualEarningAndProfit_Result">
           <Property Type="String" Name="Month" Nullable="true" MaxLength="30" />
@@ -6644,6 +6658,32 @@
           <Property Name="isSharedBookingEnabled" Type="Boolean" />
           <Property Name="MemberSince" Type="DateTime" Nullable="false" Precision="3" />
           <Property Name="RewardPoints" Type="Int32" Nullable="false" />
+          <Property Name="LanguageID" Type="Int32" />
+        </EntityType>
+        <EntityType Name="PassengerPlace">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="PlacesTypesID" Type="Int32" Nullable="false" />
+          <Property Name="Name" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Address" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="Latitude" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Longitutde" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="PassengerId" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="ApplicationID" Type="Guid" Nullable="false" />
+          <Property Name="ResellerID" Type="Guid" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Language">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Language1" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="ShortName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Format" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="ApplicationId" Type="Guid" />
+          <Property Name="ResellerId" Type="Guid" />
         </EntityType>
       </Schema>
     </edmx:ConceptualModels>
@@ -6705,6 +6745,7 @@
           <EntitySetMapping Name="ApplicationSettings">
             <EntityTypeMapping TypeName="CangooModel.ApplicationSetting">
               <MappingFragment StoreEntitySet="ApplicationSettings">
+                <ScalarProperty Name="WishCarRadius" ColumnName="WishCarRadius" />
                 <ScalarProperty Name="ApplicationSettingsID" ColumnName="ApplicationSettingsID" />
                 <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
                 <ScalarProperty Name="AwardPointsThreshold" ColumnName="AwardPointsThreshold" />
@@ -7459,16 +7500,6 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="RewardPointsManagers">
-            <EntityTypeMapping TypeName="CangooModel.RewardPointsManager">
-              <MappingFragment StoreEntitySet="RewardPointsManager">
-                <ScalarProperty Name="ID" ColumnName="ID" />
-                <ScalarProperty Name="Deduction" ColumnName="Deduction" />
-                <ScalarProperty Name="RedeemAmount" ColumnName="RedeemAmount" />
-                <ScalarProperty Name="Description" ColumnName="Description" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
           <EntitySetMapping Name="Settings">
             <EntityTypeMapping TypeName="CangooModel.Setting">
               <MappingFragment StoreEntitySet="Settings">
@@ -7624,7 +7655,7 @@
           <EntitySetMapping Name="Vehicles">
             <EntityTypeMapping TypeName="CangooModel.Vehicle">
               <MappingFragment StoreEntitySet="Vehicle">
-                <ScalarProperty Name="CategoryID" ColumnName="CategoryID" />
+                <ScalarProperty Name="Categories" ColumnName="Categories" />
                 <ScalarProperty Name="VehicleID" ColumnName="VehicleID" />
                 <ScalarProperty Name="PlateNumber" ColumnName="PlateNumber" />
                 <ScalarProperty Name="VehiclePicture" ColumnName="VehiclePicture" />
@@ -10356,6 +10387,7 @@
           <EntitySetMapping Name="UserProfiles">
             <EntityTypeMapping TypeName="CangooModel.UserProfile">
               <MappingFragment StoreEntitySet="UserProfile">
+                <ScalarProperty Name="LanguageID" ColumnName="LanguageID" />
                 <ScalarProperty Name="RewardPoints" ColumnName="RewardPoints" />
                 <ScalarProperty Name="MemberSince" ColumnName="MemberSince" />
                 <ScalarProperty Name="isSharedBookingEnabled" ColumnName="isSharedBookingEnabled" />
@@ -10380,6 +10412,33 @@
                 <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
                 <ScalarProperty Name="ResellerID" ColumnName="ResellerID" />
                 <ScalarProperty Name="UserID" ColumnName="UserID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="PassengerPlaces">
+            <EntityTypeMapping TypeName="CangooModel.PassengerPlace">
+              <MappingFragment StoreEntitySet="PassengerPlaces">
+                <ScalarProperty Name="ResellerID" ColumnName="ResellerID" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="PassengerId" ColumnName="PassengerId" />
+                <ScalarProperty Name="Longitutde" ColumnName="Longitutde" />
+                <ScalarProperty Name="Latitude" ColumnName="Latitude" />
+                <ScalarProperty Name="Address" ColumnName="Address" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="PlacesTypesID" ColumnName="PlacesTypesID" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Languages">
+            <EntityTypeMapping TypeName="CangooModel.Language">
+              <MappingFragment StoreEntitySet="Languages">
+                <ScalarProperty Name="ResellerId" ColumnName="ResellerId" />
+                <ScalarProperty Name="ApplicationId" ColumnName="ApplicationId" />
+                <ScalarProperty Name="Format" ColumnName="Format" />
+                <ScalarProperty Name="ShortName" ColumnName="ShortName" />
+                <ScalarProperty Name="Language1" ColumnName="Language" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

@@ -43,6 +43,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API\AuthenticationModels.cs" />
+    <Compile Include="API\LanguagesModel.cs" />
+    <Compile Include="API\PassengerPlacesModels.cs" />
     <Compile Include="Shared\FacilityDTOs.cs" />
     <Compile Include="API\Notificatons\NewDeviceLogIn.cs" />
     <Compile Include="API\Notificatons\RideRequest.cs" />

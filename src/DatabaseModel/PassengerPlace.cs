@@ -12,11 +12,16 @@ namespace DatabaseModel
     using System;
     using System.Collections.Generic;
     
-    public partial class RewardPointsManager
+    public partial class PassengerPlace
     {
         public int ID { get; set; }
-        public int Deduction { get; set; }
-        public int RedeemAmount { get; set; }
-        public string Description { get; set; }
+        public int PlacesTypesID { get; set; }
+        public string Name { get; set; }
+        public string Address { get; set; }
+        public string Latitude { get; set; }
+        public string Longitutde { get; set; }
+        public string PassengerId { get; set; }
+        public System.Guid ApplicationID { get; set; }
+        public System.Guid ResellerID { get; set; }
     }
 }
