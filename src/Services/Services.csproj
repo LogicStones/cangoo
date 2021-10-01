@@ -69,7 +69,7 @@
     <Compile Include="AuthenticationService.cs" />
     <Compile Include="Automapper\AutoMapperConfig.cs" />
     <Compile Include="Automapper\AutoMapperProfile.cs" />
-    <Compile Include="FavoritiesService.cs" />
+    <Compile Include="FavoritesService.cs" />
     <Compile Include="FacilitiesManagerService.cs" />
     <Compile Include="FilesManagerService.cs" />
     <Compile Include="NotificationService.cs" />

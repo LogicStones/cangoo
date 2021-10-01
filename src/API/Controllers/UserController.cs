@@ -332,30 +332,6 @@ namespace API.Controllers
 
                 if (postedFile != null && postedFile.ContentLength > 0)
                 {
-                    //Extension check is applied on application end.
-
-                    //IList<string> AllowedFileExtensions = new List<string> { ".jpg", ".gif", ".png" };
-                    //var extension = postedFile.FileName.Substring(postedFile.FileName.LastIndexOf('.')).ToLower();
-
-                    //if (!AllowedFileExtensions.Contains(extension))
-                    //{
-                    //    response.data = dic;
-                    //    response.error = true;
-                    //    response.message = AppMessage.invalidFileExtension;
-                    //    return Request.CreateResponse(HttpStatusCode.OK, response);
-                    //}
-                    //else
-                    //{
-
-                    //string path = "~/Images/User/" + psng.UserID + extension;
-                    //var filePath = HttpContext.Current.Server.MapPath(path);
-                    //postedFile.SaveAs(filePath);
-                    //psng.ProfilePicture = path;
-                    //psng.OriginalPicture = psng.UserID + extension;
-
-                    //context.SaveChanges();
-                    //dic["originalPicture"] =  path;
-
                     string uploadedFilePath = "~/Images/User/" + FilesManagerService.SaveFile(postedFile, "~/Images/User/", user.Id);
 
                     await UserService.UpdateImageAsync(uploadedFilePath, postedFile.FileName, user.Id);
@@ -369,16 +345,11 @@ namespace API.Controllers
                         ProfilePicture = uploadedFilePath,
                         IsUserProfileUpdated = true.ToString()
                     };
-                    //}
                 }
 
                 ResponseWrapper.Error = false;
                 ResponseWrapper.Message = ResponseKeys.msgSuccess;
-                //response.data = dic;
-                //    response.error = false;
-                //    response.message = AppMessage.msgSuccess;
                 return Request.CreateResponse(HttpStatusCode.OK, ResponseWrapper);
-                //}
             }
             else
             {
@@ -518,8 +489,8 @@ namespace API.Controllers
         #region Reward Points
 
         [HttpGet]
-        [Route("get-passenger-reward-points")]
-        public async Task<HttpResponseMessage> GetRewardPoints(string pID)
+        [Route("passenger-earned-reward-points")]
+        public async Task<HttpResponseMessage> PassengerEarnedRewardPoints(string pID)
         {
            return Request.CreateResponse(HttpStatusCode.OK);
             //if (!string.IsNullOrEmpty(pID))
@@ -610,8 +581,8 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [Route("get-reward-points-list")]
-        public async Task<HttpResponseMessage> GetRewardPointsList()
+        [Route("reward-points-list")]
+        public async Task<HttpResponseMessage> RewardPointsList()
         {
             return Request.CreateResponse(HttpStatusCode.OK);
 
@@ -657,124 +628,52 @@ namespace API.Controllers
 
         #region Favorites
 
-        //[HttpPost]
-        //[Route("add-fav-captain")]
-        //public async Task<HttpResponseMessage> AddFavCaptain(UpdatePassengerPhoneNumberRequest model)
-        //{
-        //    {
-        //        var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
-        //        if (tp == null)
-        //        {
-        //            response.error = true;
-        //            response.message = AppMessage.tripNotFound;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //        var user = context.UserProfiles.Where(c => c.UserID.ToString().Equals(model.pID)).FirstOrDefault();
-        //        var fav = context.UserFavoriteCaptains.Where(u => u.CaptainID == tp.CaptainID && u.UserID == model.pID).FirstOrDefault();
-
-        //        if (fav == null)
-        //        {
-        //            UserFavoriteCaptain uf = new UserFavoriteCaptain
-        //            {
-        //                ID = Guid.NewGuid(),
-        //                UserID = model.pID.ToString(),
-        //                CaptainID = tp.CaptainID,
-        //                IsFavByPassenger = true,
-        //                IsFavByCaptain = false,
-        //                ApplicationID = Guid.Parse(this.ApplicationID)
-        //            };
-        //            context.UserFavoriteCaptains.Add(uf);
-
-        //            user.NumberDriverFavourites = user.NumberDriverFavourites == null ? 1 : (int)user.NumberDriverFavourites + 1;
-        //        }
-        //        else
-        //        {
-        //            if ((bool)fav.IsFavByCaptain && (bool)fav.IsFavByPassenger)
-        //            {
-        //                fav.IsFavByPassenger = false;
-        //                user.NumberDriverFavourites = user.NumberDriverFavourites == 1 ? 0 : (int)user.NumberDriverFavourites - 1;
-        //            }
-        //            else if ((bool)fav.IsFavByPassenger)
-        //            {
-        //                context.UserFavoriteCaptains.Remove(fav);
-        //                user.NumberDriverFavourites = user.NumberDriverFavourites == 1 ? 0 : (int)user.NumberDriverFavourites - 1;
-        //            }
-        //            else
-        //            {
-        //                fav.IsFavByPassenger = true;
-        //                user.NumberDriverFavourites = user.NumberDriverFavourites == null ? 1 : (int)user.NumberDriverFavourites + 1;
-        //            }
-        //        }
-        //        context.SaveChanges();
-        //        response.error = false;
-        //        response.message = AppMessage.msgSuccess;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-
-        //    return Request.CreateResponse(HttpStatusCode.OK);
-        //}
-
-        //[HttpPost]
-        //[Route("del-fav-captain")]
-        //public async Task<HttpResponseMessage> DelFavCaptain(UpdatePassengerPhoneNumberRequest model)
-        //{
-        //    {
-        //        var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
-        //        if (tp == null)
-        //        {
-        //            response.error = true;
-        //            response.message = AppMessage.tripNotFound;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //        var user = context.UserProfiles.Where(c => c.UserID.ToString().Equals(model.pID)).FirstOrDefault();
-        //        var fav = context.UserFavoriteCaptains.Where(u => u.CaptainID == tp.CaptainID && u.UserID == model.pID).FirstOrDefault();
-
-        //        if (fav == null)
-        //        {
-        //            UserFavoriteCaptain uf = new UserFavoriteCaptain
-        //            {
-        //                ID = Guid.NewGuid(),
-        //                UserID = model.pID.ToString(),
-        //                CaptainID = tp.CaptainID,
-        //                IsFavByPassenger = true,
-        //                IsFavByCaptain = false,
-        //                ApplicationID = Guid.Parse(this.ApplicationID)
-        //            };
-        //            context.UserFavoriteCaptains.Add(uf);
-
-        //            user.NumberDriverFavourites = user.NumberDriverFavourites == null ? 1 : (int)user.NumberDriverFavourites + 1;
-        //        }
-        //        else
-        //        {
-        //            if ((bool)fav.IsFavByCaptain && (bool)fav.IsFavByPassenger)
-        //            {
-        //                fav.IsFavByPassenger = false;
-        //                user.NumberDriverFavourites = user.NumberDriverFavourites == 1 ? 0 : (int)user.NumberDriverFavourites - 1;
-        //            }
-        //            else if ((bool)fav.IsFavByPassenger)
-        //            {
-        //                context.UserFavoriteCaptains.Remove(fav);
-        //                user.NumberDriverFavourites = user.NumberDriverFavourites == 1 ? 0 : (int)user.NumberDriverFavourites - 1;
-        //            }
-        //            else
-        //            {
-        //                fav.IsFavByPassenger = true;
-        //                user.NumberDriverFavourites = user.NumberDriverFavourites == null ? 1 : (int)user.NumberDriverFavourites + 1;
-        //            }
-        //        }
-        //        context.SaveChanges();
-        //        response.error = false;
-        //        response.message = AppMessage.msgSuccess;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //    return Request.CreateResponse(HttpStatusCode.OK);
-        //}
+        [HttpPost]
+        [Route("search-drivers")]
+        public async Task<HttpResponseMessage> SearchDrivers(SearchDriversRequest model)
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = await FavoritesService.GetDriversSerachResultListAsync(model.DriverUserName)
+            });
+        }
 
         [HttpPost]
-        [Route("get-fav-captains")]
-        public async Task<HttpResponseMessage> GetFavCaptains(UpdatePassengerPhoneNumberRequest model)
+        [Route("add-fav-driver")]
+        public async Task<HttpResponseMessage> AddFavCaptain(AddFavoriteDriverRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = await FavoritesService.AddFavoriteDriverAsync(model.DriverId, model.PassengerId, ApplicationID)
+            });
+        }
+
+        [HttpPost]
+        [Route("del-fav-driver")]
+        public async Task<HttpResponseMessage> DelFavCaptain(DeleteFavoriteDriverRequest model)
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = await FavoritesService.DeleteFavoriteDriverAsync(model.DriverId, model.PassengerId)
+            });
+        }
+
+        [HttpPost]
+        [Route("get-fav-drivers")]
+        public async Task<HttpResponseMessage> GetFavCaptains(FavoriteDriversListRequest model)
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = await FavoritesService.GetFavoriteDriversListAsync(model.PassengerId)
+            });
         }
 
         #endregion

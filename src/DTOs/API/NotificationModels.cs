@@ -4,8 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DTOs.API.Notificatons
+namespace DTOs.API
 {
+	public class NewDeviceLogInNotification
+	{
+		public string PassengerId { get; set; }
+		public string DeviceToken { get; set; }
+	}
+
 	public class RideRequestNotification
 	{
 		//public string lat { get; set; }

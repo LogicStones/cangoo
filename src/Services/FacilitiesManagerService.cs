@@ -17,9 +17,6 @@ namespace Services
         {
             using (var context = new CangooEntities())
             {
-                //DestinationType obj = Mapper.Map<SourceType, DestinationType>(sourceValueObject);
-                //List<DestinationType> listObj = Mapper.Map<List<SourceType>, List<DestinationType>>(enumarableSourceValueObject);
-                
                 var facilities = await context.Facilities.Where(f => f.isActive == true).ToListAsync();
                 return AutoMapperConfig._mapper.Map<List<Facility>, List<FacilitiyDTO>>(facilities);
 

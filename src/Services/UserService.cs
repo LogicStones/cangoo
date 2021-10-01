@@ -2,7 +2,6 @@
 using Constants;
 using DatabaseModel;
 using DTOs.API;
-using DTOs.API.Notificatons;
 using DTOs.Shared;
 using Services.Automapper;
 using System;
@@ -22,8 +21,6 @@ namespace Services
         {
             using (var context = new CangooEntities())
             {
-                //DestinationType obj = Mapper.Map<SourceType, DestinationType>(sourceValueObject);
-                //List<DestinationType> listObj = Mapper.Map<List<SourceType>, List<DestinationType>>(enumarableSourceValueObject);
                 var user = await context.AspNetUsers.Where(u => u.UserName.Equals(userName)).FirstOrDefaultAsync();
                 return AutoMapperConfig._mapper.Map<AspNetUser, PassengerIdentityDTO>(user);
             }
@@ -81,11 +78,6 @@ namespace Services
         {
             using (var dbContext = new CangooEntities())
             {
-                //int noOfRowUpdated = ctx.Database.ExecuteSqlCommand("Update student set studentname = 'changed student by command' where studentid = 1");
-                //int noOfRowInserted = ctx.Database.ExecuteSqlCommand("insert into student(studentname) values('New Student')");
-                //int noOfRowDeleted = ctx.Database.ExecuteSqlCommand("delete from student where studentid = 1");
-
-                //var result = await dbContext.UserProfiles.Where(up => up.UserID.Equals(profile.UserID)).FirstOrDefaultAsync();
                 await dbContext.Database.ExecuteSqlCommandAsync("Update Userprofile Set FirstName = {0}, LastName = {1} where UserID = {2}", firstName, lastName, userId);
             }
         }
@@ -186,11 +178,7 @@ Update Userprofile Set CountryCode = {1} where UserID = {2};", phoneNumber, coun
         }
 
         public static async Task<ResponseWrapper> GetAccessTokenAndPassengerProfileData(string userId, string userName, string password, string deviceToken, string email, string phoneNumber,
-            string applicationId,
-            string resellerId,
-            bool isExistingUser,
-            bool isUserProfileUpdated,
-            bool isLogin)
+            string applicationId, string resellerId, bool isExistingUser, bool isUserProfileUpdated, bool isLogin)
         {
             using (var context = new CangooEntities())
             {
@@ -218,18 +206,14 @@ Update Userprofile Set CountryCode = {1} where UserID = {2};", phoneNumber, coun
                         //Pushy device token never changes. If user is already logged in on some other device then force logout.
                         if (!userProfile.DeviceToken.ToLower().Equals(deviceToken.ToLower()))
                         {
-                            //FireBaseController fc = new FireBaseController();
                             NewDeviceLogInNotification payload = new NewDeviceLogInNotification
                             {
                                 PassengerId = userId,
                                 DeviceToken = userProfile.DeviceToken
                             };
-
                             await NotificationService.UniCast(userProfile.DeviceToken, payload, NotificationKeys.pas_NewDeviceLoggedIn);
-
                         }
                     }
-
                     await UpdateDeviceTokenAsync(deviceToken, userProfile.UserID);
                 }
 

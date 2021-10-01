@@ -1,5 +1,5 @@
 ﻿using Constants;
-using DTOs.API.Notificatons;
+using DTOs.API;
 using Integrations;
 using Newtonsoft.Json;
 using System;
