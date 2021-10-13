@@ -131,6 +131,12 @@
     <Compile Include="CouponsManager.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="CourierServicesDistrict.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="CourierServiceZone.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="CoworkerQuota.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
@@ -496,6 +502,24 @@
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="Reseller.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RideServicesArea.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RideServicesAreaFare.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RideServicesCategoryFare.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RideServicesFareManager.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RideServicesFareRanx.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="RideServicesTimeRanx.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="rpt_GetTripsOverviewInDateRange_Result.cs">

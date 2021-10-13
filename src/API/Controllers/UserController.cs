@@ -759,18 +759,50 @@ namespace API.Controllers
 
         #region TrustedContact
 
-        [HttpPost]
+        [HttpGet]
         [Route("get-trusted-contact")]
-        public async Task<HttpResponseMessage> GetTrustedContact(UpdatePassengerPhoneNumberRequest model)
+        public async Task<HttpResponseMessage> GetTrustedContact(string passengerId)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var lstTrustedContact = await TrustedContactManagerService.GetTrustedContact(passengerId);
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new GetTrustedContactResponse
+                {
+                    Contact = lstTrustedContact
+                }
+            });
         }
 
-        [HttpGet]
+        [HttpPost]
         [Route("update-trusted-contact")]
-        public async Task<HttpResponseMessage> UpdateTrustedContact(UpdatePassengerPhoneNumberRequest model)
+        public async Task<HttpResponseMessage> UpdateTrustedContact(UpdateTrustedContact model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var result = await TrustedContactManagerService.UpdateTrustedContact(model);
+
+            if (result == 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Message = ResponseKeys.failedToUpdate
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    Data = new UpdateTrustedContactResponse
+                    {
+                        Name = model.Name,
+                        CountryCode = model.CountryCode,
+                        PhoneNumber = model.PhoneNumber,
+                        Email = model.Email
+                    }
+                });
+            }
         }
 
         #endregion
@@ -992,9 +1024,18 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("get-promo-codes")]
-        public async Task<HttpResponseMessage> GetPromoCodesList([FromBody] string model)
+        public async Task<HttpResponseMessage> GetPromoCodesList(string passengerId)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var lstPromoCodes = await PromoCodeService.GetPromoCodes(passengerId);
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new GetPromoCodeRespose
+                {
+                    Codes = lstPromoCodes
+                }
+            });
 
         }
         #endregion
@@ -1749,16 +1790,43 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("recent-locations")]
-        public async Task<HttpResponseMessage> GetRecentLocations(string tripId)
+        public async Task<HttpResponseMessage> GetRecentLocations(string passengerId)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            if (passengerId != string.Empty)
+            {
+                var lstLocation = await TripsManagerService.GetRecentLocation(passengerId);
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    Data = new GetRecentLocationResponse
+                    {
+                        Locations = lstLocation
+                    }
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
+            }
+            
         }
 
         [HttpPost]
         [Route("estimate-fare")]
-        public async Task<HttpResponseMessage> EstimateFare(string tripId)
+        public async Task<HttpResponseMessage> EstimateFare(EstimateFare model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            decimal totalFare = 0;
+            if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(model.ApplicationAuthorizeArea), model.PickUpLatitude, model.PickUpLongitude))
+            {
+                totalFare = await TripsManagerService.CalculateEstimatedFare(model.PickUpArea,model.PickUpLatitude,model.PickUpLongitude,model.DropOffArea,model.DropOffLatitude,model.DropOffLongitutde);
+            }
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = totalFare
+            });
         }
 
         [HttpPost]

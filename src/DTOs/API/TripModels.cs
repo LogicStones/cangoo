@@ -80,4 +80,36 @@ namespace DTOs.API
 		public string PlateNumber { get; set; } = "";
 		public List<FacilitiyDTO> FacilitiesList { get; set; } 
 	}
+
+	public class GetRecentLocationResponse
+	{
+		public List<GetRecentLocationDetails> Locations { get; set; } = new List<GetRecentLocationDetails>();
+	}
+
+	public class GetRecentLocationDetails
+	{
+		public string DropOffLatitude { get; set; } = "";
+		public string DropOffLongitude { get; set; } = "";
+		public string DropOffLocation { get; set; } = "";
+	}
+
+	public class EstimateFare
+	{
+		[Required]
+		public string PassengerId { get; set; } = "";
+		[Required]
+		public string PickUpLatitude { get; set; } = "";
+		[Required]
+		public string PickUpLongitude { get; set; } = "";
+		[Required]
+		public string PickUpArea { get; set; } = "";
+		[Required]
+		public string DropOffLatitude { get; set; } = "";
+		[Required]
+		public string DropOffLongitutde { get; set; } = "";
+		[Required]
+		public string DropOffArea { get; set; } = "";
+		[Required]
+		public string ApplicationAuthorizeArea { get; set; } = "";
+	}
 }

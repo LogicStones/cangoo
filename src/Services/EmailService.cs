@@ -11,8 +11,8 @@ namespace Services
 		public static async Task<string> SendEmailOTPAsync(string toEmailAddress)
 		{
 			var verificationCode = AuthenticationService.GenerateOTP();
-			await SendGrid.SendEmailAsync(toEmailAddress, string.Format(@"Your update email verification code is {0}",verificationCode),
-				ConfigurationManager.AppSettings["ChangeEmailOTPEmailSubject"].ToString(), 
+			await SendGrid.SendEmailAsync(toEmailAddress, string.Format(@"Your update email verification code is {0}", verificationCode),
+				ConfigurationManager.AppSettings["ChangeEmailOTPEmailSubject"].ToString(),
 				ConfigurationManager.AppSettings["ChangeEmailOTPFromEmailAddress"].ToString(),
 				ConfigurationManager.AppSettings["ChangeEmailOTPFromDisplayName"].ToString());
 			return verificationCode;

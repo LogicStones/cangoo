@@ -426,6 +426,38 @@
           <Property Name="UsedBy" Type="uniqueidentifier" />
           <Property Name="ApplicationID" Type="uniqueidentifier" Nullable="false" />
         </EntityType>
+        <EntityType Name="CourierServicesDistrict">
+          <Key>
+            <PropertyRef Name="DistrictID" />
+          </Key>
+          <Property Name="DistrictID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ZoneID" Type="int" />
+          <Property Name="DistrictName" Type="varchar" MaxLength="50" />
+          <Property Name="Xindex" Type="int" Nullable="false" />
+          <Property Name="Yindex" Type="int" Nullable="false" />
+          <Property Name="IsDistrictLabel" Type="bit" Nullable="false" />
+          <Property Name="ApplicationID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="ResellerID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="UserID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="LastSubmitted" Type="datetime" Nullable="false" />
+        </EntityType>
+        <EntityType Name="CourierServiceZones">
+          <Key>
+            <PropertyRef Name="ZoneID" />
+          </Key>
+          <Property Name="ZoneID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ZoneName" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="Price" Type="money" Nullable="false" />
+          <Property Name="Tax" Type="float" />
+          <Property Name="Color" Type="varchar" MaxLength="50" Nullable="false" />
+          <Property Name="StartDate" Type="datetime" />
+          <Property Name="ExpiryDate" Type="datetime" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+          <Property Name="ApplicationID" Type="uniqueidentifier" />
+          <Property Name="ResellerID" Type="uniqueidentifier" />
+          <Property Name="UserID" Type="uniqueidentifier" />
+          <Property Name="LastSubmitted" Type="datetime" />
+        </EntityType>
         <EntityType Name="CoworkerQuota">
           <Key>
             <PropertyRef Name="QuotaID" />
@@ -802,6 +834,105 @@
           <Property Name="ProfileImage" Type="varchar" MaxLength="250" />
           <Property Name="OriginalProfileImage" Type="varchar" MaxLength="250" />
           <Property Name="PercentageReceiveable" Type="float" Nullable="false" />
+        </EntityType>
+        <EntityType Name="RideServicesArea">
+          <Key>
+            <PropertyRef Name="AreaID" />
+          </Key>
+          <Property Name="AreaID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="Area" Type="varchar" MaxLength="100" />
+          <Property Name="AreaLatLong" Type="varchar(max)" />
+          <Property Name="ResellerID" Type="uniqueidentifier" />
+          <Property Name="ApplicationID" Type="uniqueidentifier" />
+          <Property Name="UserID" Type="uniqueidentifier" />
+          <Property Name="UpdatedAt" Type="datetime" />
+          <Property Name="CreatedAt" Type="datetime" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+        </EntityType>
+        <EntityType Name="RideServicesAreaFare">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="RideServicesID" Type="uniqueidentifier" />
+          <Property Name="AreaID" Type="uniqueidentifier" />
+        </EntityType>
+        <EntityType Name="RideServicesCategoryFare">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="CategoryID" Type="int" />
+          <Property Name="RideServicesID" Type="uniqueidentifier" />
+        </EntityType>
+        <EntityType Name="RideServicesFareManager">
+          <Key>
+            <PropertyRef Name="RideServicesID" />
+          </Key>
+          <Property Name="RideServicesID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="BaseFare" Type="money" />
+          <Property Name="BookingFare" Type="money" />
+          <Property Name="PerKmFare" Type="money" />
+          <Property Name="WaitingFare" Type="money" />
+          <Property Name="ResellerID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="ApplicationID" Type="uniqueidentifier" />
+          <Property Name="EveningShiftStartTime" Type="time" Precision="7" />
+          <Property Name="EveningShiftEndTime" Type="time" Precision="7" />
+          <Property Name="EveningSurcharge" Type="money" />
+          <Property Name="EveningBaseFare" Type="money" />
+          <Property Name="EveningPerKmFare" Type="money" />
+          <Property Name="EveningPerMinFare" Type="money" />
+          <Property Name="EveningBookingFare" Type="money" />
+          <Property Name="EveningWaitingFare" Type="money" />
+          <Property Name="MorningShiftStartTime" Type="time" Precision="7" />
+          <Property Name="MorningShiftEndTime" Type="time" Precision="7" />
+          <Property Name="MorningSurcharge" Type="money" />
+          <Property Name="MorningBaseFare" Type="money" />
+          <Property Name="MorningPerKmFare" Type="money" />
+          <Property Name="MorningPerMinFare" Type="money" />
+          <Property Name="MorningBookingFare" Type="money" />
+          <Property Name="MorningWaitingFare" Type="money" />
+          <Property Name="WeekendShiftStartTime" Type="time" Precision="7" Nullable="false" />
+          <Property Name="WeekendShiftEndTime" Type="time" Precision="7" Nullable="false" />
+          <Property Name="WeekendSurcharge" Type="money" />
+          <Property Name="WeekendBaseFare" Type="money" />
+          <Property Name="WeekendPerKmFare" Type="money" />
+          <Property Name="WeekendPerMinFare" Type="money" />
+          <Property Name="WeekendBookingFare" Type="money" />
+          <Property Name="WeekendWaitingFare" Type="money" />
+          <Property Name="CreatedAt" Type="datetime" Nullable="false" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+          <Property Name="MorningWishCarRadius" Type="int" />
+          <Property Name="MorningWishCarExtraPrice" Type="money" Nullable="false" />
+          <Property Name="EveningWishCarRadius" Type="int" />
+          <Property Name="EveningWishCarExtraPrice" Type="money" Nullable="false" />
+          <Property Name="WeekendWishCarRadius" Type="int" />
+          <Property Name="WeekendWishCarExtraPrice" Type="money" Nullable="false" />
+          <Property Name="WeekendIsFixed" Type="bit" Nullable="false" />
+          <Property Name="MorningIsFixed" Type="bit" Nullable="false" />
+          <Property Name="EveningIsFixed" Type="bit" Nullable="false" />
+        </EntityType>
+        <EntityType Name="RideServicesFareRanges">
+          <Key>
+            <PropertyRef Name="RangeID" />
+          </Key>
+          <Property Name="RangeID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="Range" Type="varchar" MaxLength="50" />
+          <Property Name="Charges" Type="money" />
+          <Property Name="RideServicesID" Type="uniqueidentifier" />
+          <Property Name="ApplicationID" Type="uniqueidentifier" />
+          <Property Name="ShiftID" Type="int" />
+        </EntityType>
+        <EntityType Name="RideServicesTimeRanges">
+          <Key>
+            <PropertyRef Name="TimeRangeID" />
+          </Key>
+          <Property Name="TimeRangeID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="Range" Type="varchar" MaxLength="50" />
+          <Property Name="Charges" Type="money" />
+          <Property Name="RideServicesID" Type="uniqueidentifier" />
+          <Property Name="ApplicationID" Type="uniqueidentifier" />
+          <Property Name="ShiftID" Type="int" />
         </EntityType>
         <EntityType Name="Settings">
           <Key>
@@ -2312,6 +2443,8 @@
           <EntitySet Name="CompanyVouchers" EntityType="Self.CompanyVouchers" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ContactDetails" EntityType="Self.ContactDetails" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="CouponsManager" EntityType="Self.CouponsManager" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="CourierServicesDistrict" EntityType="Self.CourierServicesDistrict" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="CourierServiceZones" EntityType="Self.CourierServiceZones" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="CoworkerQuota" EntityType="Self.CoworkerQuota" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="DispatchedRidesLog" EntityType="Self.DispatchedRidesLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Dispatcher" EntityType="Self.Dispatcher" Schema="dbo" store:Type="Tables" />
@@ -2338,6 +2471,12 @@
           <EntitySet Name="ReportsLog" EntityType="Self.ReportsLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ReroutedRidesLog" EntityType="Self.ReroutedRidesLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Resellers" EntityType="Self.Resellers" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="RideServicesArea" EntityType="Self.RideServicesArea" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="RideServicesAreaFare" EntityType="Self.RideServicesAreaFare" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="RideServicesCategoryFare" EntityType="Self.RideServicesCategoryFare" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="RideServicesFareManager" EntityType="Self.RideServicesFareManager" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="RideServicesFareRanges" EntityType="Self.RideServicesFareRanges" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="RideServicesTimeRanges" EntityType="Self.RideServicesTimeRanges" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Settings" EntityType="Self.Settings" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="SharedRideBlockedUsers" EntityType="Self.SharedRideBlockedUsers" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="SharedRideParticipants" EntityType="Self.SharedRideParticipants" Schema="dbo" store:Type="Tables" />
@@ -4538,6 +4677,14 @@
           <EntitySet Name="UserProfiles" EntityType="CangooModel.UserProfile" />
           <EntitySet Name="PassengerPlaces" EntityType="CangooModel.PassengerPlace" />
           <EntitySet Name="Languages" EntityType="CangooModel.Language" />
+          <EntitySet Name="CourierServicesDistricts" EntityType="CangooModel.CourierServicesDistrict" />
+          <EntitySet Name="CourierServiceZones" EntityType="CangooModel.CourierServiceZone" />
+          <EntitySet Name="RideServicesAreas" EntityType="CangooModel.RideServicesArea" />
+          <EntitySet Name="RideServicesAreaFares" EntityType="CangooModel.RideServicesAreaFare" />
+          <EntitySet Name="RideServicesCategoryFares" EntityType="CangooModel.RideServicesCategoryFare" />
+          <EntitySet Name="RideServicesFareManagers" EntityType="CangooModel.RideServicesFareManager" />
+          <EntitySet Name="RideServicesFareRanges" EntityType="CangooModel.RideServicesFareRanx" />
+          <EntitySet Name="RideServicesTimeRanges" EntityType="CangooModel.RideServicesTimeRanx" />
         </EntityContainer>
         <ComplexType Name="FetchAdminAnnualEarningAndProfit_Result">
           <Property Type="String" Name="Month" Nullable="true" MaxLength="30" />
@@ -6684,6 +6831,137 @@
           <Property Name="Format" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
           <Property Name="ApplicationId" Type="Guid" />
           <Property Name="ResellerId" Type="Guid" />
+        </EntityType>
+        <EntityType Name="CourierServicesDistrict">
+          <Key>
+            <PropertyRef Name="DistrictID" />
+          </Key>
+          <Property Name="DistrictID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ZoneID" Type="Int32" />
+          <Property Name="DistrictName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Xindex" Type="Int32" Nullable="false" />
+          <Property Name="Yindex" Type="Int32" Nullable="false" />
+          <Property Name="IsDistrictLabel" Type="Boolean" Nullable="false" />
+          <Property Name="ApplicationID" Type="Guid" Nullable="false" />
+          <Property Name="ResellerID" Type="Guid" Nullable="false" />
+          <Property Name="UserID" Type="Guid" Nullable="false" />
+          <Property Name="LastSubmitted" Type="DateTime" Nullable="false" Precision="3" />
+        </EntityType>
+        <EntityType Name="CourierServiceZone">
+          <Key>
+            <PropertyRef Name="ZoneID" />
+          </Key>
+          <Property Name="ZoneID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ZoneName" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Price" Type="Decimal" Nullable="false" Precision="19" Scale="4" />
+          <Property Name="Tax" Type="Double" />
+          <Property Name="Color" Type="String" Nullable="false" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="StartDate" Type="DateTime" Precision="3" />
+          <Property Name="ExpiryDate" Type="DateTime" Precision="3" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+          <Property Name="ApplicationID" Type="Guid" />
+          <Property Name="ResellerID" Type="Guid" />
+          <Property Name="UserID" Type="Guid" />
+          <Property Name="LastSubmitted" Type="DateTime" Precision="3" />
+        </EntityType>
+        <EntityType Name="RideServicesArea">
+          <Key>
+            <PropertyRef Name="AreaID" />
+          </Key>
+          <Property Name="AreaID" Type="Guid" Nullable="false" />
+          <Property Name="Area" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Name="AreaLatLong" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="ResellerID" Type="Guid" />
+          <Property Name="ApplicationID" Type="Guid" />
+          <Property Name="UserID" Type="Guid" />
+          <Property Name="UpdatedAt" Type="DateTime" Precision="3" />
+          <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+        </EntityType>
+        <EntityType Name="RideServicesAreaFare">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="RideServicesID" Type="Guid" />
+          <Property Name="AreaID" Type="Guid" />
+        </EntityType>
+        <EntityType Name="RideServicesCategoryFare">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CategoryID" Type="Int32" />
+          <Property Name="RideServicesID" Type="Guid" />
+        </EntityType>
+        <EntityType Name="RideServicesFareManager">
+          <Key>
+            <PropertyRef Name="RideServicesID" />
+          </Key>
+          <Property Name="RideServicesID" Type="Guid" Nullable="false" />
+          <Property Name="BaseFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="BookingFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="PerKmFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="WaitingFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="ResellerID" Type="Guid" Nullable="false" />
+          <Property Name="ApplicationID" Type="Guid" />
+          <Property Name="EveningShiftStartTime" Type="Time" Precision="7" />
+          <Property Name="EveningShiftEndTime" Type="Time" Precision="7" />
+          <Property Name="EveningSurcharge" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="EveningBaseFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="EveningPerKmFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="EveningPerMinFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="EveningBookingFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="EveningWaitingFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="MorningShiftStartTime" Type="Time" Precision="7" />
+          <Property Name="MorningShiftEndTime" Type="Time" Precision="7" />
+          <Property Name="MorningSurcharge" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="MorningBaseFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="MorningPerKmFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="MorningPerMinFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="MorningBookingFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="MorningWaitingFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="WeekendShiftStartTime" Type="Time" Nullable="false" Precision="7" />
+          <Property Name="WeekendShiftEndTime" Type="Time" Nullable="false" Precision="7" />
+          <Property Name="WeekendSurcharge" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="WeekendBaseFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="WeekendPerKmFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="WeekendPerMinFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="WeekendBookingFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="WeekendWaitingFare" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="CreatedAt" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+          <Property Name="MorningWishCarRadius" Type="Int32" />
+          <Property Name="MorningWishCarExtraPrice" Type="Decimal" Nullable="false" Precision="19" Scale="4" />
+          <Property Name="EveningWishCarRadius" Type="Int32" />
+          <Property Name="EveningWishCarExtraPrice" Type="Decimal" Nullable="false" Precision="19" Scale="4" />
+          <Property Name="WeekendWishCarRadius" Type="Int32" />
+          <Property Name="WeekendWishCarExtraPrice" Type="Decimal" Nullable="false" Precision="19" Scale="4" />
+          <Property Name="WeekendIsFixed" Type="Boolean" Nullable="false" />
+          <Property Name="MorningIsFixed" Type="Boolean" Nullable="false" />
+          <Property Name="EveningIsFixed" Type="Boolean" Nullable="false" />
+        </EntityType>
+        <EntityType Name="RideServicesFareRanx">
+          <Key>
+            <PropertyRef Name="RangeID" />
+          </Key>
+          <Property Name="RangeID" Type="Guid" Nullable="false" />
+          <Property Name="Range" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Charges" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="RideServicesID" Type="Guid" />
+          <Property Name="ApplicationID" Type="Guid" />
+          <Property Name="ShiftID" Type="Int32" />
+        </EntityType>
+        <EntityType Name="RideServicesTimeRanx">
+          <Key>
+            <PropertyRef Name="TimeRangeID" />
+          </Key>
+          <Property Name="TimeRangeID" Type="Guid" Nullable="false" />
+          <Property Name="Range" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Charges" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="RideServicesID" Type="Guid" />
+          <Property Name="ApplicationID" Type="Guid" />
+          <Property Name="ShiftID" Type="Int32" />
         </EntityType>
       </Schema>
     </edmx:ConceptualModels>
@@ -10439,6 +10717,145 @@
                 <ScalarProperty Name="ShortName" ColumnName="ShortName" />
                 <ScalarProperty Name="Language1" ColumnName="Language" />
                 <ScalarProperty Name="Id" ColumnName="Id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="CourierServicesDistricts">
+            <EntityTypeMapping TypeName="CangooModel.CourierServicesDistrict">
+              <MappingFragment StoreEntitySet="CourierServicesDistrict">
+                <ScalarProperty Name="LastSubmitted" ColumnName="LastSubmitted" />
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="ResellerID" ColumnName="ResellerID" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="IsDistrictLabel" ColumnName="IsDistrictLabel" />
+                <ScalarProperty Name="Yindex" ColumnName="Yindex" />
+                <ScalarProperty Name="Xindex" ColumnName="Xindex" />
+                <ScalarProperty Name="DistrictName" ColumnName="DistrictName" />
+                <ScalarProperty Name="ZoneID" ColumnName="ZoneID" />
+                <ScalarProperty Name="DistrictID" ColumnName="DistrictID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="CourierServiceZones">
+            <EntityTypeMapping TypeName="CangooModel.CourierServiceZone">
+              <MappingFragment StoreEntitySet="CourierServiceZones">
+                <ScalarProperty Name="LastSubmitted" ColumnName="LastSubmitted" />
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="ResellerID" ColumnName="ResellerID" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
+                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
+                <ScalarProperty Name="Color" ColumnName="Color" />
+                <ScalarProperty Name="Tax" ColumnName="Tax" />
+                <ScalarProperty Name="Price" ColumnName="Price" />
+                <ScalarProperty Name="ZoneName" ColumnName="ZoneName" />
+                <ScalarProperty Name="ZoneID" ColumnName="ZoneID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RideServicesAreas">
+            <EntityTypeMapping TypeName="CangooModel.RideServicesArea">
+              <MappingFragment StoreEntitySet="RideServicesArea">
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="UpdatedAt" ColumnName="UpdatedAt" />
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="ResellerID" ColumnName="ResellerID" />
+                <ScalarProperty Name="AreaLatLong" ColumnName="AreaLatLong" />
+                <ScalarProperty Name="Area" ColumnName="Area" />
+                <ScalarProperty Name="AreaID" ColumnName="AreaID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RideServicesAreaFares">
+            <EntityTypeMapping TypeName="CangooModel.RideServicesAreaFare">
+              <MappingFragment StoreEntitySet="RideServicesAreaFare">
+                <ScalarProperty Name="AreaID" ColumnName="AreaID" />
+                <ScalarProperty Name="RideServicesID" ColumnName="RideServicesID" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RideServicesCategoryFares">
+            <EntityTypeMapping TypeName="CangooModel.RideServicesCategoryFare">
+              <MappingFragment StoreEntitySet="RideServicesCategoryFare">
+                <ScalarProperty Name="RideServicesID" ColumnName="RideServicesID" />
+                <ScalarProperty Name="CategoryID" ColumnName="CategoryID" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RideServicesFareManagers">
+            <EntityTypeMapping TypeName="CangooModel.RideServicesFareManager">
+              <MappingFragment StoreEntitySet="RideServicesFareManager">
+                <ScalarProperty Name="EveningIsFixed" ColumnName="EveningIsFixed" />
+                <ScalarProperty Name="MorningIsFixed" ColumnName="MorningIsFixed" />
+                <ScalarProperty Name="WeekendIsFixed" ColumnName="WeekendIsFixed" />
+                <ScalarProperty Name="WeekendWishCarExtraPrice" ColumnName="WeekendWishCarExtraPrice" />
+                <ScalarProperty Name="WeekendWishCarRadius" ColumnName="WeekendWishCarRadius" />
+                <ScalarProperty Name="EveningWishCarExtraPrice" ColumnName="EveningWishCarExtraPrice" />
+                <ScalarProperty Name="EveningWishCarRadius" ColumnName="EveningWishCarRadius" />
+                <ScalarProperty Name="MorningWishCarExtraPrice" ColumnName="MorningWishCarExtraPrice" />
+                <ScalarProperty Name="MorningWishCarRadius" ColumnName="MorningWishCarRadius" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="WeekendWaitingFare" ColumnName="WeekendWaitingFare" />
+                <ScalarProperty Name="WeekendBookingFare" ColumnName="WeekendBookingFare" />
+                <ScalarProperty Name="WeekendPerMinFare" ColumnName="WeekendPerMinFare" />
+                <ScalarProperty Name="WeekendPerKmFare" ColumnName="WeekendPerKmFare" />
+                <ScalarProperty Name="WeekendBaseFare" ColumnName="WeekendBaseFare" />
+                <ScalarProperty Name="WeekendSurcharge" ColumnName="WeekendSurcharge" />
+                <ScalarProperty Name="WeekendShiftEndTime" ColumnName="WeekendShiftEndTime" />
+                <ScalarProperty Name="WeekendShiftStartTime" ColumnName="WeekendShiftStartTime" />
+                <ScalarProperty Name="MorningWaitingFare" ColumnName="MorningWaitingFare" />
+                <ScalarProperty Name="MorningBookingFare" ColumnName="MorningBookingFare" />
+                <ScalarProperty Name="MorningPerMinFare" ColumnName="MorningPerMinFare" />
+                <ScalarProperty Name="MorningPerKmFare" ColumnName="MorningPerKmFare" />
+                <ScalarProperty Name="MorningBaseFare" ColumnName="MorningBaseFare" />
+                <ScalarProperty Name="MorningSurcharge" ColumnName="MorningSurcharge" />
+                <ScalarProperty Name="MorningShiftEndTime" ColumnName="MorningShiftEndTime" />
+                <ScalarProperty Name="MorningShiftStartTime" ColumnName="MorningShiftStartTime" />
+                <ScalarProperty Name="EveningWaitingFare" ColumnName="EveningWaitingFare" />
+                <ScalarProperty Name="EveningBookingFare" ColumnName="EveningBookingFare" />
+                <ScalarProperty Name="EveningPerMinFare" ColumnName="EveningPerMinFare" />
+                <ScalarProperty Name="EveningPerKmFare" ColumnName="EveningPerKmFare" />
+                <ScalarProperty Name="EveningBaseFare" ColumnName="EveningBaseFare" />
+                <ScalarProperty Name="EveningSurcharge" ColumnName="EveningSurcharge" />
+                <ScalarProperty Name="EveningShiftEndTime" ColumnName="EveningShiftEndTime" />
+                <ScalarProperty Name="EveningShiftStartTime" ColumnName="EveningShiftStartTime" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="ResellerID" ColumnName="ResellerID" />
+                <ScalarProperty Name="WaitingFare" ColumnName="WaitingFare" />
+                <ScalarProperty Name="PerKmFare" ColumnName="PerKmFare" />
+                <ScalarProperty Name="BookingFare" ColumnName="BookingFare" />
+                <ScalarProperty Name="BaseFare" ColumnName="BaseFare" />
+                <ScalarProperty Name="RideServicesID" ColumnName="RideServicesID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RideServicesFareRanges">
+            <EntityTypeMapping TypeName="CangooModel.RideServicesFareRanx">
+              <MappingFragment StoreEntitySet="RideServicesFareRanges">
+                <ScalarProperty Name="ShiftID" ColumnName="ShiftID" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="RideServicesID" ColumnName="RideServicesID" />
+                <ScalarProperty Name="Charges" ColumnName="Charges" />
+                <ScalarProperty Name="Range" ColumnName="Range" />
+                <ScalarProperty Name="RangeID" ColumnName="RangeID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RideServicesTimeRanges">
+            <EntityTypeMapping TypeName="CangooModel.RideServicesTimeRanx">
+              <MappingFragment StoreEntitySet="RideServicesTimeRanges">
+                <ScalarProperty Name="ShiftID" ColumnName="ShiftID" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="RideServicesID" ColumnName="RideServicesID" />
+                <ScalarProperty Name="Charges" ColumnName="Charges" />
+                <ScalarProperty Name="Range" ColumnName="Range" />
+                <ScalarProperty Name="TimeRangeID" ColumnName="TimeRangeID" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

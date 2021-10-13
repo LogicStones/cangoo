@@ -75,6 +75,14 @@
         <EntityTypeShape EntityType="CangooModel.UserProfile" Width="1.5" PointX="17.375" PointY="24.75" />
         <EntityTypeShape EntityType="CangooModel.PassengerPlace" Width="1.5" PointX="5.375" PointY="25.75" />
         <EntityTypeShape EntityType="CangooModel.Language" Width="1.5" PointX="25.375" PointY="19.75" />
+        <EntityTypeShape EntityType="CangooModel.CourierServicesDistrict" Width="1.5" PointX="11.375" PointY="25.75" />
+        <EntityTypeShape EntityType="CangooModel.CourierServiceZone" Width="1.5" PointX="25.375" PointY="22.75" />
+        <EntityTypeShape EntityType="CangooModel.RideServicesArea" Width="1.5" PointX="27.375" PointY="0.75" />
+        <EntityTypeShape EntityType="CangooModel.RideServicesAreaFare" Width="1.5" PointX="27.375" PointY="4.75" />
+        <EntityTypeShape EntityType="CangooModel.RideServicesCategoryFare" Width="1.5" PointX="27.375" PointY="7.75" />
+        <EntityTypeShape EntityType="CangooModel.RideServicesFareManager" Width="1.5" PointX="27.375" PointY="10.75" />
+        <EntityTypeShape EntityType="CangooModel.RideServicesFareRanx" Width="1.5" PointX="19.375" PointY="27.75" />
+        <EntityTypeShape EntityType="CangooModel.RideServicesTimeRanx" Width="1.5" PointX="27.375" PointY="20.75" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>
