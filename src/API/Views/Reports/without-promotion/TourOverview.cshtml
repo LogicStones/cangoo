@@ -1,0 +1,179 @@
+﻿@using System.Globalization;
+@model CanTaxi_Api.Models.TourOverviewReportModel
+
+@section stylesheet
+{
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/report.css" rel="stylesheet" />
+    <title>Cangoo Rechnung</title>
+}
+
+<table class="w-100" cellpadding="2">
+    <tr>
+        <td class="company-details">
+            @Model.FleetName <br />@Model.Street @Model.BuildingNumber <br />@Model.PostCode @Model.City
+        </td>
+    </tr>
+    <tr>
+        <td class="report-heading">
+            Ihre CANGOO Fahrtenübersicht vom @Model.ReportStartDate - @Model.ReportEndDate
+        </td>
+    </tr>
+    <tr>
+        <td class="report-description">
+            <label>Datum</label>
+            <span>@Model.ReportDate</span>
+        </td>
+    </tr>
+    <tr>
+        <td class="report-description">
+            <label>Firma</label>
+            <span>@Model.FleetName</span>
+        </td>
+    </tr>
+    <tr>
+        <td class="report-description">
+            <label>Zeitraum</label>
+            <span>@Model.ReportStartDate - @Model.ReportEndDate</span>
+        </td>
+    </tr>
+    <tr>
+        <td class="report-description">
+            <label>Nummer</label>
+            <span>@Model.ReportNumber</span>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <table class="details-table">
+                <thead>
+                    <tr>
+                        <th class="text-center">Position</th>
+                        <th class="text-left">Fahrer ID</th>
+                        <th class="text-center">Gesamt-<br />Umsatz</th>
+                        <th class="text-center">Bar<br />Fahrten</th>
+                        <th class="text-center">App<br />Fahrten</th>
+                        <th class="text-center">Disaggio</th>
+                        <th class="text-center">Anzahl<br />App<br />Fahrten</th>
+                        <th class="text-center">Vermittl-<br />ungsgebühr<br />(ohne MwSt.)</th>
+                        <th class="text-center">Auszahl-<br />ungsbetrag</th>
+                    </tr>
+                    <tr>
+                        <th colspan="9">
+                            <hr class="seperator" />
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var summaryItem in @Model.Summary.Select((value, index) => new { value, index }))
+                    {
+                        <tr>
+                            <td class="text-center">@(summaryItem.index + 1)</td>
+                            <td class="text-left">@summaryItem.value.DriverCode</td>
+                            <td class="text-right">@summaryItem.value.TotalSale.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                            <td class="text-right">@summaryItem.value.CashSale.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                            <td class="text-right">@summaryItem.value.AppSale.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                            <td class="text-right">@summaryItem.value.ServiceCharges.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                            <td class="text-right">@summaryItem.value.TotalTrips</td>
+                            <td class="text-right">@summaryItem.value.ApplicationCommission.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                            <td class="text-right">@summaryItem.value.PayableToCaptain.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="9">
+                            <hr class="seperator" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="text-right" colspan="2"><strong>Total</strong></td>
+                        <td class="text-right"><strong>@Model.Summary.Sum(s => s.TotalSale).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</strong></td>
+                        <td class="text-right"><strong>@Model.Summary.Sum(s => s.CashSale).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</strong></td>
+                        <td class="text-right"><strong>@Model.Summary.Sum(s => s.AppSale).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</strong></td>
+                        <td class="text-right"><strong>@Model.Summary.Sum(s => s.ServiceCharges).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</strong></td>
+                        <td class="text-right"><strong>@Model.Summary.Sum(s => s.TotalTrips)</strong></td>
+                        <td class="text-right"><strong>@Model.Summary.Sum(s => s.ApplicationCommission).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</strong></td>
+                        <td class="text-right"><strong>@Model.Summary.Sum(s => s.PayableToCaptain).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </td>
+    </tr>
+</table>
+
+@foreach (var captain in Model.CaptainsList)
+{
+    <p class="page-break"></p>
+
+    <table class="w-100" cellpadding="2">
+        <tr>
+            <td class="report-description">
+                <label>Nummer</label>
+                <span>@Model.ReportNumber</span>
+            </td>
+        </tr>
+        <tr>
+            <td class="report-description">
+                <label>Zeitraum</label>
+                <span>@Model.ReportStartDate - @Model.ReportEndDate</span>
+            </td>
+        </tr>
+        <tr>
+            <td class="report-description">
+                <label>ID Fahrer</label>
+                <span>@captain.DriverCode</span>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <table class="details-table">
+                    <thead>
+                        <tr>
+                            <th class="text-center">Position</th>
+                            <th class="text-left">Datum</th>
+                            <th class="text-left">Zahlungsart</th>
+                            <th class="text-right">Betrag <br /> (inkl. MwSt.)</th>
+                            <th class="text-right">Disaggio</th>
+                            <th class="text-right">Service-<br />gebühr<br />(ohne. MwSt.)</th>
+                            <th class="text-right">Zahlung-<br />sbetrag <br />(inkl. MwSt.)</th>
+                        </tr>
+                        <tr>
+                            <th colspan="7">
+                                <hr class="seperator" />
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var trip in captain.TripsList.Select((value, index) => new { value, index }))
+                        {
+                            <tr>
+                                <td class="text-center">@(trip.index + 1)</td>
+                                <td class="text-left">@trip.value.TripDate</td>
+                                <td class="text-left">@trip.value.PaymentMode</td>
+                                <td class="text-right">@trip.value.TripFare.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                                <td class="text-right">@trip.value.ServicesCharges.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                                <td class="text-right">@trip.value.ApplicationCommission.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                                <td class="text-right">@trip.value.PayableToCaptain.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="7">
+                                <hr class="seperator" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-right"><strong>Total</strong></td>
+                            <td class="text-right"><strong>@captain.TripsList.Sum(s => s.TripFare).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</strong></td>
+                            <td class="text-right"><strong>@captain.TripsList.Sum(s => s.ServicesCharges).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</strong></td>
+                            <td class="text-right"><strong>@captain.TripsList.Sum(s => s.ApplicationCommission).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</strong></td>
+                            <td class="text-right"><strong>@captain.TripsList.Sum(s => s.PayableToCaptain).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </td>
+        </tr>
+    </table>
+}

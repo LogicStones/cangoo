@@ -1,65 +1,66 @@
-﻿//using CanTaxi_Api.App_Start;
-//using CanTaxi_Api.Models;
-//using Rotativa;
+﻿using DTOs.API;
+using Rotativa;
+using Services;
 using System;
+using System.Threading.Tasks;
 using System.Web.Mvc;
 
 namespace API.Controllers
 {
     public class InvoiceController : Controller
 	{
-//		public ActionResult Header()
-//		{
-//			return View();
-//		}
-//		public ActionResult Footer()
-//		{
-//			return View();
-//		}
+        public ActionResult Header()
+        {
+            return View();
+        }
+        public ActionResult Footer()
+        {
+            return View();
+        }
 
-//		public void SendInvoice(InvoiceModel model, string headerLink, string footerLink)
-//		{
-			
-//			EmailManager.SendInvoice(model.CustomerEmail,
-//												@"
-//<pre>Hallo!
+        public async Task SendInvoice(InvoiceModel model, string headerLink, string footerLink)
+        {
 
-//Danke für deine Taxifahrt mit cangoo.
-//Wir hoffen, dass du mit cangoo zufrieden bist und freuen uns dich bald wieder zu sehen.
-//In der Beilage findest du deine Rechnung.
+            await EmailService.SendInvoice(model.CustomerEmail,
+                                                @"
+<pre>Hallo!
 
-//Viel Freude mit cangoo,
-//dein cangoo-Team
+Danke für deine Taxifahrt mit cangoo.
+Wir hoffen, dass du mit cangoo zufrieden bist und freuen uns dich bald wieder zu sehen.
+In der Beilage findest du deine Rechnung.
 
-//Für weitere Fragen wende dich bitte an den Support <a href='mailto:info@cangoo.at'>hier</a>.</pre>
-//",
-//												"Deine cangoo Rechnung",
-//												"rechnung@cangoo.at",
-//												"Cangoo Rechnung",
-//												"invoice.pdf",
-//												GenerateInvoice(model, headerLink, footerLink));
+Viel Freude mit cangoo,
+dein cangoo-Team
 
-//			//EmailManager.SendInvoice(model.CustomerEmail,
-//			//                                 "<b>Your invoice is attached.</b>",
-//			//                                 "Trip invoice with pdf",
-//			//                                 "cs@cangoo.at",
-//			//                                 "Customer Service",
-//			//                                 "invoice.pdf",
-//			//                                 GenerateInvoice(model, headerLink, footerLink));
-//		}
+Für weitere Fragen wende dich bitte an den Support <a href='mailto:info@cangoo.at'>hier</a>.</pre>
+",
+                                                "Deine cangoo Rechnung",
+                                                "rechnung@cangoo.at",
+                                                "Cangoo Rechnung",
+                                                "invoice.pdf",
+                                                GenerateInvoice(model, headerLink, footerLink), model.InvoiceNumber);
 
-//		public Byte[] GenerateInvoice(InvoiceModel model, string headerLink, string footerLink)
-//		{
-//			var invoice = new ViewAsPdf(model)
-//			{
-//				PageMargins = { Left = 0, Bottom = 42, Right = 0, Top = 44 },
-//				FileName = "invoice.pdf",
-//				PageOrientation = Rotativa.Options.Orientation.Portrait,
-//				PageSize = Rotativa.Options.Size.A4,
-//				CustomSwitches = string.Format("--print-media-type --allow {0} --footer-html {0} --header-html {1}", footerLink, headerLink)
-//			};
+            //EmailManager.SendInvoice(model.CustomerEmail,
+            //                                 "<b>Your invoice is attached.</b>",
+            //                                 "Trip invoice with pdf",
+            //                                 "cs@cangoo.at",
+            //                                 "Customer Service",
+            //                                 "invoice.pdf",
+            //                                 GenerateInvoice(model, headerLink, footerLink));
+        }
 
-//			return invoice.BuildFile(this.ControllerContext);
-//		}
-	}
+        public Byte[] GenerateInvoice(InvoiceModel model, string headerLink, string footerLink)
+        {
+            var invoice = new ViewAsPdf(model)
+            {
+                PageMargins = { Left = 0, Bottom = 42, Right = 0, Top = 44 },
+                FileName = "invoice.pdf",
+                PageOrientation = Rotativa.Options.Orientation.Portrait,
+                PageSize = Rotativa.Options.Size.A4,
+                CustomSwitches = string.Format("--print-media-type --allow {0} --footer-html {0} --header-html {1}", footerLink, headerLink)
+            };
+
+            return invoice.BuildFile(this.ControllerContext);
+        }
+    }
 }

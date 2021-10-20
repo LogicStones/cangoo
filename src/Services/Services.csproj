@@ -69,6 +69,7 @@
     <Compile Include="AuthenticationService.cs" />
     <Compile Include="Automapper\AutoMapperConfig.cs" />
     <Compile Include="Automapper\AutoMapperProfile.cs" />
+    <Compile Include="DriverService.cs" />
     <Compile Include="FavoritesService.cs" />
     <Compile Include="FacilitiesManagerService.cs" />
     <Compile Include="LanguageService.cs" />

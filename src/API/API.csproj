@@ -73,6 +73,9 @@
     <Reference Include="Microsoft.Owin.Security.OAuth, Version=4.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Owin.Security.OAuth.4.2.0\lib\net45\Microsoft.Owin.Security.OAuth.dll</HintPath>
     </Reference>
+    <Reference Include="Rotativa, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Rotativa.1.7.3\lib\net461\Rotativa.dll</HintPath>
+    </Reference>
     <Reference Include="Serilog, Version=2.0.0.0, Culture=neutral, PublicKeyToken=24c2f752a8e58a10, processorArchitecture=MSIL">
       <HintPath>..\packages\Serilog.2.10.0\lib\net46\Serilog.dll</HintPath>
     </Reference>
@@ -215,7 +218,6 @@
     <Compile Include="Controllers\InvoiceController.cs" />
     <Compile Include="Controllers\KarhooController.cs" />
     <Compile Include="Controllers\CronJobsController.cs" />
-    <Compile Include="Controllers\DriverController.cs" />
     <Compile Include="Controllers\ReportsController.cs" />
     <Compile Include="Controllers\UserController.cs" />
     <Compile Include="Filters\ResponseWrapperInitializer.cs" />
@@ -235,13 +237,32 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="AppSettingsSecrets.config" />
+    <Content Include="Content\bootstrap.min.css" />
+    <Content Include="Content\invoice.css" />
+    <Content Include="Content\report.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
+    <Content Include="Rotativa\help-wkhtmltoimage.txt" />
+    <Content Include="Rotativa\help-wkhtmltopdf.txt" />
+    <Content Include="Rotativa\wkhtmltoimage.exe" />
+    <Content Include="Rotativa\wkhtmltopdf.exe" />
     <Content Include="Views\Web.config" />
-    <Content Include="Views\_ViewStart.cshtml" />
-    <Content Include="Views\Shared\Error.cshtml" />
-    <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Web.config" />
+    <Content Include="Views\Invoice\Footer.cshtml" />
+    <Content Include="Views\Invoice\Header.cshtml" />
+    <Content Include="Views\Invoice\SendInvoice.cshtml" />
+    <Content Include="Views\Reports\Footer.cshtml" />
+    <Content Include="Views\Reports\Header.cshtml" />
+    <Content Include="Views\Reports\Index.cshtml" />
+    <Content Include="Views\Reports\InvoiceSummary.cshtml" />
+    <Content Include="Views\Reports\MonthyInvoice.cshtml" />
+    <Content Include="Views\Reports\TourOverview.cshtml" />
+    <Content Include="Views\Reports\without-promotion\InvoiceSummary.cshtml" />
+    <Content Include="Views\Reports\without-promotion\MonthyInvoice.cshtml" />
+    <Content Include="Views\Reports\without-promotion\TourOverview.cshtml" />
+    <Content Include="Views\Shared\_Layout.cshtml" />
+    <Content Include="Views\_ViewStart.cshtml" />
+    <Content Include="App_Browsers\qt.browser" />
     <None Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </None>
@@ -251,7 +272,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
-    <Folder Include="Views\Driver\" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="ConnectionStrings.config" />

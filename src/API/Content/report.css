@@ -1,0 +1,71 @@
+﻿body {
+    margin: 0;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.header-image {
+    height: 200px;
+}
+
+table {
+    table-layout: fixed;
+    width: 1000px;
+    margin: 0 auto;
+    color: rgba(112, 112, 112, 1);
+}
+
+thead, tfoot {
+    display: table-row-group
+}
+
+    table > tr {
+        margin-top: 10px;
+    }
+
+.company-details {
+    text-align: left;
+    font-weight: bold;
+    font-size: 20px;
+    color: black;
+}
+
+.report-description {
+    text-align: left;
+    font-size: 18px;
+}
+
+    .report-description label {
+        width: 150px
+    }
+    .report-description span {
+        margin-left: 40px
+    }
+
+.report-heading {
+    text-align: center;
+    font-size: 25px;
+    padding-top: 15px;
+    padding-bottom: 25px;
+}
+
+.details-table {
+    width: 1000px;
+    margin-top: 20px;
+    font-size: 18px;
+}
+
+.seperator {
+    border-top: 1px solid #108e8e;
+}
+
+.footer {
+    font-size: 15px;
+}
+
+.w-100 {
+    width: 100%;
+}
+
+.page-break {
+    page-break-after: always
+}

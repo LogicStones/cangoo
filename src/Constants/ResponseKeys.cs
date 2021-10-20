@@ -11,14 +11,20 @@ namespace Constants
         #region response.error = false
 
         public const string msgSuccess = "success";
-        public const string laterBookingConflict = "laterBookingConflict";  //When going to accept another laterbooking
-        public const string userNotVerified = "userNotVerified";    //User attemplts login without verification
-
+       
         #endregion
 
         #region response.error = true
 
-        public const string serverError = "serverError"; //Exception occured.
+        public const string failedToAdd = "failedToAdd";
+        public const string failedToUpdate = "failedToUpdate";
+        public const string failedToDelete = "failedToDelete";
+        public const string notFound = "notFound";
+        public const string serverError = "serverError";
+
+        public const string laterBookingConflict = "laterBookingConflict";  //When going to accept another laterbooking
+        public const string userNotVerified = "userNotVerified";    //User attemplts login without verification
+
         public const string tripAlreadyBooked = "tripAlreadyBooked";
         public const string invalidParameters = "invalidParameters"; //API hit with invalid parameters.
         public const string userAlreadyVerified = "userAlreadyVerified"; //User tries to verify phone number again.
@@ -34,7 +40,6 @@ namespace Constants
         public const string feedNotFound = "feedNotFound";
         public const string failedToResetPassword = "failedToResetPassword";    //If oldPassword and phone number don't match.
         public const string vehicleNotFound = "vehicleNotFound";
-        public const string failedToUpdate = "failedToUpdate";
         public const string userInTrip = "userInTrip";
         public const string driverInTrip = "driverInTrip";
         public const string invalidUser = "invalidUser";  //user don't belong to current application

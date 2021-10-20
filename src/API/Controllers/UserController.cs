@@ -209,7 +209,7 @@ namespace API.Controllers
 
             if (user == null)
             {
-                return Request.CreateResponse(HttpStatusCode.Unauthorized, new ResponseWrapper { Message = ResponseKeys.authenticationFailed });
+                return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper { Message = ResponseKeys.userNotFound });
             }
 
             string newPassword = AuthenticationService.GetRandomPassword();
@@ -353,8 +353,7 @@ namespace API.Controllers
             }
             else
             {
-                ResponseWrapper.Message = ResponseKeys.invalidParameters;
-                return Request.CreateResponse(HttpStatusCode.OK, ResponseWrapper);
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
             }
         }
 
@@ -456,7 +455,7 @@ namespace API.Controllers
                 Message = ResponseKeys.msgSuccess,
                 Data = new UpdatePassengerPhoneNumberOTPResponse
                 {
-                    OTP = await TextMessageService.SendAChangePhoneNumberOTP(model.PhoneNumber)
+                    OTP = await TextMessageService.SendChangePhoneNumberOTP(model.PhoneNumber)
                 }
             });
         }
@@ -472,7 +471,7 @@ namespace API.Controllers
 
             await UserService.UpdatePhoneNumberAsync(model.PhoneNumber, model.CountryCode, model.PassengerId);
 
-            return Request.CreateResponse(HttpStatusCode.Conflict, new ResponseWrapper
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
@@ -618,7 +617,7 @@ namespace API.Controllers
             }
             else
             {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
+                return Request.CreateResponse(HttpStatusCode.Forbidden, new ResponseWrapper { Message = ResponseKeys.failedToAdd });
             }
         }
 
@@ -649,14 +648,13 @@ namespace API.Controllers
         [Route("get-places")]
         public async Task<HttpResponseMessage> GetPlaces(string passengerId)
         {
-            var lstPassengerPlaces = await PassengerPlacesService.GetPassengerPlaces(passengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
                 Data = new GetPassengerPlacesResponse
                 {
-                    Places = lstPassengerPlaces
+                    Places = await PassengerPlacesService.GetPassengerPlaces(passengerId)
                 }
             });
         }

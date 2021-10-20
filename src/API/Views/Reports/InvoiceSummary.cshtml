@@ -1,0 +1,112 @@
+﻿@using System.Globalization;
+@model DTOs.API.InvoiceSummaryReportModel
+
+@section stylesheet
+{
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/report.css" rel="stylesheet" />
+}
+
+<table class="w-100" cellpadding="2">
+    <tr>
+        <td class="company-details">
+            @Model.FleetName <br />@Model.Street @Model.BuildingNumber <br />@Model.PostCode @Model.City
+        </td>
+    </tr>
+    <tr>
+        <td class="report-heading">
+            Ihre cangoo Leistungsübersicht  vom @Model.ReportStartDate - @Model.ReportEndDate
+        </td>
+    </tr>
+    <tr>
+        <td class="report-description">
+            <label>Datum</label>
+            <span>@Model.ReportDate</span>
+        </td>
+    </tr>
+    <tr>
+        <td class="report-description">
+            <label>Nummer</label>
+            <span>@Model.ReportNumber</span>
+        </td>
+    </tr>
+    <tr>
+        <td class="report-description">
+            <label>Zeitraum</label>
+            <span>@Model.ReportStartDate - @Model.ReportEndDate</span>
+        </td>
+    </tr>
+    <tr style="margin-top:20px;" class="report-description">
+        <td>
+            Sehr geehrte/r (Firma) @Model.FleetName,<br />
+            Wir danken für das erwiesene Vertrauen. Details zu erbrachten Leistungen entnehmen Sie der Übersicht:
+        </td>
+    </tr>
+    <tr class="mt-5">
+        <td>
+            <table class="details-table">
+                <tr>
+                    <th class="text-left">Beschreibung</th>
+                    <th class="text-right">Betrag</th>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <hr class="seperator" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">Anzahl Touren</td>
+                    <td class="text-right">@Model.TotalTrips</td>
+                </tr>
+                <tr>
+                    <td class="text-left">Gesamt App Zahlungen</td>
+                    <td class="text-right">@Model.MobileTripsTotalFare.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                </tr>
+                <tr>
+                    <td class="text-left">Vemittlungsgebühr</td>
+                    <td class="text-right">-@((Model.ApplicationTotalCommission + (Model.ApplicationTotalCommission * 20 / 100)).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE")))</td>
+                </tr>
+                <tr>
+                    <td class="text-left">Disagio 3,5 %</td>
+                    <td class="text-right">-@Model.TotalServicesCharges.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                </tr>
+                @*<tr>
+                    <td class="text-left">Bonus "Aktions Wochen" @Model.TotalTrips x @Model.BonusPerRide.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE")) </td>
+                    <td class="text-right">@Model.TripsTotalBonus.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                </tr>*@
+                <tr>
+                    <td colspan="2">
+                        <hr class="seperator" />
+                    </td>
+                </tr>
+                @*<tr>
+                    <td class="text-left"><strong>Zwischensumme</strong></td>
+                    <td class="text-right"><strong>@((Model.TripsTotalFare + Model.TripsTotalBonus - (Model.TripsTotalBonus * 20 / 100) - Model.TotalServicesCharges - (Model.ApplicationTotalCommission + (Model.ApplicationTotalCommission * 20 / 100))).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE")))</strong></td>
+                </tr>
+                <tr style="margin-top:10px;">
+                    <td class="text-left">Betrag abzüglich Barzahlungen </td>
+                    <td class="text-right">-@Model.CashTripsTotalFare.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                </tr>*@
+                <tr style="margin-top:10px;">
+                    <td class="text-left"><strong>Auszahlungsbetrag</strong></td>
+                    <td class="text-right"><strong>@((Model.MobileTripsTotalFare - Model.TotalServicesCharges - (Model.ApplicationTotalCommission + (Model.ApplicationTotalCommission * 20 / 100)) + Model.TripsTotalBonus).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE")))</strong></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr style="margin-top:20px;" class="report-description">
+        <td>
+            Der Auszahlungsbetrag von <strong>@((Model.MobileTripsTotalFare - Model.TotalServicesCharges - (Model.ApplicationTotalCommission + (Model.ApplicationTotalCommission * 20 / 100)) + Model.TripsTotalBonus).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE")))</strong> wird Ihnen innerhalb von sieben Werktagen auf Ihr angeführtes Bankkonto (@Model.FleetBankAccountDetails) überwiesen.
+        </td>
+    </tr>
+    <tr style="margin-top:20px;" class="report-description">
+        <td>
+            <strong>Zur Information:</strong>
+        </td>
+    </tr>
+    <tr style="margin-top:10px;" class="report-description">
+        <td>
+            Diese Übersicht dient lediglich zur Information. Es ist keine Rechnung im Sinne des §11 UStG. Dieser Beleg kann umsatzsteuerrechtlich nicht verwendet werden.
+        </td>
+    </tr>
+</table>

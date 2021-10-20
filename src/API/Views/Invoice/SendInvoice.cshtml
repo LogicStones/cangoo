@@ -1,0 +1,121 @@
+﻿@model DTOs.API.InvoiceModel
+
+@{
+    decimal netAmount;
+}
+
+@section stylesheet
+{
+    <link href="~/Content/invoice.css" rel="stylesheet" />    
+}
+
+<table cellpadding="2">
+    <tr>
+        <td colspan="2" class="heading">
+            <label>RECHNUNG</label>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <hr class="seperator" />
+        </td>
+    </tr>
+    <tr>
+        <td class="left-align">@Model.CustomerName</td>
+        <td class="right-align">Date: @Model.TripDate</td>
+    </tr>
+    <tr>
+        <td colspan="2" class="right-align">
+            Rechnungsunmmer: @Model.InvoiceNumber
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" class="heading p-t-20">
+            <label>Unternehmer</label>
+        </td>
+    </tr>
+    <tr>
+        <td class="left-align">@Model.FleetName</td>
+        <td class="right-align">ATU Nummer: @Model.ATUNumber</td>
+    </tr>
+    <tr>
+        <td colspan="2" class="left-align">@Model.FleetEmail</td>
+    </tr>
+    <tr>
+        <td colspan="2" class="left-align">@Model.Street, @Model.BuildingNumber</td>
+    </tr>
+    <tr>
+        <td colspan="2" class="left-align">@Model.PostCode, @Model.City</td>
+    </tr>
+    <tr>
+        <td colspan="2" class="heading p-t-20 left-align">
+            <label>Fahrer ID</label>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" class="left-align">@Model.CaptainUserName</td>
+    </tr>
+    <tr>
+        <td colspan="2" class="heading p-t-20 left-align">
+            <label>Fahrzeug</label>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2" class="left-align">@Model.VehicleNumber</td>
+    </tr>
+    <tr>
+        <td class="heading p-t-20 left-align">
+            <label>Leistung</label>
+        </td>
+        <td class="heading p-t-20 right-align">
+            <label>Preis</label>
+        </td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            <hr class="seperator" />
+        </td>
+    </tr>
+    <tr>
+        <td class="left-align">Taxifahrt</td>
+        <td class="right-align">@decimal.Parse(Model.TotalAmount).ToString("0.00") €</td>
+    </tr>
+    <tr>
+        <td colspan="2" class="p-l-30">Start : @Model.PickUpAddress</td>
+    </tr>
+    <tr>
+        <td colspan="2" class="p-l-30">Fahrziel : @Model.DropOffAddress</td>
+    </tr>
+    <tr>
+        <td colspan="2" class="p-l-30">Strecke : @Model.Distance km</td>
+    </tr>
+    <tr>
+        <td class="description">Gutschein</td>
+        <td class="value">-@decimal.Parse(Model.PromoDiscountAmount).ToString("0.00") €</td>
+    </tr>
+    <tr>
+        <td class="description">Walet</td>
+        <td class="value">-@decimal.Parse(Model.WalletUsedAmount).ToString("0.00") €</td>
+    </tr>
+    <tr>
+        <td class="description">Bar</td>
+        <td class="value">-@decimal.Parse(Model.CashAmount).ToString("0.00") €</td>
+    </tr>
+    <tr>
+        @{netAmount = decimal.Parse(Model.TotalAmount) - decimal.Parse(Model.CashAmount) - decimal.Parse(Model.WalletUsedAmount) - decimal.Parse(Model.PromoDiscountAmount); }
+        <td class="description">Zwischensumme</td>
+        <td class="value">@(netAmount.ToString("0.00")) €</td>
+    </tr>
+    <tr>
+        <td class="description">Netto</td>
+        <td class="value">@((netAmount - (netAmount * 0.0909M)).ToString("0.00") ) €</td>
+    </tr>
+    <tr>
+        <td class="description">MwSt.10%</td>
+        <td class="value">@((netAmount * 0.0909M).ToString("0.00")) €</td>
+    </tr>
+    <tr>
+        <td class="description heading p-t-20">Brutto</td>
+        <td class="value">@(netAmount.ToString("0.00")) €</td>
+    </tr>
+</table>

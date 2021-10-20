@@ -1,0 +1,96 @@
+﻿@using System.Globalization;
+@model CanTaxi_Api.Models.MonthlyInvoiceReportModel
+
+@section stylesheet
+{
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/report.css" rel="stylesheet" />
+}
+
+<table class="w-100" cellpadding="2">
+    <tr>
+        <td class="company-details">
+            @Model.FleetName <br />@Model.Street @Model.BuildingNumber <br />@Model.PostCode @Model.City
+        </td>
+    </tr>
+    <tr>
+        <td class="report-heading">
+            Ihre Leistungsübersicht vom @Model.ReportStartDate - @Model.ReportEndDate
+        </td>
+    </tr>
+    <tr>
+        <td class="report-description">
+            <label>Rechnungsnummer</label>
+            <span>R @Model.ReportNumber</span>
+        </td>
+    </tr>
+    <tr>
+        <td class="report-description">
+            <label>Datum</label>
+            <span>@Model.ReportDate</span>
+        </td>
+    </tr>
+    <tr>
+        <td class="report-description">
+            <label>Zeitraum</label>
+            <span>@Model.ReportStartDate - @Model.ReportEndDate</span>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <table class="details-table">
+                <tr>
+                    <th class="text-left">Position</th>
+                    <th class="text-left">Leistung</th>
+                    <th class="text-right">Vermittlungen</th>
+                    <th class="text-right">Betrag</th>
+                </tr>
+                <tr>
+                    <td colspan="4">
+                        <hr class="seperator" />
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-left">1</td>
+                    <td class="text-left">cangoo Servicegebühr</td>
+                    <td class="text-right">@Model.TotalTrips</td>
+                    <td class="text-right">@Model.TotalTripsAppCommission.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                </tr>
+                @*<tr>
+                        <td class="text-left">2</td>
+                        <td class="text-left">Bewirtungs Rückzahlung</td>
+                        <td class="text-right">@Model.TotalHospitalityRepayment</td>
+                        <td class="text-right">@Model.TotalHospitalityRepayment.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                    </tr>
+                    <tr>
+                        <td class="text-left">3</td>
+                        <td class="text-left">Wien Corporate Kick-Back</td>
+                        <td class="text-right">@Model.TotalKickBacks</td>
+                        <td class="text-right">@Model.KickBacksAmount.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</td>
+                    </tr>*@
+                <tr>
+                    <td colspan="4">
+                        <hr class="seperator" />
+                    </td>
+                </tr>
+                <tr style="margin-top:10px;">
+                    <td colspan="3" class="text-right"><strong>Rechnungsbetrag (netto)</strong></td>
+                    <td class="text-right"><strong>@Model.TotalTripsAppCommission.ToString("C2", CultureInfo.CreateSpecificCulture("de-DE"))</strong></td>
+                </tr>
+                <tr style="margin-top:10px;">
+                    <td colspan="3" class="text-right"><strong>MwSt. 20%</strong></td>
+                    <td class="text-right">@((Model.TotalTripsAppCommission * 20 / 100).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE")))</td>
+                </tr>
+                <tr style="margin-top:10px;">
+                    <td colspan="3" class="text-right"><strong>Rechnungsbetrag (brutto)</strong></td>
+                    <td class="text-right"><strong>@((Model.TotalTripsAppCommission + (Model.TotalTripsAppCommission * 20 / 100)).ToString("C2", CultureInfo.CreateSpecificCulture("de-DE")))</strong></td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+    <tr style="margin-top:20px;" class="report-description">
+        <td>
+            Diese Rechnung ist keine Zahlungsaufforderung. Der Rechnungsbetrag wird mit dem Auszahlungsbetrag verrechnet.
+        </td>
+    </tr>
+</table>

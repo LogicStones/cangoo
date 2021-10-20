@@ -7,16 +7,18 @@ using System.Threading.Tasks;
 
 namespace DTOs.API
 {
-    public class GenerateOTPRequest
-    {
-        [Required]
-        public string PhoneNumber { get; set; }
-    }
+	#region Passenger
 
-    public class GenerateOTPResponse
-    {
-        public string OTP { get; set; } = "";
-        public string IsUserProfileUpdated { get; set; } = "";
+	public class GenerateOTPRequest
+	{
+		[Required]
+		public string PhoneNumber { get; set; }
+	}
+
+	public class GenerateOTPResponse
+	{
+		public string OTP { get; set; } = "";
+		public string IsUserProfileUpdated { get; set; } = "";
 	}
 
 	public class PassengerRegisterRequest
@@ -69,6 +71,7 @@ namespace DTOs.API
 		[Required]
 		public string PhoneNumber { get; set; }
 	}
+
 	public class PassengerChangePasswordRequest
 	{
 		[Required]
@@ -78,19 +81,11 @@ namespace DTOs.API
 		[Required]
 		public string NewPassword { get; set; }
 	}
+
 	public class PassengerLogOutRequest
 	{
 		[Required]
 		public string PassengerId { get; set; }
-	}
-	public class PassengerLogOutResponse
-	{
-		[Required]
-		public string PhoneNumber { get; set; }
-		[Required]
-		public string CurrentPassword { get; set; }
-		[Required]
-		public string NewPassword { get; set; }
 	}
 
 	public class PassengerVerifyDeviceTokenRequest
@@ -105,4 +100,62 @@ namespace DTOs.API
 	{
 		public string IsTokenVerified { get; set; } = "";
 	}
+
+	#endregion
+
+	#region Driver
+
+	public class DriverVerifyDeviceTokenRequest
+	{
+		[Required]
+		public string driverID { get; set; }
+		[Required]
+		public string DeviceToken { get; set; }
+	}
+
+	public class DriverVerifyDeviceTokenResponse
+	{
+		public bool isTokenVerified { get; set; }
+	}
+
+	public class DriverVerifyPhoneNumberRequest
+	{
+		[Required]
+		public string UserName { get; set; }
+	}
+
+	public class DriverVerifyPhoneNumberResponse
+	{
+		public string code { get; set; } = "";
+		public string user_id { get; set; } = "";
+		public bool is_user_register { get; set; } 
+	}
+
+
+	public class DriverSetNewPasswordRequest
+	{
+		[Required]
+		public string userID { get; set; }
+		[Required]
+		public string password { get; set; }
+	}
+
+	public class DriverLoginRequest
+	{
+		[Required]
+		public string UserName { get; set; }
+		[Required]
+		public string password { get; set; }
+		[Required]
+		public string DeviceToken { get; set; }
+	}
+
+	public class DriverLoginResponse
+	{
+		public string userID { get; set; }
+		public string password { get; set; }
+	}
+
+
+	#endregion
 }

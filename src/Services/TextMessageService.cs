@@ -29,11 +29,16 @@ namespace Services
 			return verificationCode;
 		}
 
-		public static async Task<string> SendAChangePhoneNumberOTP(string receiverNumber)
+		public static async Task<string> SendChangePhoneNumberOTP(string receiverNumber)
 		{
 			string verificationCode = AuthenticationService.GenerateOTP();
 			await Twilio.SendSms(string.Format("Your OTP to change phone number is:\n{0}", verificationCode), receiverNumber);
 			return verificationCode;
+		}
+
+		public static async Task SendDriverMessages(string message, string receiverNumber)
+		{
+			await Twilio.SendSms(message, receiverNumber);
 		}
 	}
 }

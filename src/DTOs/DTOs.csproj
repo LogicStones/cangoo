@@ -43,11 +43,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API\AuthenticationModels.cs" />
+    <Compile Include="API\DriverModel.cs" />
     <Compile Include="API\LanguagesModel.cs" />
     <Compile Include="API\PassengerPlacesModels.cs" />
     <Compile Include="API\FavoriteModels.cs" />
     <Compile Include="API\PromoCodeModel.cs" />
+    <Compile Include="API\ReportingModels.cs" />
     <Compile Include="API\TrustedConatctModel.cs" />
+    <Compile Include="API\VehicleModels.cs" />
     <Compile Include="Shared\FacilityDTOs.cs" />
     <Compile Include="API\NotificationModels.cs" />
     <Compile Include="API\ProfileModels.cs" />
