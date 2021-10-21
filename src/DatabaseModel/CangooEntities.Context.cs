@@ -102,6 +102,8 @@ namespace DatabaseModel
         public virtual DbSet<RideServicesFareManager> RideServicesFareManagers { get; set; }
         public virtual DbSet<RideServicesFareRanx> RideServicesFareRanges { get; set; }
         public virtual DbSet<RideServicesTimeRanx> RideServicesTimeRanges { get; set; }
+        public virtual DbSet<TrustedContact> TrustedContacts { get; set; }
+        public virtual DbSet<RewardPointsManager> RewardPointsManagers { get; set; }
     
         public virtual int AddApplication(Nullable<System.Guid> resellerID, Nullable<System.Guid> applicationID, string ownerName, string companyName, string logo, string originalLogo, string contractFile, string originalContractFile, string authorizedArea, Nullable<double> percentagePayable, Nullable<double> percentageReceiveable, Nullable<int> subscriptionPlanID, Nullable<System.DateTime> subscriptionDate, Nullable<System.DateTime> paymentDueDate, Nullable<int> subscriptionTypeID, Nullable<int> paymentModeID, Nullable<int> paymentTypeID, Nullable<int> paymentStatusID, string paypalAccountNumber, string address, string taxNumber, string subscribedModules, string paypalEmail, string paypalNationalNumber, string paypalCountryCode, string paypalPhoneExt, Nullable<System.Guid> transactionID, Nullable<System.DateTime> dateTime, Nullable<System.Guid> debitFrom, Nullable<System.Guid> creditTo, string reference, Nullable<decimal> amount)
         {

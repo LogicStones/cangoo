@@ -49,6 +49,7 @@
     <Compile Include="API\FavoriteModels.cs" />
     <Compile Include="API\PromoCodeModel.cs" />
     <Compile Include="API\ReportingModels.cs" />
+    <Compile Include="API\RewardPointModel.cs" />
     <Compile Include="API\TrustedConatctModel.cs" />
     <Compile Include="API\VehicleModels.cs" />
     <Compile Include="Shared\FacilityDTOs.cs" />

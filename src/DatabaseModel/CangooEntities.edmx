@@ -835,6 +835,22 @@
           <Property Name="OriginalProfileImage" Type="varchar" MaxLength="250" />
           <Property Name="PercentageReceiveable" Type="float" Nullable="false" />
         </EntityType>
+        <EntityType Name="RewardPointsManager">
+          <Key>
+            <PropertyRef Name="RewardID" />
+          </Key>
+          <Property Name="RewardID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Deduction" Type="int" Nullable="false" />
+          <Property Name="RedeemAmount" Type="int" />
+          <Property Name="Description" Type="varchar" MaxLength="250" />
+          <Property Name="StartDate" Type="datetime" />
+          <Property Name="ExpiryDate" Type="datetime" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+          <Property Name="ApplicationID" Type="uniqueidentifier" />
+          <Property Name="ResellerID" Type="uniqueidentifier" />
+          <Property Name="CreatedAt" Type="datetime" />
+          <Property Name="UserID" Type="uniqueidentifier" />
+        </EntityType>
         <EntityType Name="RideServicesArea">
           <Key>
             <PropertyRef Name="AreaID" />
@@ -1133,6 +1149,19 @@
           </Key>
           <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="Status" Type="varchar" MaxLength="200" />
+        </EntityType>
+        <EntityType Name="TrustedContacts">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="FirstName" Type="varchar" MaxLength="50" />
+          <Property Name="CountryCode" Type="varchar" MaxLength="50" />
+          <Property Name="MobileNo" Type="varchar" MaxLength="50" />
+          <Property Name="Email" Type="varchar" MaxLength="50" />
+          <Property Name="ApplicationId" Type="uniqueidentifier" />
+          <Property Name="ResellerId" Type="uniqueidentifier" />
+          <Property Name="PassengerId" Type="uniqueidentifier" />
         </EntityType>
         <EntityType Name="UserFavoriteCaptain">
           <Key>
@@ -2471,6 +2500,7 @@
           <EntitySet Name="ReportsLog" EntityType="Self.ReportsLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="ReroutedRidesLog" EntityType="Self.ReroutedRidesLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Resellers" EntityType="Self.Resellers" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="RewardPointsManager" EntityType="Self.RewardPointsManager" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesArea" EntityType="Self.RideServicesArea" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesAreaFare" EntityType="Self.RideServicesAreaFare" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesCategoryFare" EntityType="Self.RideServicesCategoryFare" Schema="dbo" store:Type="Tables" />
@@ -2487,6 +2517,7 @@
           <EntitySet Name="TripRequestLog" EntityType="Self.TripRequestLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Trips" EntityType="Self.Trips" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="TripStatus" EntityType="Self.TripStatus" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="TrustedContacts" EntityType="Self.TrustedContacts" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="UserFavoriteCaptain" EntityType="Self.UserFavoriteCaptain" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="UserInvites" EntityType="Self.UserInvites" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="UserProfile" EntityType="Self.UserProfile" Schema="dbo" store:Type="Tables" />
@@ -4685,6 +4716,8 @@
           <EntitySet Name="RideServicesFareManagers" EntityType="CangooModel.RideServicesFareManager" />
           <EntitySet Name="RideServicesFareRanges" EntityType="CangooModel.RideServicesFareRanx" />
           <EntitySet Name="RideServicesTimeRanges" EntityType="CangooModel.RideServicesTimeRanx" />
+          <EntitySet Name="TrustedContacts" EntityType="CangooModel.TrustedContact" />
+          <EntitySet Name="RewardPointsManagers" EntityType="CangooModel.RewardPointsManager" />
         </EntityContainer>
         <ComplexType Name="FetchAdminAnnualEarningAndProfit_Result">
           <Property Type="String" Name="Month" Nullable="true" MaxLength="30" />
@@ -6962,6 +6995,35 @@
           <Property Name="RideServicesID" Type="Guid" />
           <Property Name="ApplicationID" Type="Guid" />
           <Property Name="ShiftID" Type="Int32" />
+        </EntityType>
+        <EntityType Name="TrustedContact">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="FirstName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="CountryCode" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="MobileNo" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Email" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="ApplicationId" Type="Guid" />
+          <Property Name="ResellerId" Type="Guid" />
+          <Property Name="PassengerId" Type="Guid" />
+        </EntityType>
+        <EntityType Name="RewardPointsManager">
+          <Key>
+            <PropertyRef Name="RewardID" />
+          </Key>
+          <Property Name="RewardID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Deduction" Type="Int32" Nullable="false" />
+          <Property Name="RedeemAmount" Type="Int32" />
+          <Property Name="Description" Type="String" MaxLength="250" FixedLength="false" Unicode="false" />
+          <Property Name="StartDate" Type="DateTime" Precision="3" />
+          <Property Name="ExpiryDate" Type="DateTime" Precision="3" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+          <Property Name="ApplicationID" Type="Guid" />
+          <Property Name="ResellerID" Type="Guid" />
+          <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+          <Property Name="UserID" Type="Guid" />
         </EntityType>
       </Schema>
     </edmx:ConceptualModels>
@@ -10856,6 +10918,37 @@
                 <ScalarProperty Name="Charges" ColumnName="Charges" />
                 <ScalarProperty Name="Range" ColumnName="Range" />
                 <ScalarProperty Name="TimeRangeID" ColumnName="TimeRangeID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="TrustedContacts">
+            <EntityTypeMapping TypeName="CangooModel.TrustedContact">
+              <MappingFragment StoreEntitySet="TrustedContacts">
+                <ScalarProperty Name="PassengerId" ColumnName="PassengerId" />
+                <ScalarProperty Name="ResellerId" ColumnName="ResellerId" />
+                <ScalarProperty Name="ApplicationId" ColumnName="ApplicationId" />
+                <ScalarProperty Name="Email" ColumnName="Email" />
+                <ScalarProperty Name="MobileNo" ColumnName="MobileNo" />
+                <ScalarProperty Name="CountryCode" ColumnName="CountryCode" />
+                <ScalarProperty Name="FirstName" ColumnName="FirstName" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RewardPointsManagers">
+            <EntityTypeMapping TypeName="CangooModel.RewardPointsManager">
+              <MappingFragment StoreEntitySet="RewardPointsManager">
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="ResellerID" ColumnName="ResellerID" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
+                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
+                <ScalarProperty Name="Description" ColumnName="Description" />
+                <ScalarProperty Name="RedeemAmount" ColumnName="RedeemAmount" />
+                <ScalarProperty Name="Deduction" ColumnName="Deduction" />
+                <ScalarProperty Name="RewardID" ColumnName="RewardID" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

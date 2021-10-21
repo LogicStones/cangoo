@@ -83,6 +83,8 @@
         <EntityTypeShape EntityType="CangooModel.RideServicesFareManager" Width="1.5" PointX="27.375" PointY="10.75" />
         <EntityTypeShape EntityType="CangooModel.RideServicesFareRanx" Width="1.5" PointX="19.375" PointY="27.75" />
         <EntityTypeShape EntityType="CangooModel.RideServicesTimeRanx" Width="1.5" PointX="27.375" PointY="20.75" />
+        <EntityTypeShape EntityType="CangooModel.TrustedContact" Width="1.5" PointX="27.375" PointY="23.75" />
+        <EntityTypeShape EntityType="CangooModel.RewardPointsManager" Width="1.5" PointX="25.375" PointY="27.75" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

@@ -6,6 +6,8 @@ using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Services.Automapper;
+using System.Configuration;
 
 namespace Services
 {
@@ -15,11 +17,24 @@ namespace Services
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                return await dbContext.Database.ExecuteSqlCommandAsync("",
-                                                                                      new SqlParameter("@", model.Name),
-                                                                                      new SqlParameter("@", model.CountryCode),
-                                                                                      new SqlParameter("@", model.PhoneNumber),
-                                                                                      new SqlParameter("@", model.Email));
+                if (IsContactExist(model.PassengerId) == true)
+                {
+                    return  (await dbContext.Database.ExecuteSqlCommandAsync("UPDATE TrustedContacts SET FirstName = @firstName ,CountryCode = @countryCode,MobileNo = @mobileNo,Email = @email WHERE PassengerId = @passengerId",
+                                                                                      new SqlParameter("@firstName", model.FirstName),
+                                                                                      new SqlParameter("@countryCode", model.CountryCode),
+                                                                                      new SqlParameter("@mobileNo", model.MobileNo),
+                                                                                      new SqlParameter("@email", model.Email),
+                                                                                      new SqlParameter("@passengerId", model.PassengerId)));
+                }
+                else
+                {
+                    var result = AutoMapperConfig._mapper.Map<UpdateTrustedContact, TrustedContact>(model);
+                    result.ApplicationId = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString());
+                    result.ResellerId = Guid.Parse(ConfigurationManager.AppSettings["ResellerID"].ToString());
+
+                    dbContext.TrustedContacts.Add(result);
+                    return (await dbContext.SaveChangesAsync());
+                }
             }
         }
 
@@ -27,8 +42,17 @@ namespace Services
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<TrustedContactDetails>("", new SqlParameter("@", passengerId));
+                var query = dbContext.Database.SqlQuery<TrustedContactDetails>("SELECT FirstName,CountryCode,MobileNo,Email FROM TrustedContacts WHERE PassengerId = @passengerId", 
+                                                                                                                                                        new SqlParameter("@passengerId", passengerId));
                 return await query.ToListAsync();
+            }
+        }
+
+        public static bool IsContactExist(Guid PassengerId)
+        {
+            using (CangooEntities dbContext = new CangooEntities())
+            {
+                return dbContext.TrustedContacts.Where(x => x.PassengerId == PassengerId).Any();
             }
         }
     }

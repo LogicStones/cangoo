@@ -80,6 +80,7 @@
     <Compile Include="PromoCodeService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="EmailService.cs" />
+    <Compile Include="RewardPointService.cs" />
     <Compile Include="TextMessageService.cs" />
     <Compile Include="TripsManagerService.cs" />
     <Compile Include="TrustedContactManagerService.cs" />

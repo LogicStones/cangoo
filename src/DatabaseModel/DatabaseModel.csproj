@@ -504,6 +504,9 @@
     <Compile Include="Reseller.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="RewardPointsManager.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="RideServicesArea.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
@@ -661,6 +664,9 @@
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="TripStatu.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="TrustedContact.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="UpdateApplicationSettings_Result.cs">

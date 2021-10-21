@@ -489,9 +489,10 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("passenger-earned-reward-points")]
-        public async Task<HttpResponseMessage> PassengerEarnedRewardPoints(string pID)
+        public async Task<HttpResponseMessage> PassengerEarnedRewardPoints(string passengerId)
         {
-           return Request.CreateResponse(HttpStatusCode.OK);
+            //var result = await RewardPointService.GetPassengerPoints(passengerId);
+            return Request.CreateResponse(HttpStatusCode.OK);
             //if (!string.IsNullOrEmpty(pID))
             //{
             //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
@@ -525,77 +526,44 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("redeem-reward-points")]
-        public async Task<HttpResponseMessage> RedeemRewardPoints([FromBody] string pID)
+        public async Task<HttpResponseMessage> RedeemRewardPoints([FromBody] PassengerReedemReward model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
-
-            //if (!string.IsNullOrEmpty(model.pID) && model.redeemAmount > 0 && model.pointsDeduction > 0)
-            //{
-            //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //    {
-            //        var user = context.UserProfiles.Where(u => u.UserID == model.pID).FirstOrDefault();
-
-            //        if (user == null)
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.userNotFound;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-
-            //        context.WalletTransfers.Add(new WalletTransfer
-            //        {
-            //            Amount = model.redeemAmount,
-            //            RechargeDate = DateTime.UtcNow,
-            //            WalletTransferID = Guid.NewGuid(),
-            //            Referrence = model.pointsDeduction + " Reward points redeemed",
-            //            TransferredBy = Guid.Parse(this.ApplicationID),
-            //            TransferredTo = Guid.Parse(model.pID),
-            //            ApplicationID = Guid.Parse(this.ApplicationID),
-            //            ResellerID = Guid.Parse(this.ResellerID)
-            //        });
-
-            //        user.RewardPoints -= model.pointsDeduction;
-            //        user.WalletBalance += model.redeemAmount;
-            //        user.LastRechargedAt = DateTime.UtcNow;
-
-            //        context.SaveChanges();
-
-            //        dic = new Dictionary<dynamic, dynamic>
-            //                {
-            //                    { "rewardPoints", user.RewardPoints },
-            //                    { "walletBalance", user.WalletBalance }
-            //                };
-            //        response.error = false;
-            //        response.message = AppMessage.msgSuccess;
-            //        response.data = dic;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
-            //}
-            //else
-            //{
-            //    response.error = true;
-            //    response.message = AppMessage.invalidParameters;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
+            var result = await RewardPointService.ReedemPassengerPoints(model);
+            if (result == 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Message = ResponseKeys.failedToUpdate
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    //Data = new PassengerReedemRewardResponse
+                    //{
+                    //    RewardPoint = model.,
+                    //    WalletAmount = model.CountryCode,
+                    //}
+                });
+            }
         }
 
         [HttpGet]
         [Route("reward-points-list")]
         public async Task<HttpResponseMessage> RewardPointsList()
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
-
-            //using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //    {
-            //        dic = new Dictionary<dynamic, dynamic>
-            //            {
-            //                { "lstRewardPoints", context.RewardPointsManagers.OrderBy(rp => rp.RedeemAmount).ToList() }
-            //            };
-            //        response.error = false;
-            //        response.message = AppMessage.msgSuccess;
-            //        response.data = dic;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new RewardPointResponse
+                {
+                    Rewards = await RewardPointService.GetRewards()
+                }
+            });
         }
 
         #endregion
@@ -794,9 +762,9 @@ namespace API.Controllers
                     Message = ResponseKeys.msgSuccess,
                     Data = new UpdateTrustedContactResponse
                     {
-                        Name = model.Name,
+                        FirstName = model.FirstName,
                         CountryCode = model.CountryCode,
-                        PhoneNumber = model.PhoneNumber,
+                        MobileNo = model.MobileNo,
                         Email = model.Email
                     }
                 });

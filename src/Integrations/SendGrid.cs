@@ -1,5 +1,5 @@
-﻿using DTOs.API;
-using SendGrid;
+﻿using SendGrid;
+using DTOs.API;
 using SendGrid.Helpers.Mail;
 using Serilog;
 using System;
