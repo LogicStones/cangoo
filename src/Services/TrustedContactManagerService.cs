@@ -13,7 +13,7 @@ namespace Services
 {
     public class TrustedContactManagerService
     {
-        public static async Task<int> UpdateTrustedContact(UpdateTrustedContact model)
+        public static async Task<int> UpdateTrustedContact(UpdateTrustedContactRequest model)
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
@@ -28,7 +28,7 @@ namespace Services
                 }
                 else
                 {
-                    var result = AutoMapperConfig._mapper.Map<UpdateTrustedContact, TrustedContact>(model);
+                    var result = AutoMapperConfig._mapper.Map<UpdateTrustedContactRequest, TrustedContact>(model);
                     result.ApplicationId = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString());
                     result.ResellerId = Guid.Parse(ConfigurationManager.AppSettings["ResellerID"].ToString());
 
@@ -48,11 +48,11 @@ namespace Services
             }
         }
 
-        public static bool IsContactExist(Guid PassengerId)
+        public static bool IsContactExist(Guid passengerId)
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                return dbContext.TrustedContacts.Where(x => x.PassengerId == PassengerId).Any();
+                return dbContext.TrustedContacts.Where(x => x.PassengerId.Equals(passengerId)).Any();
             }
         }
     }

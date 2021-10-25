@@ -48,14 +48,59 @@ namespace API
                 required = false
             });
 
-            //operation.parameters.Add(new Parameter
-            //{
-            //    name = "ResellerID",
-            //    @in = "header",
-            //    type = "string",
-            //    //description = "My header field",
-            //    required = true
-            //});
+            operation.parameters.Add(new Parameter
+            {
+                name = "OperatingSystem",
+                @in = "header",
+                type = "string",
+                //description = "My header field",
+                required = false
+            });
+
+            operation.parameters.Add(new Parameter
+            {
+                name = "OperatingSystemVersion",
+                @in = "header",
+                type = "string",
+                //description = "My header field",
+                required = false
+            });
+
+            operation.parameters.Add(new Parameter
+            {
+                name = "DeviceNameWithModel",
+                @in = "header",
+                type = "string",
+                //description = "My header field",
+                required = false
+            });
+
+            operation.parameters.Add(new Parameter
+            {
+                name = "ApplicationVersion",
+                @in = "header",
+                type = "string",
+                //description = "My header field",
+                required = false
+            });
+
+            operation.parameters.Add(new Parameter
+            {
+                name = "ApplicationLanguage",
+                @in = "header",
+                type = "string",
+                //description = "My header field",
+                required = false
+            });
+
+            operation.parameters.Add(new Parameter
+            {
+                name = "ConnectionType",
+                @in = "header",
+                type = "string",
+                //description = "My header field",
+                required = false
+            });
         }
     }
 

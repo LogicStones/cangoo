@@ -484,90 +484,7 @@ namespace API.Controllers
         }
 
         #endregion
-
-        #region Reward Points
-
-        [HttpGet]
-        [Route("passenger-earned-reward-points")]
-        public async Task<HttpResponseMessage> PassengerEarnedRewardPoints(string passengerId)
-        {
-            //var result = await RewardPointService.GetPassengerPoints(passengerId);
-            return Request.CreateResponse(HttpStatusCode.OK);
-            //if (!string.IsNullOrEmpty(pID))
-            //{
-            //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //    {
-            //        var user = context.UserProfiles.Where(u => u.UserID == pID).FirstOrDefault();
-
-            //        if (user == null)
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.userNotFound;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-
-            //        dic = new Dictionary<dynamic, dynamic>
-            //                    {
-            //                        { "rewardPoints", user.RewardPoints }
-            //                    };
-            //        response.error = false;
-            //        response.message = AppMessage.msgSuccess;
-            //        response.data = dic;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
-            //}
-            //else
-            //{
-            //    response.error = true;
-            //    response.message = AppMessage.invalidParameters;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
-        }
-
-        [HttpPost]
-        [Route("redeem-reward-points")]
-        public async Task<HttpResponseMessage> RedeemRewardPoints([FromBody] PassengerReedemReward model)
-        {
-            var result = await RewardPointService.ReedemPassengerPoints(model);
-            if (result == 0)
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Message = ResponseKeys.failedToUpdate
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                    //Data = new PassengerReedemRewardResponse
-                    //{
-                    //    RewardPoint = model.,
-                    //    WalletAmount = model.CountryCode,
-                    //}
-                });
-            }
-        }
-
-        [HttpGet]
-        [Route("reward-points-list")]
-        public async Task<HttpResponseMessage> RewardPointsList()
-        {
-            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-            {
-                Error = false,
-                Message = ResponseKeys.msgSuccess,
-                Data = new RewardPointResponse
-                {
-                    Rewards = await RewardPointService.GetRewards()
-                }
-            });
-        }
-
-        #endregion
-
+        
         #region Places
 
         [HttpPost]
@@ -743,7 +660,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-trusted-contact")]
-        public async Task<HttpResponseMessage> UpdateTrustedContact(UpdateTrustedContact model)
+        public async Task<HttpResponseMessage> UpdateTrustedContact(UpdateTrustedContactRequest model)
         {
             var result = await TrustedContactManagerService.UpdateTrustedContact(model);
 
@@ -769,6 +686,89 @@ namespace API.Controllers
                     }
                 });
             }
+        }
+
+        #endregion
+
+        #region Reward Points
+
+        [HttpGet]
+        [Route("passenger-earned-reward-points")]
+        public async Task<HttpResponseMessage> PassengerEarnedRewardPoints(string passengerId)
+        {
+            //var result = await RewardPointService.GetPassengerPoints(passengerId);
+            return Request.CreateResponse(HttpStatusCode.OK);
+            //if (!string.IsNullOrEmpty(pID))
+            //{
+            //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
+            //    {
+            //        var user = context.UserProfiles.Where(u => u.UserID == pID).FirstOrDefault();
+
+            //        if (user == null)
+            //        {
+            //            response.error = true;
+            //            response.message = AppMessage.userNotFound;
+            //            return Request.CreateResponse(HttpStatusCode.OK, response);
+            //        }
+
+            //        dic = new Dictionary<dynamic, dynamic>
+            //                    {
+            //                        { "rewardPoints", user.RewardPoints }
+            //                    };
+            //        response.error = false;
+            //        response.message = AppMessage.msgSuccess;
+            //        response.data = dic;
+            //        return Request.CreateResponse(HttpStatusCode.OK, response);
+            //    }
+            //}
+            //else
+            //{
+            //    response.error = true;
+            //    response.message = AppMessage.invalidParameters;
+            //    return Request.CreateResponse(HttpStatusCode.OK, response);
+            //}
+        }
+
+        [HttpPost]
+        [Route("redeem-reward-points")]
+        public async Task<HttpResponseMessage> RedeemRewardPoints([FromBody] PassengerReedemRewardRequsest model)
+        {
+            var result = await RewardPointService.ReedemPassengerPoints(model);
+            if (result == 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Message = ResponseKeys.failedToUpdate
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    //Data = new PassengerReedemRewardResponse
+                    //{
+                    //    RewardPoint = model.,
+                    //    WalletAmount = model.CountryCode,
+                    //}
+                });
+            }
+        }
+
+        [HttpGet]
+        [Route("reward-points-list")]
+        public async Task<HttpResponseMessage> RewardPointsList()
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new RewardPointResponse
+                {
+                    Rewards = await RewardPointService.GetRewards()
+                }
+            });
         }
 
         #endregion
@@ -831,21 +831,14 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("trip-details")]
-        public async Task<HttpResponseMessage> TripDetails(string tripId)
+        public async Task<HttpResponseMessage> TripDetails([FromUri] PassengerTripDetailRequest model)
         {
-            if (!string.IsNullOrEmpty(tripId))
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                    Data = await TripsManagerService.GetTripDetails(tripId)
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
-            }
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = await TripsManagerService.GetTripDetails(model.TripId)
+            });
         }
 
         [HttpPost]
@@ -1005,6 +998,8 @@ namespace API.Controllers
 
         }
         #endregion
+
+        #region Payment Methods
 
         #region Wallet
 
@@ -1548,7 +1543,9 @@ namespace API.Controllers
 
         #endregion
 
-        #region Invite Code
+        #endregion
+
+        #region Notifications
 
         [HttpGet]
         [Route("notifications-list")]
@@ -1748,13 +1745,6 @@ namespace API.Controllers
         #region Booking
 
         [HttpGet]
-        [Route("facilities")]
-        public async Task<HttpResponseMessage> GetFacilities(string tripId)
-        {
-            return Request.CreateResponse(HttpStatusCode.OK);
-        }
-
-        [HttpGet]
         [Route("recent-locations")]
         public async Task<HttpResponseMessage> GetRecentLocations(string passengerId)
         {
@@ -1775,24 +1765,30 @@ namespace API.Controllers
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
             }
-            
+
         }
 
         [HttpPost]
         [Route("estimate-fare")]
-        public async Task<HttpResponseMessage> EstimateFare(EstimateFare model)
+        public async Task<HttpResponseMessage> EstimateFare(EstimateFareRequest model)
         {
-            decimal totalFare = 0;
             if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(model.ApplicationAuthorizeArea), model.PickUpLatitude, model.PickUpLongitude))
             {
-                totalFare = await TripsManagerService.CalculateEstimatedFare(model.PickUpArea,model.PickUpLatitude,model.PickUpLongitude,model.DropOffArea,model.DropOffLatitude,model.DropOffLongitutde);
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    Data = await FareManagerService.GetFareEstimate(model.PickUpPostalCode, model.PickUpLatitude, model.PickUpLongitude, model.MidwayPostalCode, model.MidwayLatitude, model.MidwayLongitude, model.DropOffPostalCode, model.DropOffLatitude, model.DropOffLongitutde, model.PolyLine)
+                });
             }
-            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            else
             {
-                Error = false,
-                Message = ResponseKeys.msgSuccess,
-                Data = totalFare
-            });
+                return Request.CreateResponse(HttpStatusCode.NoContent, new ResponseWrapper
+                {
+                    Error = true,
+                    Message = ResponseKeys.serviceNotAvailable,
+                });
+            }
         }
 
         [HttpPost]

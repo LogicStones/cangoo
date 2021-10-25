@@ -22,7 +22,7 @@ namespace DTOs.API
         public List<RewardDetails> Rewards { get; set; } = new List<RewardDetails>();
     }
 
-    public class PassengerReedemReward
+    public class PassengerReedemRewardRequsest
     {
         public string PassengerId { get; set; }
         public int RewardId { get; set; }

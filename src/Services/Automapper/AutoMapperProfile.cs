@@ -31,7 +31,7 @@ namespace Services.Automapper
             CreateMap<UserProfile, PassengerProfileDTO>();
             CreateMap<Facility, FacilitiyDTO>();
             CreateMap<PassengerPlace, AddPassengerPlaceRequest>().ReverseMap();
-            CreateMap<TrustedContact, UpdateTrustedContact>().ReverseMap();
+            CreateMap<TrustedContact, UpdateTrustedContactRequest>().ReverseMap();
             //CreateMap<UserDTO, UserJson>().ReverseMap();
             //CreateMap<UserDTO, UserProfileModelJson>().ReverseMap();
             //CreateMap<UserDTO, RegistrationModelJson>().ReverseMap();

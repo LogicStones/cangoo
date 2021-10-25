@@ -19,7 +19,6 @@ namespace Services
             {
                 var facilities = await context.Facilities.Where(f => f.isActive == true).ToListAsync();
                 return AutoMapperConfig._mapper.Map<List<Facility>, List<FacilitiyDTO>>(facilities);
-
             }
         }
     }

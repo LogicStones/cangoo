@@ -22,7 +22,7 @@ namespace Services
             }
         }
 
-        public static async Task<int> ReedemPassengerPoints(PassengerReedemReward model)
+        public static async Task<int> ReedemPassengerPoints(PassengerReedemRewardRequsest model)
         {
             using (CangooEntities dbContext = new CangooEntities())
             {

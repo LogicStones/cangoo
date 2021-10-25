@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DTOs.API
 {
-    public class UpdateTrustedContact : TrustedContactDetails
+    public class UpdateTrustedContactRequest : TrustedContactDetails
     {
         [Required]
         public Guid PassengerId { get; set; }

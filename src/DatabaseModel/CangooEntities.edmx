@@ -715,6 +715,26 @@
           <Property Name="ApplicationUserTypeID" Type="int" Nullable="false" />
           <Property Name="ApplicationID" Type="uniqueidentifier" Nullable="false" />
         </EntityType>
+        <EntityType Name="Notifications">
+          <Key>
+            <PropertyRef Name="PopupID" />
+          </Key>
+          <Property Name="PopupID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ReceiverID" Type="int" Nullable="false" />
+          <Property Name="Title" Type="varchar(max)" />
+          <Property Name="RidirectURL" Type="varchar(max)" />
+          <Property Name="Text" Type="varchar(max)" />
+          <Property Name="LinkButtonText" Type="varchar" MaxLength="50" />
+          <Property Name="StartDate" Type="datetime" />
+          <Property Name="Image" Type="varchar" MaxLength="200" />
+          <Property Name="ExpiryDate" Type="datetime" />
+          <Property Name="ButtonText" Type="varchar" MaxLength="50" />
+          <Property Name="ApplicationID" Type="uniqueidentifier" />
+          <Property Name="ResellerId" Type="uniqueidentifier" />
+          <Property Name="CreatedAt" Type="datetime" />
+          <Property Name="UserID" Type="uniqueidentifier" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+        </EntityType>
         <EntityType Name="PassengerPlaces">
           <Key>
             <PropertyRef Name="ID" />
@@ -865,6 +885,17 @@
           <Property Name="CreatedAt" Type="datetime" />
           <Property Name="IsActive" Type="bit" Nullable="false" />
         </EntityType>
+        <EntityType Name="RideServicesAreaCategoryFare">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="CategoryID" Type="int" />
+          <Property Name="AreaID" Type="uniqueidentifier" />
+          <Property Name="RideServicesFareManagerID" Type="uniqueidentifier" />
+          <Property Name="ApplicationID" Type="uniqueidentifier" />
+          <Property Name="ResellerID" Type="uniqueidentifier" />
+        </EntityType>
         <EntityType Name="RideServicesAreaFare">
           <Key>
             <PropertyRef Name="ID" />
@@ -880,6 +911,17 @@
           <Property Name="ID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
           <Property Name="CategoryID" Type="int" />
           <Property Name="RideServicesID" Type="uniqueidentifier" />
+        </EntityType>
+        <EntityType Name="RideServicesDistanceRanges">
+          <Key>
+            <PropertyRef Name="RangeID" />
+          </Key>
+          <Property Name="RangeID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="Range" Type="varchar" MaxLength="50" />
+          <Property Name="Charges" Type="money" />
+          <Property Name="RideServicesID" Type="uniqueidentifier" />
+          <Property Name="ApplicationID" Type="uniqueidentifier" />
+          <Property Name="ShiftID" Type="int" />
         </EntityType>
         <EntityType Name="RideServicesFareManager">
           <Key>
@@ -938,6 +980,13 @@
           <Property Name="RideServicesID" Type="uniqueidentifier" />
           <Property Name="ApplicationID" Type="uniqueidentifier" />
           <Property Name="ShiftID" Type="int" />
+        </EntityType>
+        <EntityType Name="RideServicesShift">
+          <Key>
+            <PropertyRef Name="ShiftID" />
+          </Key>
+          <Property Name="ShiftID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ShiftName" Type="varchar" MaxLength="50" />
         </EntityType>
         <EntityType Name="RideServicesTimeRanges">
           <Key>
@@ -2491,6 +2540,7 @@
           <EntitySet Name="LogCaptainOnlineVehicle" EntityType="Self.LogCaptainOnlineVehicle" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Modules" EntityType="Self.Modules" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="NewsFeed" EntityType="Self.NewsFeed" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Notifications" EntityType="Self.Notifications" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PassengerPlaces" EntityType="Self.PassengerPlaces" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PaymentModes" EntityType="Self.PaymentModes" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PaymentStatus" EntityType="Self.PaymentStatus" Schema="dbo" store:Type="Tables" />
@@ -2502,10 +2552,13 @@
           <EntitySet Name="Resellers" EntityType="Self.Resellers" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RewardPointsManager" EntityType="Self.RewardPointsManager" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesArea" EntityType="Self.RideServicesArea" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="RideServicesAreaCategoryFare" EntityType="Self.RideServicesAreaCategoryFare" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesAreaFare" EntityType="Self.RideServicesAreaFare" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesCategoryFare" EntityType="Self.RideServicesCategoryFare" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="RideServicesDistanceRanges" EntityType="Self.RideServicesDistanceRanges" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesFareManager" EntityType="Self.RideServicesFareManager" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesFareRanges" EntityType="Self.RideServicesFareRanges" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="RideServicesShift" EntityType="Self.RideServicesShift" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesTimeRanges" EntityType="Self.RideServicesTimeRanges" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Settings" EntityType="Self.Settings" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="SharedRideBlockedUsers" EntityType="Self.SharedRideBlockedUsers" Schema="dbo" store:Type="Tables" />
@@ -4718,6 +4771,10 @@
           <EntitySet Name="RideServicesTimeRanges" EntityType="CangooModel.RideServicesTimeRanx" />
           <EntitySet Name="TrustedContacts" EntityType="CangooModel.TrustedContact" />
           <EntitySet Name="RewardPointsManagers" EntityType="CangooModel.RewardPointsManager" />
+          <EntitySet Name="Notifications" EntityType="CangooModel.Notification" />
+          <EntitySet Name="RideServicesAreaCategoryFares" EntityType="CangooModel.RideServicesAreaCategoryFare" />
+          <EntitySet Name="RideServicesDistanceRanges" EntityType="CangooModel.RideServicesDistanceRanx" />
+          <EntitySet Name="RideServicesShifts" EntityType="CangooModel.RideServicesShift" />
         </EntityContainer>
         <ComplexType Name="FetchAdminAnnualEarningAndProfit_Result">
           <Property Type="String" Name="Month" Nullable="true" MaxLength="30" />
@@ -7024,6 +7081,55 @@
           <Property Name="ResellerID" Type="Guid" />
           <Property Name="CreatedAt" Type="DateTime" Precision="3" />
           <Property Name="UserID" Type="Guid" />
+        </EntityType>
+        <EntityType Name="Notification">
+          <Key>
+            <PropertyRef Name="PopupID" />
+          </Key>
+          <Property Name="PopupID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ReceiverID" Type="Int32" Nullable="false" />
+          <Property Name="Title" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="RidirectURL" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="Text" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="LinkButtonText" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="StartDate" Type="DateTime" Precision="3" />
+          <Property Name="Image" Type="String" MaxLength="200" FixedLength="false" Unicode="false" />
+          <Property Name="ExpiryDate" Type="DateTime" Precision="3" />
+          <Property Name="ButtonText" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="ApplicationID" Type="Guid" />
+          <Property Name="ResellerId" Type="Guid" />
+          <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+          <Property Name="UserID" Type="Guid" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+        </EntityType>
+        <EntityType Name="RideServicesAreaCategoryFare">
+          <Key>
+            <PropertyRef Name="ID" />
+          </Key>
+          <Property Name="ID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="CategoryID" Type="Int32" />
+          <Property Name="AreaID" Type="Guid" />
+          <Property Name="RideServicesFareManagerID" Type="Guid" />
+          <Property Name="ApplicationID" Type="Guid" />
+          <Property Name="ResellerID" Type="Guid" />
+        </EntityType>
+        <EntityType Name="RideServicesDistanceRanx">
+          <Key>
+            <PropertyRef Name="RangeID" />
+          </Key>
+          <Property Name="RangeID" Type="Guid" Nullable="false" />
+          <Property Name="Range" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="Charges" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="RideServicesID" Type="Guid" />
+          <Property Name="ApplicationID" Type="Guid" />
+          <Property Name="ShiftID" Type="Int32" />
+        </EntityType>
+        <EntityType Name="RideServicesShift">
+          <Key>
+            <PropertyRef Name="ShiftID" />
+          </Key>
+          <Property Name="ShiftID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ShiftName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
         </EntityType>
       </Schema>
     </edmx:ConceptualModels>
@@ -10949,6 +11055,59 @@
                 <ScalarProperty Name="RedeemAmount" ColumnName="RedeemAmount" />
                 <ScalarProperty Name="Deduction" ColumnName="Deduction" />
                 <ScalarProperty Name="RewardID" ColumnName="RewardID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Notifications">
+            <EntityTypeMapping TypeName="CangooModel.Notification">
+              <MappingFragment StoreEntitySet="Notifications">
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="ResellerId" ColumnName="ResellerId" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="ButtonText" ColumnName="ButtonText" />
+                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
+                <ScalarProperty Name="Image" ColumnName="Image" />
+                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
+                <ScalarProperty Name="LinkButtonText" ColumnName="LinkButtonText" />
+                <ScalarProperty Name="Text" ColumnName="Text" />
+                <ScalarProperty Name="RidirectURL" ColumnName="RidirectURL" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="ReceiverID" ColumnName="ReceiverID" />
+                <ScalarProperty Name="PopupID" ColumnName="PopupID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RideServicesAreaCategoryFares">
+            <EntityTypeMapping TypeName="CangooModel.RideServicesAreaCategoryFare">
+              <MappingFragment StoreEntitySet="RideServicesAreaCategoryFare">
+                <ScalarProperty Name="ResellerID" ColumnName="ResellerID" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="RideServicesFareManagerID" ColumnName="RideServicesFareManagerID" />
+                <ScalarProperty Name="AreaID" ColumnName="AreaID" />
+                <ScalarProperty Name="CategoryID" ColumnName="CategoryID" />
+                <ScalarProperty Name="ID" ColumnName="ID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RideServicesDistanceRanges">
+            <EntityTypeMapping TypeName="CangooModel.RideServicesDistanceRanx">
+              <MappingFragment StoreEntitySet="RideServicesDistanceRanges">
+                <ScalarProperty Name="ShiftID" ColumnName="ShiftID" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="RideServicesID" ColumnName="RideServicesID" />
+                <ScalarProperty Name="Charges" ColumnName="Charges" />
+                <ScalarProperty Name="Range" ColumnName="Range" />
+                <ScalarProperty Name="RangeID" ColumnName="RangeID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="RideServicesShifts">
+            <EntityTypeMapping TypeName="CangooModel.RideServicesShift">
+              <MappingFragment StoreEntitySet="RideServicesShift">
+                <ScalarProperty Name="ShiftName" ColumnName="ShiftName" />
+                <ScalarProperty Name="ShiftID" ColumnName="ShiftID" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

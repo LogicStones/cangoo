@@ -70,6 +70,7 @@
     <Compile Include="Automapper\AutoMapperConfig.cs" />
     <Compile Include="Automapper\AutoMapperProfile.cs" />
     <Compile Include="DriverService.cs" />
+    <Compile Include="FareManagerService.cs" />
     <Compile Include="FavoritesService.cs" />
     <Compile Include="FacilitiesManagerService.cs" />
     <Compile Include="LanguageService.cs" />
@@ -85,6 +86,7 @@
     <Compile Include="TripsManagerService.cs" />
     <Compile Include="TrustedContactManagerService.cs" />
     <Compile Include="UserService.cs" />
+    <Compile Include="VehiclesService.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Constants\Constants.csproj">

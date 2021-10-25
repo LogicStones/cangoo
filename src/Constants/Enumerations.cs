@@ -32,9 +32,25 @@ namespace Constants
 	}
 
 	public enum PassengerPlacesTypes
-    {
+	{
 		Home = 1,
 		Work = 2,
 		Other = 3
-    }
+	}
+
+	public enum VehicleCategories
+	{
+		Standard = 1,
+		Comfort,
+		Premium,
+		Grossraum,//XL
+		GreenTaxi
+	}
+	
+	public enum FareManagerShifts
+	{
+		Morning = 1,
+		Evening,
+		Weekend
+	}
 }
