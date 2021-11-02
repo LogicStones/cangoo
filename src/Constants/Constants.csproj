@@ -42,6 +42,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Enumerations.cs" />
+    <Compile Include="Formats.cs" />
     <Compile Include="NotificationKeys.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResponseKeys.cs" />

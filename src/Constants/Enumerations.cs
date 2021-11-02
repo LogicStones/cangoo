@@ -24,11 +24,12 @@ namespace Constants
 		Arrived = 3,
 		RequestSent = 4,    //Request Sent
 		Picked = 5,
-		Cancel = 6,     //Trip Canceled | ReRouting
-		PaymentPending = 7,     //End Ride
+		Cancel = 6,     //Trip Canceled
+		PaymentPending = 7,     //End Ride   //"Payment Pending"
 		TimeOut = 8,
 		LaterBookingAccepted = 9,
-		PaymentRequested = 10
+		PaymentRequested = 10,   //Payment Requested
+		ReRouting = 11   //ReRouting
 	}
 
 	public enum PassengerPlacesTypes
@@ -46,11 +47,29 @@ namespace Constants
 		Grossraum,//XL
 		GreenTaxi
 	}
-	
+
 	public enum FareManagerShifts
 	{
 		Morning = 1,
 		Evening,
 		Weekend
+	}
+
+	public enum BookingTypes
+	{
+		Normal = 1,
+		Later,
+		Shared,
+		WalkIn
+	}
+
+	public enum BookingModes
+	{
+		Voucher = 1,
+		UserWebPortal,
+		UserApplication,
+		Hotel,
+		Karhoo,
+		Dispatcher
 	}
 }

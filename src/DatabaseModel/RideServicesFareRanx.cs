@@ -17,8 +17,9 @@ namespace DatabaseModel
         public System.Guid RangeID { get; set; }
         public string Range { get; set; }
         public Nullable<decimal> Charges { get; set; }
-        public Nullable<System.Guid> RideServicesID { get; set; }
+        public Nullable<System.Guid> RSFMID { get; set; }
         public Nullable<System.Guid> ApplicationID { get; set; }
         public Nullable<int> ShiftID { get; set; }
+        public Nullable<System.Guid> ResellerId { get; set; }
     }
 }

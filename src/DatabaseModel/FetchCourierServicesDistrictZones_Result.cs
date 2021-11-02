@@ -10,15 +10,14 @@
 namespace DatabaseModel
 {
     using System;
-    using System.Collections.Generic;
     
-    public partial class RideServicesAreaCategoryFare
+    public partial class FetchCourierServicesDistrictZones_Result
     {
-        public int ID { get; set; }
-        public int CategoryID { get; set; }
-        public System.Guid AreaID { get; set; }
-        public Nullable<System.Guid> RSFMID { get; set; }
-        public Nullable<System.Guid> ApplicationID { get; set; }
-        public Nullable<System.Guid> ResellerID { get; set; }
+        public int DistrictID { get; set; }
+        public string DistrictName { get; set; }
+        public int Xindex { get; set; }
+        public int Yindex { get; set; }
+        public string Color { get; set; }
+        public string ZoneName { get; set; }
     }
 }

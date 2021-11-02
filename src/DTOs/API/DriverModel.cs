@@ -1,10 +1,22 @@
-﻿using System;
+﻿using DTOs.Shared;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
 namespace DTOs.API
 {
+    public class DatabaseOlineDriversDTO
+    {
+        public Guid CaptainID { get; set; }
+        public string Name { get; set; }
+        public bool? IsPriorityHoursActive { get; set; }
+        public string DeviceToken { get; set; }
+        public double? Rating { get; set; }
+        public string LaterBookingNotificationTone { get; set; }
+        public string NormalBookingNotificationTone { get; set; }
+    }
+
     public class PassengerRequest
     {
         public string pID { get; set; }
@@ -238,12 +250,12 @@ namespace DTOs.API
         public string email { get; set; }
         public string phone { get; set; }
         public string shareCode { get; set; }
-        public List<Facilities> captainFacilitiesList { get; set; }
+        public List<FacilitiyDTO> captainFacilitiesList { get; set; }
         public string make { get; set; }
         public string model { get; set; }
         public string number { get; set; }
         public string seatingCapacity { get; set; }
-        public List<Facilities> vehicleFacilitiesList { get; set; }
+        public List<FacilitiyDTO> vehicleFacilitiesList { get; set; }
     }
 
     public class CaptainStats
@@ -270,20 +282,7 @@ namespace DTOs.API
         public string laterBookingNotificationTone { get; set; }
         public string captainID { get; set; }
     }
-
-    public class Facilities
-	{
-		public string facilityID { get; set; }
-		public string facilityName { get; set; }
-		public string facilityIcon { get; set; }
-    }
-
-    public class CanclReasonsModel
-    {
-        public int id { get; set; }
-        public string reason { get; set; }
-    }
-
+    
     public class AcceptRideDriverModel
     {
         public string pickupLocationLatitude { get; set; }
@@ -297,7 +296,7 @@ namespace DTOs.API
         public string phone { get; set; }
         public bool isWeb { get; set; }
         public bool isLaterBooking { get; set; }
-        public List<CanclReasonsModel> lstCancel = new List<CanclReasonsModel>();
+        public List<CanclReasonsDTO> lstCancel = new List<CanclReasonsDTO>();
         public string tripID { get; set; }
         public string laterBookingPickUpDateTime { get; set; }
         public string isDispatchedRide { get; set; }
@@ -419,6 +418,6 @@ namespace DTOs.API
         public string model { get; set; }
         public string make { get; set; }
 		public string paymentMode { get; set; }
-		public List<Facilities> facilities { get; set; }
+		public List<FacilitiyDTO> facilities { get; set; }
 	}
 }

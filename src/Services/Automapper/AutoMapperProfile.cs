@@ -29,9 +29,27 @@ namespace Services.Automapper
         {
             CreateMap<AspNetUser, PassengerIdentityDTO>();
             CreateMap<UserProfile, PassengerProfileDTO>();
+            CreateMap<CancelReason, CanclReasonsDTO>();
             CreateMap<Facility, FacilitiyDTO>();
             CreateMap<PassengerPlace, AddPassengerPlaceRequest>().ReverseMap();
             CreateMap<TrustedContact, UpdateTrustedContactRequest>().ReverseMap();
+            CreateMap<spGetOnlineDriver_Result, DatabaseOlineDriversDTO>().ReverseMap();
+            CreateMap<TripRequestLogDTO, TripRequestLog>().ReverseMap();
+            //CreateMap<Trip, TripDTO>().ReverseMap();
+
+
+
+            //DestinationType obj = Mapper.Map<SourceType, DestinationType>(sourceValueObject);
+            //List<DestinationType> listObj = Mapper.Map<List<SourceType>, List<DestinationType>>(enumarableSourceValueObject);
+
+            //int noOfRowUpdated = ctx.Database.ExecuteSqlCommand("Update student set studentname = 'changed student by command' where studentid = 1");
+            //int noOfRowInserted = ctx.Database.ExecuteSqlCommand("insert into student(studentname) values('New Student')");
+            //int noOfRowDeleted = ctx.Database.ExecuteSqlCommand("delete from student where studentid = 1");
+
+            //var result = await dbContext.UserProfiles.Where(up => up.UserID.Equals(profile.UserID)).FirstOrDefaultAsync();
+
+
+
             //CreateMap<UserDTO, UserJson>().ReverseMap();
             //CreateMap<UserDTO, UserProfileModelJson>().ReverseMap();
             //CreateMap<UserDTO, RegistrationModelJson>().ReverseMap();

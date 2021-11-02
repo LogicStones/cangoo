@@ -10,12 +10,14 @@
 namespace DatabaseModel
 {
     using System;
-    using System.Collections.Generic;
     
-    public partial class RideServicesCategoryFare
+    public partial class FetchRideServiceArea_Result
     {
-        public int ID { get; set; }
-        public Nullable<int> CategoryID { get; set; }
-        public Nullable<System.Guid> RideServicesID { get; set; }
+        public Nullable<long> RowNo { get; set; }
+        public Nullable<int> Total { get; set; }
+        public string AreaID { get; set; }
+        public string Area { get; set; }
+        public string CreatedAt { get; set; }
+        public bool IsActive { get; set; }
     }
 }

@@ -837,7 +837,7 @@ namespace API.Controllers
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
-                Data = await TripsManagerService.GetTripDetails(model.TripId)
+                Data = await TripsManagerService.GetFullTripById(model.TripId)
             });
         }
 
@@ -1770,7 +1770,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("estimate-fare")]
-        public async Task<HttpResponseMessage> EstimateFare(EstimateFareRequest model)
+        public async Task<HttpResponseMessage> EstimateFare([FromBody] EstimateFareRequest model)
         {
             if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(model.ApplicationAuthorizeArea), model.PickUpLatitude, model.PickUpLongitude))
             {
@@ -1778,7 +1778,10 @@ namespace API.Controllers
                 {
                     Error = false,
                     Message = ResponseKeys.msgSuccess,
-                    Data = await FareManagerService.GetFareEstimate(model.PickUpPostalCode, model.PickUpLatitude, model.PickUpLongitude, model.MidwayPostalCode, model.MidwayLatitude, model.MidwayLongitude, model.DropOffPostalCode, model.DropOffLatitude, model.DropOffLongitutde, model.PolyLine)
+                    Data = await FareManagerService.GetFareEstimate(model.PickUpPostalCode, model.PickUpLatitude, model.PickUpLongitude,
+                    model.MidwayPostalCode, model.MidwayLatitude, model.MidwayLongitude,
+                    model.DropOffPostalCode, model.DropOffLatitude, model.DropOffLongitutde,
+                    model.PolyLine, model.InBoundTimeInSeconds, model.InBoundDistanceInMeters, model.OutBoundTimeInSeconds, model.OutBoundDistanceInMeters)
                 });
             }
             else
@@ -1786,71 +1789,58 @@ namespace API.Controllers
                 return Request.CreateResponse(HttpStatusCode.NoContent, new ResponseWrapper
                 {
                     Error = true,
-                    Message = ResponseKeys.serviceNotAvailable,
+                    Message = ResponseKeys.userOutOfRange,
                 });
             }
         }
 
         [HttpPost]
         [Route("book-trip")]
-        public async Task<HttpResponseMessage> BookTrip(string tripId)
+        public async Task<HttpResponseMessage> BookTrip([FromBody] BookTripRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(model.ApplicationAuthorizeArea), model.PickUpLatitude, model.PickUpLongitude))
+            {
+                await TripsManagerService.BookNewTrip(model);
+
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.NoContent, new ResponseWrapper
+                {
+                    Message = ResponseKeys.userOutOfRange,
+                });
+            }
         }
 
         [HttpPost]  //Cancel normal booking which is not accepted yet
         [Route("time-out")]
-        public async Task<HttpResponseMessage> TimeOut([FromBody] string model)
+        public async Task<HttpResponseMessage> TimeOut([FromBody] TripTimeOutRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
-            //if (model != null && !string.IsNullOrEmpty(model.pID) && !string.IsNullOrEmpty(model.tripID))
-            //{
-            //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //    {
-            //        var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
-            //        if (tp != null)
-            //        {
-            //            if (tp.TripStatusID != (int)App_Start.TripStatus.RequestSent) //Ride already cancelled or accepted.
-            //            {
-            //                response.error = true;
-            //                response.message = AppMessage.tripAlreadyBooked;
-            //                return Request.CreateResponse(HttpStatusCode.OK, response);
-            //            }
-
-            //            tp.TripStatusID = (int)App_Start.TripStatus.TimeOut;
-            //            tp.TripEndDatetime = DateTime.UtcNow;
-            //            context.SaveChanges();
-            //            var task = Task.Run(async () =>
-            //            {
-            //                FireBaseController fc = new FireBaseController();
-            //                await fc.delTripNode(model.tripID);
-            //            });
-            //            response.error = false;
-            //            response.message = AppMessage.msgSuccess;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-            //        else
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.tripNotFound;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    response.error = true;
-            //    response.message = AppMessage.invalidParameters;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
-
+            var responseKey = await TripsManagerService.TimeOutTrip(model.TripId, model.PassengerId);
+            if (responseKey.Equals(ResponseKeys.notFound))
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper { Message = ResponseKeys.notFound });
+            }
+            else if (responseKey.Equals(ResponseKeys.tripAlreadyBooked))
+            {
+                return Request.CreateResponse(HttpStatusCode.NoContent, new ResponseWrapper { Message = ResponseKeys.tripAlreadyBooked });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper { Message = ResponseKeys.msgSuccess, Error = false });
+            }
         }
 
         [HttpPost]
         [Route("cancel-trip")]
-        public async Task<HttpResponseMessage> CancelTrip(string tripId)
+        public async Task<HttpResponseMessage> CancelTrip(CancelTripRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            return Request.CreateResponse(HttpStatusCode.OK, await TripsManagerService.CancelTripByPassenger(model.TripId, model.PassengerId, model.DistanceTravelled, model.CancelID, model.IsLaterBooking));
         }
 
         [HttpPost]

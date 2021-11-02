@@ -31,10 +31,10 @@ namespace DatabaseModel
         public string DeviceToken { get; set; }
         public Nullable<System.Guid> ApplicationID { get; set; }
         public Nullable<System.Guid> ResellerID { get; set; }
+        public string Categories { get; set; }
         public string Facilities { get; set; }
         public string RegistrationYear { get; set; }
         public string RegistrationCertificate { get; set; }
         public string OriginalRegistrationCertificate { get; set; }
-        public string Categories { get; set; }
     }
 }

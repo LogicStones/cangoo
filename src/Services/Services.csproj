@@ -40,6 +40,7 @@
     <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
+    <Reference Include="FireSharp, Version=1.1.0.0, Culture=neutral, PublicKeyToken=null" />
     <Reference Include="Microsoft.IdentityModel.Logging, Version=1.1.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.IdentityModel.Logging.1.1.2\lib\net451\Microsoft.IdentityModel.Logging.dll</HintPath>
     </Reference>
@@ -53,6 +54,7 @@
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Device" />
     <Reference Include="System.IdentityModel.Tokens.Jwt, Version=5.1.2.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\System.IdentityModel.Tokens.Jwt.5.1.2\lib\net451\System.IdentityModel.Tokens.Jwt.dll</HintPath>
     </Reference>
@@ -66,17 +68,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ApplicationSettingService.cs" />
     <Compile Include="AuthenticationService.cs" />
     <Compile Include="Automapper\AutoMapperConfig.cs" />
     <Compile Include="Automapper\AutoMapperProfile.cs" />
+    <Compile Include="CancelReasonsService.cs" />
     <Compile Include="DriverService.cs" />
     <Compile Include="FareManagerService.cs" />
     <Compile Include="FavoritesService.cs" />
-    <Compile Include="FacilitiesManagerService.cs" />
+    <Compile Include="FacilitiesService.cs" />
+    <Compile Include="FirebaseService.cs" />
     <Compile Include="LanguageService.cs" />
     <Compile Include="PassengerPlacesService.cs" />
     <Compile Include="FilesManagerService.cs" />
-    <Compile Include="NotificationService.cs" />
+    <Compile Include="PushyService.cs" />
     <Compile Include="PolygonService.cs" />
     <Compile Include="PromoCodeService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -14,7 +14,7 @@ namespace DatabaseModel
     
     public partial class RideServicesFareManager
     {
-        public System.Guid RideServicesID { get; set; }
+        public System.Guid RSFMID { get; set; }
         public Nullable<decimal> BaseFare { get; set; }
         public Nullable<decimal> BookingFare { get; set; }
         public Nullable<decimal> PerKmFare { get; set; }

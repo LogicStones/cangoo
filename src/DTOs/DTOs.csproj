@@ -43,8 +43,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API\AuthenticationModels.cs" />
+    <Compile Include="API\CancelReasonsModels.cs" />
     <Compile Include="API\DriverModel.cs" />
     <Compile Include="API\FareModels.cs" />
+    <Compile Include="API\FirebaseModels.cs" />
     <Compile Include="API\LanguagesModel.cs" />
     <Compile Include="API\PassengerPlacesModels.cs" />
     <Compile Include="API\FavoriteModels.cs" />
@@ -54,7 +56,7 @@
     <Compile Include="API\TrustedConatctModel.cs" />
     <Compile Include="API\VehicleModels.cs" />
     <Compile Include="Shared\FacilityDTOs.cs" />
-    <Compile Include="API\NotificationModels.cs" />
+    <Compile Include="API\PushyModels.cs" />
     <Compile Include="API\ProfileModels.cs" />
     <Compile Include="API\TripModels.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

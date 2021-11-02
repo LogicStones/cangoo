@@ -12,17 +12,13 @@ namespace DatabaseModel
     using System;
     using System.Collections.Generic;
     
-    public partial class PassengerPlace
+    public partial class PublicHoliday
     {
-        public int ID { get; set; }
-        public int PlacesTypesID { get; set; }
-        public string Name { get; set; }
-        public string Address { get; set; }
-        public string Latitude { get; set; }
-        public string Longitutde { get; set; }
-        public string PassengerId { get; set; }
-        public System.Guid ApplicationID { get; set; }
-        public System.Guid ResellerID { get; set; }
-        public string PostalCode { get; set; }
+        public int Id { get; set; }
+        public string Description { get; set; }
+        public System.DateTime Date { get; set; }
+        public System.Guid ApplicationId { get; set; }
+        public System.Guid ResellerId { get; set; }
+        public bool IsActive { get; set; }
     }
 }

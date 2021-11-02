@@ -10,15 +10,14 @@
 namespace DatabaseModel
 {
     using System;
-    using System.Collections.Generic;
     
-    public partial class RideServicesAreaCategoryFare
+    public partial class FetchPublicHolidays_Result
     {
-        public int ID { get; set; }
-        public int CategoryID { get; set; }
-        public System.Guid AreaID { get; set; }
-        public Nullable<System.Guid> RSFMID { get; set; }
-        public Nullable<System.Guid> ApplicationID { get; set; }
-        public Nullable<System.Guid> ResellerID { get; set; }
+        public Nullable<long> RowNo { get; set; }
+        public Nullable<int> Total { get; set; }
+        public int Id { get; set; }
+        public string Description { get; set; }
+        public string HolidayDate { get; set; }
+        public bool IsActive { get; set; }
     }
 }

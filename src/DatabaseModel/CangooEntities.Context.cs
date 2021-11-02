@@ -49,6 +49,8 @@ namespace DatabaseModel
         public virtual DbSet<CompanyVoucher> CompanyVouchers { get; set; }
         public virtual DbSet<ContactDetail> ContactDetails { get; set; }
         public virtual DbSet<CouponsManager> CouponsManagers { get; set; }
+        public virtual DbSet<CourierServicesDistrict> CourierServicesDistricts { get; set; }
+        public virtual DbSet<CourierServiceZone> CourierServiceZones { get; set; }
         public virtual DbSet<CoworkerQuota> CoworkerQuotas { get; set; }
         public virtual DbSet<DispatchedRidesLog> DispatchedRidesLogs { get; set; }
         public virtual DbSet<Dispatcher> Dispatchers { get; set; }
@@ -62,17 +64,29 @@ namespace DatabaseModel
         public virtual DbSet<FareRanx> FareRanges { get; set; }
         public virtual DbSet<Go4SystemLocations> Go4SystemLocations { get; set; }
         public virtual DbSet<KarhooQuote> KarhooQuotes { get; set; }
+        public virtual DbSet<Language> Languages { get; set; }
         public virtual DbSet<LogCaptainOnlineVehicle> LogCaptainOnlineVehicles { get; set; }
         public virtual DbSet<Module> Modules { get; set; }
         public virtual DbSet<NewsFeed> NewsFeeds { get; set; }
+        public virtual DbSet<Notification> Notifications { get; set; }
+        public virtual DbSet<PassengerPlace> PassengerPlaces { get; set; }
         public virtual DbSet<PaymentMode> PaymentModes { get; set; }
         public virtual DbSet<PaymentStatu> PaymentStatus { get; set; }
         public virtual DbSet<PaymentType> PaymentTypes { get; set; }
         public virtual DbSet<PriorityHourLog> PriorityHourLogs { get; set; }
         public virtual DbSet<PromoManager> PromoManagers { get; set; }
+        public virtual DbSet<PublicHoliday> PublicHolidays { get; set; }
         public virtual DbSet<ReportsLog> ReportsLogs { get; set; }
         public virtual DbSet<ReroutedRidesLog> ReroutedRidesLogs { get; set; }
         public virtual DbSet<Reseller> Resellers { get; set; }
+        public virtual DbSet<RewardPointsManager> RewardPointsManagers { get; set; }
+        public virtual DbSet<RideServicesArea> RideServicesAreas { get; set; }
+        public virtual DbSet<RideServicesAreaCategoryFare> RideServicesAreaCategoryFares { get; set; }
+        public virtual DbSet<RideServicesDistanceRanx> RideServicesDistanceRanges { get; set; }
+        public virtual DbSet<RideServicesFareManager> RideServicesFareManagers { get; set; }
+        public virtual DbSet<RideServicesFareRanx> RideServicesFareRanges { get; set; }
+        public virtual DbSet<RideServicesShift> RideServicesShifts { get; set; }
+        public virtual DbSet<RideServicesTimeRanx> RideServicesTimeRanges { get; set; }
         public virtual DbSet<Setting> Settings { get; set; }
         public virtual DbSet<SharedRideBlockedUser> SharedRideBlockedUsers { get; set; }
         public virtual DbSet<SharedRideParticipant> SharedRideParticipants { get; set; }
@@ -81,33 +95,18 @@ namespace DatabaseModel
         public virtual DbSet<SubscriptionType> SubscriptionTypes { get; set; }
         public virtual DbSet<Transaction> Transactions { get; set; }
         public virtual DbSet<TripRequestLog> TripRequestLogs { get; set; }
+        public virtual DbSet<Trip> Trips { get; set; }
         public virtual DbSet<TripStatu> TripStatus { get; set; }
+        public virtual DbSet<TrustedContact> TrustedContacts { get; set; }
         public virtual DbSet<UserFavoriteCaptain> UserFavoriteCaptains { get; set; }
         public virtual DbSet<UserInvite> UserInvites { get; set; }
+        public virtual DbSet<UserProfile> UserProfiles { get; set; }
         public virtual DbSet<UserPromo> UserPromos { get; set; }
         public virtual DbSet<Vehicle> Vehicles { get; set; }
         public virtual DbSet<VehicleCategory> VehicleCategories { get; set; }
         public virtual DbSet<VehicleMake> VehicleMakes { get; set; }
         public virtual DbSet<VehicleModel> VehicleModels { get; set; }
         public virtual DbSet<WalletTransfer> WalletTransfers { get; set; }
-        public virtual DbSet<Trip> Trips { get; set; }
-        public virtual DbSet<UserProfile> UserProfiles { get; set; }
-        public virtual DbSet<PassengerPlace> PassengerPlaces { get; set; }
-        public virtual DbSet<Language> Languages { get; set; }
-        public virtual DbSet<CourierServicesDistrict> CourierServicesDistricts { get; set; }
-        public virtual DbSet<CourierServiceZone> CourierServiceZones { get; set; }
-        public virtual DbSet<RideServicesArea> RideServicesAreas { get; set; }
-        public virtual DbSet<RideServicesAreaFare> RideServicesAreaFares { get; set; }
-        public virtual DbSet<RideServicesCategoryFare> RideServicesCategoryFares { get; set; }
-        public virtual DbSet<RideServicesFareManager> RideServicesFareManagers { get; set; }
-        public virtual DbSet<RideServicesFareRanx> RideServicesFareRanges { get; set; }
-        public virtual DbSet<RideServicesTimeRanx> RideServicesTimeRanges { get; set; }
-        public virtual DbSet<TrustedContact> TrustedContacts { get; set; }
-        public virtual DbSet<RewardPointsManager> RewardPointsManagers { get; set; }
-        public virtual DbSet<Notification> Notifications { get; set; }
-        public virtual DbSet<RideServicesAreaCategoryFare> RideServicesAreaCategoryFares { get; set; }
-        public virtual DbSet<RideServicesDistanceRanx> RideServicesDistanceRanges { get; set; }
-        public virtual DbSet<RideServicesShift> RideServicesShifts { get; set; }
     
         public virtual int AddApplication(Nullable<System.Guid> resellerID, Nullable<System.Guid> applicationID, string ownerName, string companyName, string logo, string originalLogo, string contractFile, string originalContractFile, string authorizedArea, Nullable<double> percentagePayable, Nullable<double> percentageReceiveable, Nullable<int> subscriptionPlanID, Nullable<System.DateTime> subscriptionDate, Nullable<System.DateTime> paymentDueDate, Nullable<int> subscriptionTypeID, Nullable<int> paymentModeID, Nullable<int> paymentTypeID, Nullable<int> paymentStatusID, string paypalAccountNumber, string address, string taxNumber, string subscribedModules, string paypalEmail, string paypalNationalNumber, string paypalCountryCode, string paypalPhoneExt, Nullable<System.Guid> transactionID, Nullable<System.DateTime> dateTime, Nullable<System.Guid> debitFrom, Nullable<System.Guid> creditTo, string reference, Nullable<decimal> amount)
         {
@@ -3904,6 +3903,278 @@ namespace DatabaseModel
                 new ObjectParameter("resellerId", typeof(System.Guid));
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("VerifyResellerEmailAddress", resellerIdParameter);
+        }
+    
+        public virtual ObjectResult<FetchCangooReward_Result> FetchCangooReward(Nullable<int> displayLength, Nullable<int> displayStart, Nullable<int> sortCol, string sortOrder, string search, Nullable<System.Guid> applicationid)
+        {
+            var displayLengthParameter = displayLength.HasValue ?
+                new ObjectParameter("DisplayLength", displayLength) :
+                new ObjectParameter("DisplayLength", typeof(int));
+    
+            var displayStartParameter = displayStart.HasValue ?
+                new ObjectParameter("DisplayStart", displayStart) :
+                new ObjectParameter("DisplayStart", typeof(int));
+    
+            var sortColParameter = sortCol.HasValue ?
+                new ObjectParameter("SortCol", sortCol) :
+                new ObjectParameter("SortCol", typeof(int));
+    
+            var sortOrderParameter = sortOrder != null ?
+                new ObjectParameter("SortOrder", sortOrder) :
+                new ObjectParameter("SortOrder", typeof(string));
+    
+            var searchParameter = search != null ?
+                new ObjectParameter("Search", search) :
+                new ObjectParameter("Search", typeof(string));
+    
+            var applicationidParameter = applicationid.HasValue ?
+                new ObjectParameter("applicationid", applicationid) :
+                new ObjectParameter("applicationid", typeof(System.Guid));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<FetchCangooReward_Result>("FetchCangooReward", displayLengthParameter, displayStartParameter, sortColParameter, sortOrderParameter, searchParameter, applicationidParameter);
+        }
+    
+        public virtual ObjectResult<FetchCourierServicesDistrictZones_Result> FetchCourierServicesDistrictZones(Nullable<System.Guid> applicationID)
+        {
+            var applicationIDParameter = applicationID.HasValue ?
+                new ObjectParameter("ApplicationID", applicationID) :
+                new ObjectParameter("ApplicationID", typeof(System.Guid));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<FetchCourierServicesDistrictZones_Result>("FetchCourierServicesDistrictZones", applicationIDParameter);
+        }
+    
+        public virtual ObjectResult<FetchCourierServicesZones_Result> FetchCourierServicesZones(Nullable<int> displayLength, Nullable<int> displayStart, Nullable<int> sortCol, string sortOrder, string search, Nullable<System.Guid> applicationID)
+        {
+            var displayLengthParameter = displayLength.HasValue ?
+                new ObjectParameter("DisplayLength", displayLength) :
+                new ObjectParameter("DisplayLength", typeof(int));
+    
+            var displayStartParameter = displayStart.HasValue ?
+                new ObjectParameter("DisplayStart", displayStart) :
+                new ObjectParameter("DisplayStart", typeof(int));
+    
+            var sortColParameter = sortCol.HasValue ?
+                new ObjectParameter("SortCol", sortCol) :
+                new ObjectParameter("SortCol", typeof(int));
+    
+            var sortOrderParameter = sortOrder != null ?
+                new ObjectParameter("SortOrder", sortOrder) :
+                new ObjectParameter("SortOrder", typeof(string));
+    
+            var searchParameter = search != null ?
+                new ObjectParameter("Search", search) :
+                new ObjectParameter("Search", typeof(string));
+    
+            var applicationIDParameter = applicationID.HasValue ?
+                new ObjectParameter("ApplicationID", applicationID) :
+                new ObjectParameter("ApplicationID", typeof(System.Guid));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<FetchCourierServicesZones_Result>("FetchCourierServicesZones", displayLengthParameter, displayStartParameter, sortColParameter, sortOrderParameter, searchParameter, applicationIDParameter);
+        }
+    
+        public virtual ObjectResult<FetchPopUpNotification_Result> FetchPopUpNotification(Nullable<int> displayLength, Nullable<int> displayStart, Nullable<int> sortCol, string sortOrder, string search, Nullable<System.Guid> applicationID)
+        {
+            var displayLengthParameter = displayLength.HasValue ?
+                new ObjectParameter("DisplayLength", displayLength) :
+                new ObjectParameter("DisplayLength", typeof(int));
+    
+            var displayStartParameter = displayStart.HasValue ?
+                new ObjectParameter("DisplayStart", displayStart) :
+                new ObjectParameter("DisplayStart", typeof(int));
+    
+            var sortColParameter = sortCol.HasValue ?
+                new ObjectParameter("SortCol", sortCol) :
+                new ObjectParameter("SortCol", typeof(int));
+    
+            var sortOrderParameter = sortOrder != null ?
+                new ObjectParameter("SortOrder", sortOrder) :
+                new ObjectParameter("SortOrder", typeof(string));
+    
+            var searchParameter = search != null ?
+                new ObjectParameter("Search", search) :
+                new ObjectParameter("Search", typeof(string));
+    
+            var applicationIDParameter = applicationID.HasValue ?
+                new ObjectParameter("applicationID", applicationID) :
+                new ObjectParameter("applicationID", typeof(System.Guid));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<FetchPopUpNotification_Result>("FetchPopUpNotification", displayLengthParameter, displayStartParameter, sortColParameter, sortOrderParameter, searchParameter, applicationIDParameter);
+        }
+    
+        public virtual ObjectResult<FetchRideServiceArea_Result> FetchRideServiceArea(Nullable<int> displayLength, Nullable<int> displayStart, Nullable<int> sortCol, string sortOrder, string search, Nullable<System.Guid> applicationID)
+        {
+            var displayLengthParameter = displayLength.HasValue ?
+                new ObjectParameter("DisplayLength", displayLength) :
+                new ObjectParameter("DisplayLength", typeof(int));
+    
+            var displayStartParameter = displayStart.HasValue ?
+                new ObjectParameter("DisplayStart", displayStart) :
+                new ObjectParameter("DisplayStart", typeof(int));
+    
+            var sortColParameter = sortCol.HasValue ?
+                new ObjectParameter("SortCol", sortCol) :
+                new ObjectParameter("SortCol", typeof(int));
+    
+            var sortOrderParameter = sortOrder != null ?
+                new ObjectParameter("SortOrder", sortOrder) :
+                new ObjectParameter("SortOrder", typeof(string));
+    
+            var searchParameter = search != null ?
+                new ObjectParameter("Search", search) :
+                new ObjectParameter("Search", typeof(string));
+    
+            var applicationIDParameter = applicationID.HasValue ?
+                new ObjectParameter("applicationID", applicationID) :
+                new ObjectParameter("applicationID", typeof(System.Guid));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<FetchRideServiceArea_Result>("FetchRideServiceArea", displayLengthParameter, displayStartParameter, sortColParameter, sortOrderParameter, searchParameter, applicationIDParameter);
+        }
+    
+        public virtual int FetchRideServicePrice(Nullable<int> displayLength, Nullable<int> displayStart, Nullable<int> sortCol, string sortOrder, string search, Nullable<System.Guid> applicationID)
+        {
+            var displayLengthParameter = displayLength.HasValue ?
+                new ObjectParameter("DisplayLength", displayLength) :
+                new ObjectParameter("DisplayLength", typeof(int));
+    
+            var displayStartParameter = displayStart.HasValue ?
+                new ObjectParameter("DisplayStart", displayStart) :
+                new ObjectParameter("DisplayStart", typeof(int));
+    
+            var sortColParameter = sortCol.HasValue ?
+                new ObjectParameter("SortCol", sortCol) :
+                new ObjectParameter("SortCol", typeof(int));
+    
+            var sortOrderParameter = sortOrder != null ?
+                new ObjectParameter("SortOrder", sortOrder) :
+                new ObjectParameter("SortOrder", typeof(string));
+    
+            var searchParameter = search != null ?
+                new ObjectParameter("Search", search) :
+                new ObjectParameter("Search", typeof(string));
+    
+            var applicationIDParameter = applicationID.HasValue ?
+                new ObjectParameter("applicationID", applicationID) :
+                new ObjectParameter("applicationID", typeof(System.Guid));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("FetchRideServicePrice", displayLengthParameter, displayStartParameter, sortColParameter, sortOrderParameter, searchParameter, applicationIDParameter);
+        }
+    
+        public virtual ObjectResult<spGetPassengerCancelledTrips_Result> spGetPassengerCancelledTrips(string passengerID, Nullable<int> offSet, Nullable<int> limit)
+        {
+            var passengerIDParameter = passengerID != null ?
+                new ObjectParameter("PassengerID", passengerID) :
+                new ObjectParameter("PassengerID", typeof(string));
+    
+            var offSetParameter = offSet.HasValue ?
+                new ObjectParameter("OffSet", offSet) :
+                new ObjectParameter("OffSet", typeof(int));
+    
+            var limitParameter = limit.HasValue ?
+                new ObjectParameter("Limit", limit) :
+                new ObjectParameter("Limit", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetPassengerCancelledTrips_Result>("spGetPassengerCancelledTrips", passengerIDParameter, offSetParameter, limitParameter);
+        }
+    
+        public virtual ObjectResult<spGetPassengerCompletedTrips_Result> spGetPassengerCompletedTrips(string passengerID, Nullable<int> offSet, Nullable<int> limit)
+        {
+            var passengerIDParameter = passengerID != null ?
+                new ObjectParameter("PassengerID", passengerID) :
+                new ObjectParameter("PassengerID", typeof(string));
+    
+            var offSetParameter = offSet.HasValue ?
+                new ObjectParameter("OffSet", offSet) :
+                new ObjectParameter("OffSet", typeof(int));
+    
+            var limitParameter = limit.HasValue ?
+                new ObjectParameter("Limit", limit) :
+                new ObjectParameter("Limit", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetPassengerCompletedTrips_Result>("spGetPassengerCompletedTrips", passengerIDParameter, offSetParameter, limitParameter);
+        }
+    
+        public virtual ObjectResult<spGetPassengerScheduledTrips_Result> spGetPassengerScheduledTrips(string passengerID, Nullable<int> offSet, Nullable<int> limit)
+        {
+            var passengerIDParameter = passengerID != null ?
+                new ObjectParameter("PassengerID", passengerID) :
+                new ObjectParameter("PassengerID", typeof(string));
+    
+            var offSetParameter = offSet.HasValue ?
+                new ObjectParameter("OffSet", offSet) :
+                new ObjectParameter("OffSet", typeof(int));
+    
+            var limitParameter = limit.HasValue ?
+                new ObjectParameter("Limit", limit) :
+                new ObjectParameter("Limit", typeof(int));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetPassengerScheduledTrips_Result>("spGetPassengerScheduledTrips", passengerIDParameter, offSetParameter, limitParameter);
+        }
+    
+        public virtual ObjectResult<spGetTripDetails_Result> spGetTripDetails(Nullable<System.Guid> tripID)
+        {
+            var tripIDParameter = tripID.HasValue ?
+                new ObjectParameter("tripID", tripID) :
+                new ObjectParameter("tripID", typeof(System.Guid));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetTripDetails_Result>("spGetTripDetails", tripIDParameter);
+        }
+    
+        public virtual int spUpdatePassengerPlaces(Nullable<int> type, Nullable<int> id, string name, string address, string latitude, string longitutde)
+        {
+            var typeParameter = type.HasValue ?
+                new ObjectParameter("type", type) :
+                new ObjectParameter("type", typeof(int));
+    
+            var idParameter = id.HasValue ?
+                new ObjectParameter("id", id) :
+                new ObjectParameter("id", typeof(int));
+    
+            var nameParameter = name != null ?
+                new ObjectParameter("name", name) :
+                new ObjectParameter("name", typeof(string));
+    
+            var addressParameter = address != null ?
+                new ObjectParameter("address", address) :
+                new ObjectParameter("address", typeof(string));
+    
+            var latitudeParameter = latitude != null ?
+                new ObjectParameter("latitude", latitude) :
+                new ObjectParameter("latitude", typeof(string));
+    
+            var longitutdeParameter = longitutde != null ?
+                new ObjectParameter("longitutde", longitutde) :
+                new ObjectParameter("longitutde", typeof(string));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("spUpdatePassengerPlaces", typeParameter, idParameter, nameParameter, addressParameter, latitudeParameter, longitutdeParameter);
+        }
+    
+        public virtual ObjectResult<FetchPublicHolidays_Result> FetchPublicHolidays(Nullable<int> displayLength, Nullable<int> displayStart, Nullable<int> sortCol, string sortOrder, string search, Nullable<System.Guid> applicationID)
+        {
+            var displayLengthParameter = displayLength.HasValue ?
+                new ObjectParameter("DisplayLength", displayLength) :
+                new ObjectParameter("DisplayLength", typeof(int));
+    
+            var displayStartParameter = displayStart.HasValue ?
+                new ObjectParameter("DisplayStart", displayStart) :
+                new ObjectParameter("DisplayStart", typeof(int));
+    
+            var sortColParameter = sortCol.HasValue ?
+                new ObjectParameter("SortCol", sortCol) :
+                new ObjectParameter("SortCol", typeof(int));
+    
+            var sortOrderParameter = sortOrder != null ?
+                new ObjectParameter("SortOrder", sortOrder) :
+                new ObjectParameter("SortOrder", typeof(string));
+    
+            var searchParameter = search != null ?
+                new ObjectParameter("Search", search) :
+                new ObjectParameter("Search", typeof(string));
+    
+            var applicationIDParameter = applicationID.HasValue ?
+                new ObjectParameter("ApplicationID", applicationID) :
+                new ObjectParameter("ApplicationID", typeof(System.Guid));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<FetchPublicHolidays_Result>("FetchPublicHolidays", displayLengthParameter, displayStartParameter, sortColParameter, sortOrderParameter, searchParameter, applicationIDParameter);
         }
     }
 }

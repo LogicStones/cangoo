@@ -221,6 +221,9 @@
     <Compile Include="FetchBusinessAdminDashboardTransactions_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="FetchCangooReward_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="FetchCaptainAnnualEarningAndRides_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
@@ -279,6 +282,12 @@
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="FetchCompanyWorkers_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="FetchCourierServicesDistrictZones_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="FetchCourierServicesZones_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="FetchCoworkerByID_Result.cs">
@@ -365,6 +374,9 @@
     <Compile Include="FetchPaymentUsers_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="FetchPopUpNotification_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="FetchPromoCodes_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
@@ -375,6 +387,9 @@
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="FetchResellerTransactionsHistory_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="FetchRideServiceArea_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="FetchSharedRidesHistory_Result.cs">
@@ -516,12 +531,6 @@
     <Compile Include="RideServicesAreaCategoryFare.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
-    <Compile Include="RideServicesAreaFare.cs">
-      <DependentUpon>CangooEntities.tt</DependentUpon>
-    </Compile>
-    <Compile Include="RideServicesCategoryFare.cs">
-      <DependentUpon>CangooEntities.tt</DependentUpon>
-    </Compile>
     <Compile Include="RideServicesDistanceRanx.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
@@ -600,6 +609,15 @@
     <Compile Include="spGetOnlineDriver_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="spGetPassengerCancelledTrips_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="spGetPassengerCompletedTrips_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="spGetPassengerScheduledTrips_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="spGetPassengerTripHistory_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
@@ -607,6 +625,9 @@
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="spGetRideDetail_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="spGetTripDetails_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="spGetTripPassengerDetailsByTripID_Result.cs">

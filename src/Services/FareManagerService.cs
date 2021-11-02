@@ -16,13 +16,47 @@ namespace Services
 {
     public class FareManagerService
     {
+        //public static async Task<string> IsSpecialPromotionApplicable(string pickUplatitude, string pickUplongitude, string dropOfflatitude, string dropOfflongitude, string applicationID,
+        //    ref Dictionary<dynamic, dynamic> dic, bool isLaterBooking = false, DateTime? dt = null)
+        public static async Task<SpecialPromotionDTO> IsSpecialPromotionApplicable(string pickUplatitude, string pickUplongitude,
+            string dropOfflatitude, string dropOfflongitude,
+            string applicationID, bool isLaterBooking = false, DateTime? dt = null)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                dt = isLaterBooking ? dt : DateTime.UtcNow;
+                //var specialPromo = await context.PromoManagers.Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == true && p.StartDate <= dt && p.ExpiryDate >= dt).ToListAsync();
+                var specialPromo = dbContext.PromoManagers.Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == true && p.StartDate <= dt && p.ExpiryDate >= dt).ToList();
+
+                var result = new SpecialPromotionDTO();
+                if (specialPromo.Any())
+                {
+                    foreach (var promotion in specialPromo)
+                    {
+                        if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(promotion.PickupLocation), pickUplatitude, pickUplongitude) &&
+                            PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(promotion.DropOffLocation), dropOfflatitude, dropOfflongitude))
+                        {
+                            //dic["discountType"] = "special";
+                            //dic["discountAmount"] = string.Format("{0:0.00}", (decimal)promotion.Amount);
+                            //promotionID = promotion.PromoID.ToString();
+                            result.DiscountType = "special";
+                            result.DiscountAmount = string.Format("{0:0.00}", (decimal)promotion.Amount);
+                            result.PromotionId = promotion.PromoID.ToString();
+                            break;
+                        }
+                    }
+                }
+                return result;
+            }
+        }
+
         public static async Task<EstimateFareResponse> GetFareEstimate(
             string pickUpPostalCode, string pickUpLatitude, string pickUpLongitude,
             string midwayPostalCode, string midwayLatitude, string midwayLongitude,
             string dropOffPostalCode, string dropOffLatitude, string dropOffLongitutde,
-            string polyLine)
+            string polyLine, string inBoundTimeInSeconds, string inBoundDistanceInMeters, string outBoundTimeInSeconds, string outBoundDistanceInMeters)
         {
-            var result = await PrepareResponseObject(polyLine);
+            var result = await PrepareResponseObject(polyLine, inBoundTimeInSeconds, inBoundDistanceInMeters, outBoundTimeInSeconds, outBoundDistanceInMeters);
 
             var ApplicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
             using (CangooEntities dbContext = new CangooEntities())
@@ -35,15 +69,15 @@ namespace Services
                     //TBD : Get only specified areas with ids (Optimization)
                     var areasList = await GetApplicationRideServiceAreasList(ApplicationId);
 
-                    RideServicesArea PickupServiceArea = new RideServicesArea();
-                    RideServicesArea MidwayServiceArea = new RideServicesArea();
-                    RideServicesArea DropOffServiceArea = new RideServicesArea();
+                    RideServicesArea pickUpServiceArea = new RideServicesArea();
+                    RideServicesArea midWayServiceArea = new RideServicesArea();
+                    RideServicesArea dropOffServiceArea = new RideServicesArea();
 
                     foreach (var area in areasList)
                     {
                         if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(area.AreaLatLong), pickUpLatitude, pickUpLongitude))
                         {
-                            PickupServiceArea = area;
+                            pickUpServiceArea = area;
                         }
 
                         if (!string.IsNullOrEmpty(midwayLatitude))
@@ -51,60 +85,62 @@ namespace Services
 
                             if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(area.AreaLatLong), midwayLatitude, midwayLongitude))
                             {
-                                MidwayServiceArea = area;
+                                midWayServiceArea = area;
                             }
                         }
 
                         if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(area.AreaLatLong), dropOffLatitude, dropOffLongitutde))
                         {
-                            DropOffServiceArea = area;
+                            dropOffServiceArea = area;
                         }
 
                         if (string.IsNullOrEmpty(midwayLatitude))
                         {
-                            if (!PickupServiceArea.AreaID.Equals(Guid.Empty) &&
-                                !DropOffServiceArea.AreaID.Equals(Guid.Empty))
+                            if (!pickUpServiceArea.AreaID.Equals(Guid.Empty) &&
+                                !dropOffServiceArea.AreaID.Equals(Guid.Empty))
                             {
                                 break;
                             }
                         }
                         else
                         {
-                            if (!PickupServiceArea.AreaID.Equals(Guid.Empty) &&
-                                !MidwayServiceArea.Area.Equals(Guid.Empty) &&
-                                !DropOffServiceArea.AreaID.Equals(Guid.Empty))
+                            if (!pickUpServiceArea.AreaID.Equals(Guid.Empty) &&
+                                !midWayServiceArea.AreaID.Equals(Guid.Empty) &&
+                                !dropOffServiceArea.AreaID.Equals(Guid.Empty))
                             {
                                 break;
                             }
                         }
                     }
 
-                    //If false then it means either request area doesn't in system or algorithm failed to identify
-                    if ((string.IsNullOrEmpty(midwayPostalCode) && PickupServiceArea.AreaID != Guid.Empty && DropOffServiceArea.AreaID != Guid.Empty) ||
-                        (!string.IsNullOrEmpty(midwayPostalCode) && PickupServiceArea.AreaID != Guid.Empty && MidwayServiceArea.AreaID != Guid.Empty && DropOffServiceArea.AreaID != Guid.Empty))
+                    //If all cases fails then it means either request area doesn't exist in system or algorithm failed to identify
+
+                    if (string.IsNullOrEmpty(midwayPostalCode) && pickUpServiceArea.AreaID != Guid.Empty && dropOffServiceArea.AreaID != Guid.Empty)
                     {
-                        var inBoundTripStats = GetInBoundTimeAndDistance(pickUpLatitude, pickUpLongitude, dropOffLatitude, dropOffLongitutde);
+                        //No midway, so there will be no outbound fare calculation. outBoundFareManagerId will be null
 
-                        //All categories may have same fare manager for selected area
-                        if (areasCategoryFareList.Select(ac => ac.AreaID).Distinct().Count() == 1)
+                        if (areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).Select(ac => ac.AreaID).Distinct().Count() == 1) //All categories may have same fare manager for selected area
                         {
-                            var fareManagerId = areasCategoryFareList.Where(ac => ac.AreaID.Equals(PickupServiceArea.AreaID)).FirstOrDefault().RideServicesFareManagerID;
-                            var inBoundtotalFare = await CalcuateFare((Guid)fareManagerId, inBoundTripStats.DistanceInKM, inBoundTripStats.TimeInMinutes);
-
-                            result.Categories.Select(c => { c.Amount = inBoundtotalFare.ToString(); return c; }).ToList();
-
-                            foreach (var item in result.Categories)
-                            {
-                                item.ETA = await VehiclesService.GetVehicleETA(item.CategoryID);
-                            }
+                            var inBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).FirstOrDefault().RSFMID;
+                            await SetFareBreakDownAndETA(result, inBoundFareManagerId, false, null);
                         }
                         else
                         {
-                            var standardFareManagerId = areasCategoryFareList.Where(ac => ac.AreaID.Equals(PickupServiceArea.AreaID) && ac.CategoryID == (int)VehicleCategories.Standard).FirstOrDefault().ID;
-                            var comfortFareManagerId = areasCategoryFareList.Where(ac => ac.AreaID.Equals(PickupServiceArea.AreaID) && ac.CategoryID == (int)VehicleCategories.Comfort).FirstOrDefault().ID;
-                            var premiumFareManagerId = areasCategoryFareList.Where(ac => ac.AreaID.Equals(PickupServiceArea.AreaID) && ac.CategoryID == (int)VehicleCategories.Premium).FirstOrDefault().ID;
-                            var grossraumFareManagerId = areasCategoryFareList.Where(ac => ac.AreaID.Equals(PickupServiceArea.AreaID) && ac.CategoryID == (int)VehicleCategories.Grossraum).FirstOrDefault().ID;
-                            var greenTaxiFareManagerId = areasCategoryFareList.Where(ac => ac.AreaID.Equals(PickupServiceArea.AreaID) && ac.CategoryID == (int)VehicleCategories.GreenTaxi).FirstOrDefault().ID;
+                            await SetCategoryWiseFareDetails(result, areasCategoryFareList, pickUpServiceArea, false, null);
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(midwayPostalCode) && pickUpServiceArea.AreaID != Guid.Empty && midWayServiceArea.AreaID != Guid.Empty && dropOffServiceArea.AreaID != Guid.Empty)
+                    {
+                        if (areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).Select(ac => ac.AreaID).Distinct().Count() == 1 &&
+                            areasCategoryFareList.Where(ac => ac.AreaID == midWayServiceArea.AreaID).Select(ac => ac.AreaID).Distinct().Count() == 1)
+                        {
+                            var inBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).FirstOrDefault().RSFMID;
+                            var outBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == midWayServiceArea.AreaID).FirstOrDefault().RSFMID;
+                            await SetFareBreakDownAndETA(result, inBoundFareManagerId, true, outBoundFareManagerId);
+                        }
+                        else
+                        {
+                            await SetCategoryWiseFareDetails(result, areasCategoryFareList, pickUpServiceArea, true, midWayServiceArea.AreaID);
                         }
                     }
                 }
@@ -149,11 +185,17 @@ namespace Services
             return result;
         }
 
-        private static async Task<EstimateFareResponse> PrepareResponseObject(string polyLine)
+        private static async Task<EstimateFareResponse> PrepareResponseObject(string polyLine,
+            string inBoundTimeInSeconds, string inBoundDistanceInMeters,
+            string outBoundTimeInSeconds, string outBoundDistanceInMeters)
         {
             return new EstimateFareResponse
             {
                 PolyLine = polyLine,
+                InBoundDistanceInKM = (Convert.ToDouble(inBoundDistanceInMeters) / 1000.0).ToString(),
+                InBoundTimeInMinutes = (Convert.ToDouble(inBoundTimeInSeconds) / 60.0).ToString(),
+                OutBoundDistanceInKM = (Convert.ToDouble(outBoundDistanceInMeters) / 1000.0).ToString(),
+                OutBoundTimeInMinutes = (Convert.ToDouble(outBoundTimeInSeconds) / 60.0).ToString(),
                 Categories = new List<VehicleCategoryFareEstimate>
                 {
                     new VehicleCategoryFareEstimate
@@ -178,7 +220,7 @@ namespace Services
                     }
                 },
                 Courier = new CourierFareEstimate(),
-                Facilities = await FacilitiesManagerService.GetFacilitiesListAsync()
+                Facilities = await FacilitiesService.GetFacilitiesListAsync()
             };
         }
 
@@ -199,25 +241,113 @@ namespace Services
             }
         }
 
-        private static TripStats GetInBoundTimeAndDistance(string pickUpLatitude, string pickUpLongitude, string dropOffLatitude, string dropOffLongitutde)
-        {
-            var result = DistanceMatrixAPI.GetTimeAndDistance(pickUpLatitude + "," + pickUpLongitude, dropOffLatitude + "," + dropOffLongitutde);
-            return new TripStats
-            {
-                DistanceInKM = Convert.ToDecimal(result.distanceInMeters / 1000.0),
-                TimeInMinutes = Convert.ToDecimal(result.durationInSeconds / 60.0)
-            };
-        }
-
         private static async Task<RideServicesFareManager> GetFareManagerById(Guid fareManagerId)
         {
             using (var dbContext = new CangooEntities())
             {
-                return await dbContext.RideServicesFareManagers.Where(f => f.RideServicesID == fareManagerId).FirstOrDefaultAsync();
+                return await dbContext.RideServicesFareManagers.Where(f => f.RSFMID == fareManagerId).FirstOrDefaultAsync();
             }
         }
 
-        private static decimal FormatFareValue(decimal totalFare)
+        private static async Task SetFareBreakDownAndETA(EstimateFareResponse result, Guid inBoundFareManagerId, bool isOutBound, Guid? outBoundFareManagerId)
+        {
+            FareDetailsDTO fareDetails = new FareDetailsDTO();
+
+            if (isOutBound)
+                fareDetails = await CalcuateFareBreakdown(inBoundFareManagerId, result.InBoundDistanceInKM, result.InBoundTimeInMinutes, isOutBound, outBoundFareManagerId, result.OutBoundDistanceInKM, result.OutBoundTimeInMinutes);
+            else
+                fareDetails = await CalcuateFareBreakdown(inBoundFareManagerId, result.InBoundDistanceInKM, result.InBoundTimeInMinutes, isOutBound, null, "", "");
+
+            result.Categories
+                .Select(c =>
+                {
+                    c.Amount = fareDetails.TotalFare.ToString();
+                    c.FormattingAdjustment = fareDetails.FormattingAdjustment.ToString();
+
+                    c.InBoundRSFMID = inBoundFareManagerId.ToString();
+                    c.InBoundBaseFare = fareDetails.InBoundBaseFare.ToString("0.00");
+                    c.InBoundBookingFare = fareDetails.InBoundBookingFare.ToString("0.00");
+                    c.InBoundWaitingFare = fareDetails.InBoundWaitingFare.ToString("0.00");
+                    c.InBoundSurchargeAmount = fareDetails.InBoundSurchargeAmount.ToString("0.00");
+                    c.InBoundDistanceFare = fareDetails.InBound.DistanceFare.ToString("0.00");
+                    c.InBoundTimeFare = fareDetails.InBound.TimeFare.ToString("0.00");
+
+                    c.OutBoundRSFMID = outBoundFareManagerId.ToString();
+                    c.OutBoundDistanceFare = fareDetails.OutBound.DistanceFare.ToString("0.00");
+                    c.OutBoundTimeFare = fareDetails.OutBound.TimeFare.ToString("0.00");
+
+                    return c;
+                }).ToList();
+
+            await SetVehiclesETA(result);
+        }
+
+        private static async Task SetVehiclesETA(EstimateFareResponse result)
+        {
+            foreach (var item in result.Categories)
+            {
+                item.ETA = await VehiclesService.GetVehicleETA(item.CategoryID);
+            }
+        }
+
+        private static async Task SetCategoryWiseFareDetails(EstimateFareResponse result, List<RideServicesAreaCategoryFare> areasCategoryFareList, RideServicesArea pickUpServiceArea, bool isOutBound, Guid? midWayAreaId)
+        {
+            await CalculateCategoryFare(result, areasCategoryFareList, pickUpServiceArea.AreaID, (int)VehicleCategories.Standard, isOutBound, midWayAreaId);
+            await CalculateCategoryFare(result, areasCategoryFareList, pickUpServiceArea.AreaID, (int)VehicleCategories.Comfort, isOutBound, midWayAreaId);
+            await CalculateCategoryFare(result, areasCategoryFareList, pickUpServiceArea.AreaID, (int)VehicleCategories.Premium, isOutBound, midWayAreaId);
+            await CalculateCategoryFare(result, areasCategoryFareList, pickUpServiceArea.AreaID, (int)VehicleCategories.Grossraum, isOutBound, midWayAreaId);
+            await CalculateCategoryFare(result, areasCategoryFareList, pickUpServiceArea.AreaID, (int)VehicleCategories.GreenTaxi, isOutBound, midWayAreaId);
+        }
+
+        private static async Task CalculateCategoryFare(EstimateFareResponse result, List<RideServicesAreaCategoryFare> areasCategoryFareList, Guid pickUpAreaId, int categoryId, bool isOutBound, Guid? midWayAreaId)
+        {
+            var inBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == pickUpAreaId && ac.CategoryID == categoryId).FirstOrDefault().RSFMID;
+            var outBoundFareManagerId = areasCategoryFareList.Where(ac => ac.AreaID == midWayAreaId && ac.CategoryID == categoryId).FirstOrDefault();
+
+            var fareDetails = await CalcuateFareBreakdown(inBoundFareManagerId, result.InBoundDistanceInKM, result.InBoundTimeInMinutes, isOutBound, outBoundFareManagerId?.RSFMID, result.OutBoundDistanceInKM, result.OutBoundTimeInMinutes);
+            result.Categories
+                .Where(c => c.CategoryID.Equals(categoryId.ToString()))
+                .Select(c =>
+                {
+                    c.Amount = fareDetails.TotalFare.ToString();
+                    c.FormattingAdjustment = fareDetails.FormattingAdjustment.ToString();
+
+                    c.InBoundRSFMID = inBoundFareManagerId.ToString();
+                    c.InBoundBaseFare = fareDetails.InBoundBaseFare.ToString("0.00");
+                    c.InBoundBookingFare = fareDetails.InBoundBookingFare.ToString("0.00");
+                    c.InBoundWaitingFare = fareDetails.InBoundWaitingFare.ToString("0.00");
+                    c.InBoundSurchargeAmount = fareDetails.InBoundSurchargeAmount.ToString("0.00");
+                    c.InBoundDistanceFare = fareDetails.InBound.DistanceFare.ToString("0.00");
+                    c.InBoundTimeFare = fareDetails.InBound.TimeFare.ToString("0.00");
+
+                    c.OutBoundRSFMID = outBoundFareManagerId.ToString();
+                    c.OutBoundDistanceFare = fareDetails.OutBound.DistanceFare.ToString("0.00");
+                    c.OutBoundTimeFare = fareDetails.OutBound.TimeFare.ToString("0.00");
+
+                    return c;
+                }).ToList();
+
+
+            //var comfortFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID.Equals(PickupServiceArea.AreaID) && ac.CategoryID == (int)VehicleCategories.Comfort).FirstOrDefault().RideServicesFareManagerID;
+            //var comfortTotalFare = await CalcuateFare(comfortFareManagerId, null, result.InBoundDistanceInKM, result.InBoundTimeInMinutes, result.OutBoundDistanceInKM, result.OutBoundTimeInMinutes, false);
+            //result.Categories.Where(c => c.CategoryID == ((int)VehicleCategories.Comfort).ToString()).Select(c => { c.Amount = comfortTotalFare.ToString(); return c; }).ToList();
+
+            //var premiumFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID.Equals(PickupServiceArea.AreaID) && ac.CategoryID == (int)VehicleCategories.Premium).FirstOrDefault().RideServicesFareManagerID;
+            //var premiumTotalFare = await CalcuateFare(premiumFareManagerId, null, result.InBoundDistanceInKM, result.InBoundTimeInMinutes, result.OutBoundDistanceInKM, result.OutBoundTimeInMinutes, false);
+            //result.Categories.Where(c => c.CategoryID == ((int)VehicleCategories.Premium).ToString()).Select(c => { c.Amount = premiumTotalFare.ToString(); return c; }).ToList();
+
+            //var grossraumFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID.Equals(PickupServiceArea.AreaID) && ac.CategoryID == (int)VehicleCategories.Grossraum).FirstOrDefault().RideServicesFareManagerID;
+            //var grossraumTotalFare = await CalcuateFare(grossraumFareManagerId, null, result.InBoundDistanceInKM, result.InBoundTimeInMinutes, result.OutBoundDistanceInKM, result.OutBoundTimeInMinutes, false);
+            //result.Categories.Where(c => c.CategoryID == ((int)VehicleCategories.Grossraum).ToString()).Select(c => { c.Amount = grossraumTotalFare.ToString(); return c; }).ToList();
+
+            //var greenTaxiFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID.Equals(PickupServiceArea.AreaID) && ac.CategoryID == (int)VehicleCategories.GreenTaxi).FirstOrDefault().RideServicesFareManagerID;
+            //var greenTaxiotalFare = await CalcuateFare(greenTaxiFareManagerId, null, result.InBoundDistanceInKM, result.InBoundTimeInMinutes, result.OutBoundDistanceInKM, result.OutBoundTimeInMinutes, false);
+            //result.Categories.Where(c => c.CategoryID == ((int)VehicleCategories.GreenTaxi).ToString()).Select(c => { c.Amount = greenTaxiotalFare.ToString(); return c; }).ToList();
+
+        }
+        
+
+        public static decimal FormatFareValue(decimal totalFare)
         {
             string decimalValue = "";
 
@@ -236,31 +366,6 @@ namespace Services
 
             totalFare = decimal.Parse(totalFare.ToString().Split('.')[0] + "." + decimalValue);
             return totalFare;
-        }
-
-        private static decimal GetTraveledDistanceFromFireBase(string tripID, string captainID)
-        {
-            //FireBaseController fb = new FireBaseController();
-            //var distance = fb.getTripDistance("Trips/" + tripID + "/" + captainID + "/" + "distanceTraveled");
-            //if (distance != null)
-            //    return Convert.ToDecimal(distance) / 1000;
-            //else
-            return 0.00M;
-        }
-
-        private static string GetPolyLineFromFireBase(string polyLine, string tripID, string captainID)
-        {
-            //FireBaseController fb = new FireBaseController();
-            //var ployLineLocations = fb.getTripPolyLineDetails("Trips/" + tripID + "/" + captainID + "/" + "polyline");
-            //if (ployLineLocations != null)
-            //{
-            //    foreach (var location in ployLineLocations)
-            //    {
-            //        polyLine += location.Value.latitude + "," + location.Value.longitude + "|";
-            //    }
-            //    polyLine = polyLine.Length > 0 ? polyLine.Remove(polyLine.Length - 1) : "";
-            //}
-            return polyLine;
         }
 
         #endregion
@@ -296,52 +401,89 @@ namespace Services
 
         #endregion
 
-        private static async Task<decimal> CalcuateFare(Guid fareManagerId, decimal distanceInKM, decimal timeInMinutes)
+        private static async Task<FareDetailsDTO> CalcuateFareBreakdown(Guid inBoundFareManagerId, string inBounddistanceInKM, string inBoundTimeInMinutes, bool isOutBound, Guid? outBoundFareManagerId, string outBounddistanceInKM, string outBoundTimeInMinutes)
         {
-            using (var dbContext = new CangooEntities())
+            var result = new FareDetailsDTO();
+            //decimal baseFare = 0, waitingFare = 0, bookingFare = 0, surchargeAmount = 0;
+
+            var fareManager = await GetFareManagerById(inBoundFareManagerId);
+            // TBD: Check date from public holidays lookup table
+            bool isWeekend = WeekendOrHoliday();
+            bool isMorningShift = CheckShift((TimeSpan)fareManager.MorningShiftStartTime, (TimeSpan)fareManager.MorningShiftEndTime);
+
+            var distanceAndTimeFare = await CalculateDistanceAndTimeFare(fareManager.RSFMID.ToString(),
+                 isWeekend ? (int)FareManagerShifts.Weekend : isMorningShift ? (int)FareManagerShifts.Morning : (int)FareManagerShifts.Evening,
+                 inBounddistanceInKM,
+                 (decimal)(isWeekend ? fareManager.WeekendPerKmFare : isMorningShift ? fareManager.MorningPerKmFare : fareManager.EveningPerKmFare),
+                 inBoundTimeInMinutes,
+                 (decimal)(isWeekend ? fareManager.WeekendPerMinFare : isMorningShift ? fareManager.MorningPerMinFare : fareManager.EveningPerMinFare));
+
+            result.InBoundBaseFare = isWeekend ? (decimal)fareManager.WeekendBaseFare : isMorningShift ? (decimal)fareManager.MorningBaseFare : (decimal)fareManager.EveningBaseFare;
+            result.InBoundWaitingFare = isWeekend ? (decimal)fareManager.WeekendWaitingFare : isMorningShift ? (decimal)fareManager.MorningWaitingFare : (decimal)fareManager.EveningWaitingFare;
+            result.InBoundBookingFare = isWeekend ? (decimal)fareManager.WeekendBookingFare : isMorningShift ? (decimal)fareManager.MorningBookingFare : (decimal)fareManager.EveningBookingFare;
+            result.InBound.DistanceFare = distanceAndTimeFare.DistanceFare;
+            result.InBound.TimeFare = distanceAndTimeFare.TimeFare;
+
+            if (isOutBound)
             {
-                var fareManager = await GetFareManagerById(fareManagerId);
-                decimal inBoundDistanceFare = 0, inBoundTimeFare = 0, inBoundSurchargeAmount = 0, inBoundBaseFare = 0, inBoundTotalFare = 0;
+                if (inBoundFareManagerId != outBoundFareManagerId)
+                {
+                    fareManager = await GetFareManagerById((Guid)outBoundFareManagerId);
+                    isMorningShift = CheckShift((TimeSpan)fareManager.MorningShiftStartTime, (TimeSpan)fareManager.MorningShiftEndTime);
+                }
 
-                bool isWeekend = WeekendOrHoliday();
-                bool isMorningShift = DateTime.UtcNow.TimeOfDay >= fareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= fareManager.MorningShiftEndTime;
-
-                CalculateDistanceAndTimeFare(fareManager.RideServicesID.ToString(),
+                distanceAndTimeFare = await CalculateDistanceAndTimeFare(fareManager.RSFMID.ToString(),
                     isWeekend ? (int)FareManagerShifts.Weekend : isMorningShift ? (int)FareManagerShifts.Morning : (int)FareManagerShifts.Evening,
-                    distanceInKM,
-                    (decimal)(isMorningShift ? fareManager.MorningPerKmFare : fareManager.EveningPerKmFare),
-                    timeInMinutes,
-                    (decimal)(isMorningShift ? fareManager.MorningPerMinFare : fareManager.EveningPerMinFare),
-                    out inBoundDistanceFare,
-                    out inBoundTimeFare);
+                    outBounddistanceInKM,
+                    (decimal)(isWeekend ? fareManager.WeekendPerKmFare : isMorningShift ? fareManager.MorningPerKmFare : fareManager.EveningPerKmFare),
+                    outBoundTimeInMinutes,
+                    (decimal)(isWeekend ? fareManager.WeekendPerMinFare : isMorningShift ? fareManager.MorningPerMinFare : fareManager.EveningPerMinFare));
 
-                inBoundBaseFare = Convert.ToDecimal(isMorningShift ? fareManager.MorningBaseFare : fareManager.EveningBaseFare);
-                inBoundTotalFare = inBoundBaseFare + inBoundDistanceFare + inBoundTimeFare;
-                inBoundSurchargeAmount = Convert.ToDecimal(inBoundTotalFare * (isMorningShift ? fareManager.MorningSurcharge : fareManager.EveningSurcharge) / 100);
-                decimal totalFare = inBoundTotalFare + inBoundSurchargeAmount;
-
-                return FormatFareValue(totalFare);
+                result.OutBound.DistanceFare = distanceAndTimeFare.DistanceFare;
+                result.OutBound.TimeFare = distanceAndTimeFare.TimeFare;
             }
+
+            result.TotalFare = result.InBoundBaseFare + result.InBoundBookingFare + result.InBoundWaitingFare +
+                result.InBound.DistanceFare + result.InBound.TimeFare + result.OutBound.DistanceFare + result.OutBound.TimeFare;
+
+            result.SurchargeAmount = Convert.ToDecimal(result.TotalFare * (isWeekend ? (decimal)fareManager.WeekendSurcharge : isMorningShift ? (decimal)fareManager.MorningSurcharge : (decimal)fareManager.EveningSurcharge) / 100);
+            result.TotalFare += result.SurchargeAmount;
+
+            //Trip minimum amount should be 6.6
+            if (result.TotalFare <= 6.6M)
+            {
+                result.TotalFare = 6.60M;
+            }
+
+            var formattedFare = FormatFareValue(result.TotalFare);
+            result.FormattingAdjustment = formattedFare - result.TotalFare;
+            result.TotalFare = formattedFare;
+            return result;
+        }
+
+        private static bool CheckShift(TimeSpan morningShiftStartTime, TimeSpan morningShiftEndTime)
+        {
+            return DateTime.UtcNow.TimeOfDay >= morningShiftStartTime && DateTime.UtcNow.TimeOfDay <= morningShiftEndTime;
         }
 
         private static bool WeekendOrHoliday()
         {
-            // TBD: Check date from public holidays lookup table
             return DateTime.UtcNow.DayOfWeek == DayOfWeek.Saturday || DateTime.UtcNow.DayOfWeek == DayOfWeek.Sunday;
         }
 
-        private static void CalculateDistanceAndTimeFare(string rideServicesID, int shiftId, decimal estimatedDistanceInKM, decimal perKMFare, decimal estimatedTimeInMinutes, decimal perMinFare, out decimal distanceFare, out decimal timeFare)
+        private static async Task<DistanceAndTimeFareDTO> CalculateDistanceAndTimeFare(string rideServicesID, int shiftId, string distanceInKM, decimal perKMFare, string timeInMinutes, decimal perMinFare)
         {
             using (var dbContext = new CangooEntities())
             {
                 #region distance fare calculation
 
-                distanceFare = 0;
+                var result = new DistanceAndTimeFareDTO();
 
                 //distance ranges are saved in kilo meters
-                var lstFareDistanceRange = dbContext.RideServicesFareRanges
-                    .Where(f => f.ShiftID == shiftId && f.RideServicesID.ToString().Equals(rideServicesID)).ToList()
-                    .OrderBy(f => f.Range);
+                var lstFareDistanceRange = await dbContext.RideServicesFareRanges
+                    .Where(f => f.ShiftID == shiftId && f.RSFMID.ToString().Equals(rideServicesID))
+                    .OrderBy(f => f.Range)
+                    .ToListAsync();
 
                 if (lstFareDistanceRange.Any())
                 {
@@ -349,13 +491,13 @@ namespace Services
                     {
                         var arrRange = ran.Range.Split(';');
 
-                        if (Convert.ToDecimal(arrRange[1]) <= estimatedDistanceInKM)
+                        if (Convert.ToDouble(arrRange[1]) <= Convert.ToDouble(distanceInKM))
                         {
-                            distanceFare += Convert.ToDecimal(ran.Charges) * (Convert.ToDecimal(arrRange[1]) - Convert.ToDecimal(arrRange[0]));
+                            result.DistanceFare += Convert.ToDecimal(ran.Charges) * (Convert.ToDecimal(arrRange[1]) - Convert.ToDecimal(arrRange[0]));
                         }
                         else
                         {
-                            distanceFare += Convert.ToDecimal(ran.Charges) * (estimatedDistanceInKM - Convert.ToDecimal(arrRange[0]));
+                            result.DistanceFare += Convert.ToDecimal(ran.Charges) * (Convert.ToDecimal(distanceInKM) - Convert.ToDecimal(arrRange[0]));
                             break;
                         }
 
@@ -363,7 +505,7 @@ namespace Services
                 }
                 else
                 {
-                    distanceFare = estimatedDistanceInKM * perKMFare;
+                    result.DistanceFare = Convert.ToDecimal(distanceInKM) * perKMFare;
                 }
 
                 #endregion
@@ -371,11 +513,11 @@ namespace Services
                 #region time fare calculation
 
 
-                timeFare = 0;
                 //distance ranges are saved in minutes
-                var lstFareTimeRange = dbContext.RideServicesTimeRanges
-                    .Where(f => f.ShiftID == shiftId && f.RideServicesID.ToString().Equals(rideServicesID)).ToList()
-                    .OrderBy(f => f.Range);
+                var lstFareTimeRange = await dbContext.RideServicesTimeRanges
+                    .Where(f => f.ShiftID == shiftId && f.RSFMID.ToString().Equals(rideServicesID))
+                    .OrderBy(f => f.Range)
+                    .ToListAsync();
 
                 if (lstFareTimeRange.Any())
                 {
@@ -383,618 +525,26 @@ namespace Services
                     {
                         var arrRange = ran.Range.Split(';');
 
-                        if (Convert.ToDecimal(arrRange[1]) <= estimatedTimeInMinutes)
+                        if (Convert.ToDecimal(arrRange[1]) <= Convert.ToDecimal(timeInMinutes))
                         {
-                            timeFare += Convert.ToDecimal(ran.Charges) * (Convert.ToDecimal(arrRange[1]) - Convert.ToDecimal(arrRange[0]));
+                            result.TimeFare += Convert.ToDecimal(ran.Charges) * (Convert.ToDecimal(arrRange[1]) - Convert.ToDecimal(arrRange[0]));
                         }
                         else
                         {
-                            timeFare += Convert.ToDecimal(ran.Charges) * (estimatedTimeInMinutes - Convert.ToDecimal(arrRange[0]));
+                            result.TimeFare += Convert.ToDecimal(ran.Charges) * (Convert.ToDecimal(timeInMinutes) - Convert.ToDecimal(arrRange[0]));
                             break;
                         }
                     }
                 }
                 else
                 {
-                    timeFare = estimatedTimeInMinutes * perMinFare;
+                    result.TimeFare = Convert.ToDecimal(timeInMinutes) * perMinFare;
                 }
 
                 #endregion
+
+                return result;
             }
         }
-
-
-
-
-        #region existing calculation
-
-        //public static decimal CalculateEstimatedFare(int seatingCapacity, bool isWalkIn, bool isTripEnd, string routePolyLine, bool isAtDropOffLocation, bool isFareChangeAllowed, Guid? TripId, string applicationID,
-        //   string pickUpLatitude, string pickUpLongitude, string dropOffLatitude, string dropOffLongitude, ref FareManager pickUpAreaFareManager, ref FareManager dropOffAreaFareManager, ref Dictionary<dynamic, dynamic> dic)
-        ////string distance, TimeSpan? waitingDur
-        //{
-        //    using (var context = new CangooEntities())
-        //    {
-        //        PrepareFareResponseObject(dic);
-
-        //        var fareManagers = context.FareManagers.Where(f => f.ApplicationID.ToString().Equals(applicationID)).ToList();
-
-        //        if (!fareManagers.Any())
-        //            return 0;
-
-        //        pickUpAreaFareManager = new FareManager();
-        //        dropOffAreaFareManager = new FareManager();
-
-        //        foreach (var item in fareManagers)
-        //        {
-        //            if (Polygon.IsLatLonExistsInPolygon(Polygon.ConvertLatLonObjectsArrayToPolygonString(item.AreaLatLong), pickUpLatitude, pickUpLongitude))
-        //                pickUpAreaFareManager = item;
-
-        //            if (Polygon.IsLatLonExistsInPolygon(Polygon.ConvertLatLonObjectsArrayToPolygonString(item.AreaLatLong), dropOffLatitude, dropOffLongitude))
-        //                dropOffAreaFareManager = item;
-
-        //            if (!pickUpAreaFareManager.FareManagerID.Equals(Guid.Empty) && !dropOffAreaFareManager.FareManagerID.Equals(Guid.Empty))
-        //                break;
-        //        }
-
-        //        //TBD: Remove this quick fix, efficient algo should be applied to make sure exact fare managers are selected from database
-
-        //        //if (pickUpAreaFareManager.FareManagerID.Equals(Guid.Empty) && dropOffAreaFareManager.FareManagerID.Equals(Guid.Empty))
-        //        //{
-        //        //    pickUpAreaFareManager = context.FareManagers.OrderByDescending(fm => fm.UpdatedAt).FirstOrDefault();
-        //        //    dropOffAreaFareManager = pickUpAreaFareManager;
-        //        //}
-        //        //else if (pickUpAreaFareManager.FareManagerID.Equals(Guid.Empty) && !dropOffAreaFareManager.FareManagerID.Equals(Guid.Empty))
-        //        //    pickUpAreaFareManager = dropOffAreaFareManager;
-        //        //else if (!pickUpAreaFareManager.FareManagerID.Equals(Guid.Empty) && dropOffAreaFareManager.FareManagerID.Equals(Guid.Empty))
-        //        //    dropOffAreaFareManager = pickUpAreaFareManager;
-
-        //        dic["pickUpFareManagerID"] = pickUpAreaFareManager.FareManagerID.ToString();
-        //        dic["dropOffFareMangerID"] = dropOffAreaFareManager.FareManagerID.ToString();
-
-        //        bool isInBound = Polygon.IsLatLonExistsInPolygon(Polygon.ConvertLatLonObjectsArrayToPolygonString(pickUpAreaFareManager.AreaLatLong), dropOffLatitude, dropOffLongitude);
-
-        //        decimal totalFare = 0;//, distanceFare = 0, timeFare = 0;
-        //        decimal formattedTotalFare = 0;
-
-        //        if (isWalkIn)   //Updated calculation scenario not implemented
-        //        {
-        //            totalFare = 0;
-        //        }
-        //        else
-        //        {
-        //            decimal inBoundDistanceInKM = 0, outBoundDistanceInKM = 0,
-        //                inBoundDistanceFare = 0, inBoundTimeFare = 0, inBoundSurchargeAmount = 0, inBoundBaseFare = 0, inBoundTotalFare = 0,
-        //                outBoundDistanceFare = 0, outBoundTimeFare = 0, outBoundSurchargeAmount = 0, outBoundBaseFare = 0, outBoundTotalFare = 0,
-        //                inBoundTimeInMinutes = 0, outBoundTimeInMinutes = 0;
-        //            string polyLine = "";
-        //            bool isMorningShift = false;
-
-
-        //            if (isFareChangeAllowed)
-        //            {
-        //                /*  
-        //                 *  1 - In every case need to re-calculate. isFareChangeAllowed will be true only in case of end trip. isTripEnd will be always true here) 
-        //                 *  2 - isAtDropOffLocation doesn't matter because trip time and distance is changed
-        //                 */
-        //                if (isInBound)
-        //                {
-        //                    //Get distance from firebase (Trips / TripID / CaptainID / distanceTraveled), 
-        //                    //trip time (TripEndDateTime - TripStartDateTime) from database, 
-        //                    //then apply fare manager ranges
-
-        //                    var trip = context.Trips.Where(t => t.TripID.ToString().Equals(TripId.ToString())).FirstOrDefault();
-        //                    trip.TripEndDatetime = getUtcDateTime();    //TBD: Trip instance should be passed from endTrip action. Time is already set over there.
-        //                    isMorningShift = DateTime.UtcNow.TimeOfDay >= pickUpAreaFareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= pickUpAreaFareManager.MorningShiftEndTime;
-        //                    inBoundDistanceInKM = GetTraveledDistanceFromFireBase(trip.TripID.ToString(), trip.CaptainID.ToString());
-        //                    inBoundTimeInMinutes = (int)(((DateTime)trip.TripEndDatetime - (DateTime)trip.TripStartDatetime).TotalMinutes);
-
-        //                    CalculateDistanceAndTimeFare(pickUpAreaFareManager.FareManagerID.ToString(),
-        //                        isMorningShift,
-        //                        inBoundDistanceInKM,
-        //                        (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerKmFare : pickUpAreaFareManager.EveningPerKmFare),
-        //                        inBoundTimeInMinutes,
-        //                        (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerMinFare : pickUpAreaFareManager.EveningPerMinFare),
-        //                        out inBoundDistanceFare,
-        //                        out inBoundTimeFare);
-
-        //                    inBoundBaseFare = Convert.ToDecimal(isMorningShift ? pickUpAreaFareManager.MorningBaseFare : pickUpAreaFareManager.EveningBaseFare);
-        //                    inBoundTotalFare = inBoundBaseFare + inBoundDistanceFare + inBoundTimeFare;
-        //                    inBoundSurchargeAmount = Convert.ToDecimal(inBoundTotalFare * (isMorningShift ? pickUpAreaFareManager.MorningSurcharge : pickUpAreaFareManager.EveningSurcharge) / 100);
-        //                    totalFare = inBoundTotalFare + inBoundSurchargeAmount;
-        //                    polyLine = GetPolyLineFromFireBase(polyLine, trip.TripID.ToString(), trip.CaptainID.ToString());
-        //                }
-        //                else
-        //                {
-        //                    //Get ployline ordered lat longs from firebase, (Trips / TripID / CaptainID / polyline / id /latitude + longitude + locationTime (diff / 1000 = seconds)) use first lat long to set pickup faremanager.
-        //                    //Traverse ploygon and find boundary point. 
-        //                    //Get inbound/outbund time using difference of polyline lat long.
-        //                    //Get inbound/outbund distance using difference of polyline lat long.
-
-        //                    var trip = context.Trips.Where(t => t.TripID == TripId).FirstOrDefault();
-
-        //                    FireBaseController fb = new FireBaseController();
-        //                    var ployLineLocations = fb.getTripPolyLineDetails("Trips/" + trip.TripID.ToString() + "/" + trip.CaptainID.ToString() + "/" + "polyline");
-        //                    var inBoundDistanceInMeters = 0.0;
-        //                    var inBoundTimeInSeconds = 0.0;
-        //                    var outBoundDistanceInMeters = 0.0;
-        //                    var outBoundTimeInSeconds = 0.0;
-
-        //                    bool isGoneOutBound = false;
-        //                    GeoCoordinate lastPosition = null;
-        //                    DateTime lastLocationUpdateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-
-        //                    foreach (var location in ployLineLocations)
-        //                    {
-        //                        polyLine += location.Value.latitude + "," + location.Value.longitude + "|";
-
-        //                        if (!isGoneOutBound)
-        //                        {
-        //                            if (Polygon.IsLatLonExistsInPolygon(Polygon.ConvertLatLonObjectsArrayToPolygonString(pickUpAreaFareManager.AreaLatLong), location.Value.latitude, location.Value.longitude))
-        //                            {
-        //                                if (lastPosition != null)
-        //                                {
-        //                                    var currentPosition = new GeoCoordinate(Convert.ToDouble(location.Value.latitude), Convert.ToDouble(location.Value.longitude));
-        //                                    inBoundDistanceInMeters += currentPosition.GetDistanceTo(lastPosition);  //distance in meters
-
-        //                                    DateTime currentLocationUpdateTime = DateTimeOffset.FromUnixTimeMilliseconds(location.Value.locationTime).UtcDateTime;
-        //                                    inBoundTimeInSeconds += (currentLocationUpdateTime - lastLocationUpdateTime).TotalSeconds;
-        //                                }
-        //                            }
-        //                            else
-        //                            {
-        //                                isGoneOutBound = true;
-        //                                isMorningShift = DateTime.UtcNow.TimeOfDay >= pickUpAreaFareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= pickUpAreaFareManager.MorningShiftEndTime;
-        //                                inBoundDistanceInKM = Convert.ToDecimal(inBoundDistanceInMeters / 1000.0);
-        //                                inBoundTimeInMinutes = Convert.ToDecimal(inBoundTimeInSeconds / 60.0);
-
-        //                                CalculateDistanceAndTimeFare(pickUpAreaFareManager.FareManagerID.ToString(),
-        //                                    isMorningShift,
-        //                                    inBoundDistanceInKM,
-        //                                    (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerKmFare : pickUpAreaFareManager.EveningPerKmFare),
-        //                                    inBoundTimeInMinutes,
-        //                                    (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerMinFare : pickUpAreaFareManager.EveningPerMinFare),
-        //                                    out inBoundDistanceFare,
-        //                                    out inBoundTimeFare);
-
-        //                                inBoundBaseFare = Convert.ToDecimal(isMorningShift ? pickUpAreaFareManager.MorningBaseFare : pickUpAreaFareManager.EveningBaseFare);
-        //                                inBoundTotalFare = inBoundBaseFare + inBoundDistanceFare + inBoundTimeFare;
-        //                                inBoundSurchargeAmount = Convert.ToDecimal(inBoundTotalFare * (isMorningShift ? pickUpAreaFareManager.MorningSurcharge : pickUpAreaFareManager.EveningSurcharge) / 100);
-        //                            }
-        //                        }
-        //                        else
-        //                        {
-        //                            var currentPosition = new GeoCoordinate(Convert.ToDouble(location.Value.latitude), Convert.ToDouble(location.Value.longitude));
-        //                            outBoundDistanceInMeters += currentPosition.GetDistanceTo(lastPosition);  //distance in meters
-
-        //                            DateTime currentLocationUpdateTime = DateTimeOffset.FromUnixTimeMilliseconds(location.Value.locationTime).UtcDateTime;
-        //                            outBoundTimeInSeconds += (currentLocationUpdateTime - lastLocationUpdateTime).TotalSeconds;
-
-        //                        }
-        //                        lastPosition = new GeoCoordinate(Convert.ToDouble(location.Value.latitude), Convert.ToDouble(location.Value.longitude));
-        //                        lastLocationUpdateTime = DateTimeOffset.FromUnixTimeMilliseconds(location.Value.locationTime).UtcDateTime;
-        //                    }
-
-        //                    polyLine = polyLine.Length > 0 ? polyLine.Remove(polyLine.Length - 1) : "";
-
-        //                    isMorningShift = DateTime.UtcNow.TimeOfDay >= dropOffAreaFareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= dropOffAreaFareManager.MorningShiftEndTime;
-
-        //                    outBoundDistanceInKM = Convert.ToDecimal(outBoundDistanceInMeters / 1000.0);
-        //                    outBoundTimeInMinutes = Convert.ToDecimal(outBoundTimeInSeconds / 60.0);
-
-        //                    CalculateDistanceAndTimeFare(dropOffAreaFareManager.FareManagerID.ToString(),
-        //                        isMorningShift,
-        //                        outBoundDistanceInKM,
-        //                        (decimal)(isMorningShift ? dropOffAreaFareManager.MorningPerKmFare : dropOffAreaFareManager.EveningPerKmFare),
-        //                        outBoundTimeInMinutes,
-        //                        (decimal)(isMorningShift ? dropOffAreaFareManager.MorningPerMinFare : dropOffAreaFareManager.EveningPerMinFare),
-        //                        out outBoundDistanceFare,
-        //                        out outBoundTimeFare);
-
-        //                    outBoundBaseFare = Convert.ToDecimal(isMorningShift ? dropOffAreaFareManager.MorningBaseFare : dropOffAreaFareManager.EveningBaseFare);
-        //                    outBoundTotalFare = outBoundBaseFare + outBoundDistanceFare + outBoundTimeFare;
-        //                    outBoundSurchargeAmount = Convert.ToDecimal(outBoundTotalFare * (isMorningShift ? dropOffAreaFareManager.MorningSurcharge : dropOffAreaFareManager.EveningSurcharge) / 100);
-
-        //                    totalFare = inBoundTotalFare + inBoundSurchargeAmount + outBoundTotalFare + outBoundSurchargeAmount;
-        //                }
-        //            }
-        //            else
-        //            {
-        //                if (isInBound)
-        //                {
-        //                    if (isTripEnd)  //End Trip API call
-        //                    {
-        //                        if (isAtDropOffLocation) //Will be set false by application if destination was not set OR drop off location was not within radius of 200 meters
-        //                        {
-        //                            //If normal booking return the same fare which was calculated in estimate API call. In case of later booking recalculate
-        //                            var trip = context.Trips.Where(t => t.TripID.ToString().Equals(TripId.ToString())).FirstOrDefault();
-
-        //                            //CR : Don't recalculate laterboking fare in any case.
-
-        //                            //if ((bool)trip.isLaterBooking)
-        //                            //{
-        //                            //    //In case of later booking recalculate
-        //                            //    //Get distance and time from google, calculate fare according to fare manager ranges.
-        //                            //    var result = DistanceMatrixAPI.GetTimeAndDistance(pickUpLatitude + "," + pickUpLongitude, dropOffLatitude + "," + dropOffLongitude);
-        //                            //    isMorningShift = DateTime.UtcNow.TimeOfDay >= pickUpAreaFareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= pickUpAreaFareManager.MorningShiftEndTime;
-
-        //                            //    inBoundDistanceInKM = Convert.ToDecimal(result.distanceInMeters / 1000.0);
-        //                            //    inBoundTimeInMinutes = Convert.ToDecimal(result.durationInSeconds / 60.0);
-
-        //                            //    CalculateDistanceAndTimeFare(pickUpAreaFareManager.FareManagerID.ToString(),
-        //                            //        isMorningShift,
-        //                            //        inBoundDistanceInKM,
-        //                            //        (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerKmFare : pickUpAreaFareManager.EveningPerKmFare),
-        //                            //        inBoundTimeInMinutes,
-        //                            //        (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerMinFare : pickUpAreaFareManager.EveningPerMinFare),
-        //                            //        out inBoundDistanceFare,
-        //                            //        out inBoundTimeFare);
-
-        //                            //    inBoundBaseFare = Convert.ToDecimal(isMorningShift ? pickUpAreaFareManager.MorningBaseFare : pickUpAreaFareManager.EveningBaseFare);
-        //                            //    inBoundTotalFare = inBoundBaseFare + inBoundDistanceFare + inBoundTimeFare;
-        //                            //    inBoundSurchargeAmount = Convert.ToDecimal(inBoundTotalFare * (isMorningShift ? pickUpAreaFareManager.MorningSurcharge : pickUpAreaFareManager.EveningSurcharge) / 100);
-        //                            //    totalFare = inBoundTotalFare + inBoundSurchargeAmount;
-        //                            //    polyLine = routePolyLine;
-        //                            //}
-        //                            //else
-        //                            //{
-
-        //                            inBoundDistanceInKM = Convert.ToDecimal(trip.InBoundDistanceInMeters / 1000.0);
-        //                            inBoundDistanceFare = Convert.ToDecimal(trip.InBoundDistanceFare);
-        //                            inBoundTimeInMinutes = Convert.ToDecimal(trip.InBoundTimeInSeconds / 60.0);
-        //                            inBoundTimeFare = Convert.ToDecimal(trip.InBoundTimeFare);
-        //                            outBoundDistanceInKM = Convert.ToDecimal(trip.OutBoundDistanceInMeters / 1000.0);
-        //                            outBoundDistanceFare = Convert.ToDecimal(trip.OutBoundDistanceFare);
-        //                            outBoundTimeInMinutes = Convert.ToDecimal(trip.OutBoundTimeInSeconds / 60.0);
-        //                            outBoundTimeFare = Convert.ToDecimal(trip.OutBoundTimeFare);
-        //                            inBoundSurchargeAmount = Convert.ToDecimal(trip.InBoundSurchargeAmount);
-        //                            outBoundSurchargeAmount = Convert.ToDecimal(trip.OutBoundSurchargeAmount);
-        //                            inBoundBaseFare = Convert.ToDecimal(trip.InBoundBaseFare);
-        //                            outBoundBaseFare = Convert.ToDecimal(trip.OutBoundBaseFare);
-
-        //                            totalFare = inBoundDistanceFare + inBoundTimeFare + inBoundBaseFare + inBoundSurchargeAmount +
-        //                                        outBoundDistanceFare + outBoundTimeFare + outBoundBaseFare + outBoundSurchargeAmount;
-
-        //                            polyLine = GetPolyLineFromFireBase(polyLine, trip.TripID.ToString(), trip.CaptainID.ToString());
-
-        //                            //}
-        //                        }
-        //                        else
-        //                        {
-        //                            //Get distance from firebase trip node, 
-        //                            //Calculate trip time (TripEndDateTime - TripStartDateTime) from database, 
-        //                            //Apply fare manager ranges
-
-        //                            var trip = context.Trips.Where(t => t.TripID.ToString().Equals(TripId.ToString())).FirstOrDefault();
-        //                            trip.TripEndDatetime = getUtcDateTime();    //TBD: Trip instance should be passed from endTrip action. Time is already set over there.
-
-        //                            isMorningShift = DateTime.UtcNow.TimeOfDay >= pickUpAreaFareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= pickUpAreaFareManager.MorningShiftEndTime;
-        //                            inBoundDistanceInKM = GetTraveledDistanceFromFireBase(trip.TripID.ToString(), trip.CaptainID.ToString());
-        //                            inBoundTimeInMinutes = (int)(((DateTime)trip.TripEndDatetime - (DateTime)trip.TripStartDatetime).TotalMinutes);
-
-        //                            CalculateDistanceAndTimeFare(pickUpAreaFareManager.FareManagerID.ToString(),
-        //                                isMorningShift,
-        //                                inBoundDistanceInKM,
-        //                                (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerKmFare : pickUpAreaFareManager.EveningPerKmFare),
-        //                                inBoundTimeInMinutes,
-        //                                (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerMinFare : pickUpAreaFareManager.EveningPerMinFare),
-        //                                out inBoundDistanceFare,
-        //                                out inBoundTimeFare);
-
-        //                            inBoundBaseFare = Convert.ToDecimal(isMorningShift ? pickUpAreaFareManager.MorningBaseFare : pickUpAreaFareManager.EveningBaseFare);
-        //                            inBoundTotalFare = inBoundBaseFare + inBoundDistanceFare + inBoundTimeFare;
-        //                            inBoundSurchargeAmount = Convert.ToDecimal(inBoundTotalFare * (isMorningShift ? pickUpAreaFareManager.MorningSurcharge : pickUpAreaFareManager.EveningSurcharge) / 100);
-        //                            totalFare = inBoundTotalFare + inBoundSurchargeAmount;
-
-        //                            polyLine = GetPolyLineFromFireBase(polyLine, trip.TripID.ToString(), trip.CaptainID.ToString());
-
-        //                        }
-        //                    }
-        //                    else    //Fare Estimate API call
-        //                    {
-        //                        //Get distance and time from google, calculate fare according to fare manager ranges.
-        //                        var result = DistanceMatrixAPI.GetTimeAndDistance(pickUpLatitude + "," + pickUpLongitude, dropOffLatitude + "," + dropOffLongitude);
-        //                        isMorningShift = DateTime.UtcNow.TimeOfDay >= pickUpAreaFareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= pickUpAreaFareManager.MorningShiftEndTime;
-
-        //                        inBoundDistanceInKM = Convert.ToDecimal(result.distanceInMeters / 1000.0);
-        //                        inBoundTimeInMinutes = Convert.ToDecimal(result.durationInSeconds / 60.0);
-
-        //                        CalculateDistanceAndTimeFare(pickUpAreaFareManager.FareManagerID.ToString(),
-        //                            isMorningShift,
-        //                            inBoundDistanceInKM,
-        //                            (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerKmFare : pickUpAreaFareManager.EveningPerKmFare),
-        //                            inBoundTimeInMinutes,
-        //                            (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerMinFare : pickUpAreaFareManager.EveningPerMinFare),
-        //                            out inBoundDistanceFare,
-        //                            out inBoundTimeFare);
-
-        //                        inBoundBaseFare = Convert.ToDecimal(isMorningShift ? pickUpAreaFareManager.MorningBaseFare : pickUpAreaFareManager.EveningBaseFare);
-        //                        inBoundTotalFare = inBoundBaseFare + inBoundDistanceFare + inBoundTimeFare;
-        //                        inBoundSurchargeAmount = Convert.ToDecimal(inBoundTotalFare * (isMorningShift ? pickUpAreaFareManager.MorningSurcharge : pickUpAreaFareManager.EveningSurcharge) / 100);
-        //                        totalFare = inBoundTotalFare + inBoundSurchargeAmount;
-        //                        polyLine = routePolyLine;
-        //                    }
-        //                }
-        //                else
-        //                {
-        //                    if (isTripEnd)  //End Trip API call
-        //                    {
-        //                        if (isAtDropOffLocation) //Will be set false by application if destination was not set OR drop off location was not within radius of 200 meters
-        //                        {
-        //                            //If normal booking return the same fare which was calculated in estimate API call. In case of later booking recalculate
-        //                            var trip = context.Trips.Where(t => t.TripID.ToString().Equals(TripId.ToString())).FirstOrDefault();
-
-        //                            //CR : Don't recalculate laterboking fare in any case.
-
-        //                            //if ((bool)trip.isLaterBooking)
-        //                            //{
-
-        //                            //    //In case of later booking recalculate
-        //                            //    //Get distance and time from database (saved on estimate fare), calculate fare according to fare manager new ranges (if changed).
-
-        //                            //    #region InBoundCalculation
-
-        //                            //    isMorningShift = DateTime.UtcNow.TimeOfDay >= pickUpAreaFareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= pickUpAreaFareManager.MorningShiftEndTime;
-
-        //                            //    inBoundDistanceInKM = Convert.ToDecimal(trip.InBoundDistanceInMeters / 1000.0);
-        //                            //    inBoundTimeInMinutes = Convert.ToDecimal(trip.InBoundTimeInSeconds / 60.0);
-
-        //                            //    CalculateDistanceAndTimeFare(pickUpAreaFareManager.FareManagerID.ToString(),
-        //                            //        isMorningShift,
-        //                            //        inBoundDistanceInKM,
-        //                            //        (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerKmFare : pickUpAreaFareManager.EveningPerKmFare),
-        //                            //        inBoundTimeInMinutes,
-        //                            //        (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerMinFare : pickUpAreaFareManager.EveningPerMinFare),
-        //                            //        out inBoundDistanceFare,
-        //                            //        out inBoundTimeFare);
-
-        //                            //    inBoundBaseFare = Convert.ToDecimal(isMorningShift ? pickUpAreaFareManager.MorningBaseFare : pickUpAreaFareManager.EveningBaseFare);
-        //                            //    inBoundTotalFare = inBoundBaseFare + inBoundDistanceFare + inBoundTimeFare;
-        //                            //    inBoundSurchargeAmount = Convert.ToDecimal(inBoundTotalFare * (isMorningShift ? pickUpAreaFareManager.MorningSurcharge : pickUpAreaFareManager.EveningSurcharge) / 100);
-
-        //                            //    #endregion
-
-        //                            //    #region OutBoundCalculation
-
-        //                            //    isMorningShift = DateTime.UtcNow.TimeOfDay >= dropOffAreaFareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= dropOffAreaFareManager.MorningShiftEndTime;
-
-        //                            //    outBoundDistanceInKM = Convert.ToDecimal(trip.OutBoundDistanceInMeters / 1000.0);
-        //                            //    outBoundTimeInMinutes = Convert.ToDecimal(trip.OutBoundTimeInSeconds / 60.0);
-
-        //                            //    CalculateDistanceAndTimeFare(dropOffAreaFareManager.FareManagerID.ToString(),
-        //                            //        isMorningShift,
-        //                            //        outBoundDistanceInKM,
-        //                            //        (decimal)(isMorningShift ? dropOffAreaFareManager.MorningPerKmFare : dropOffAreaFareManager.EveningPerKmFare),
-        //                            //        outBoundTimeInMinutes,
-        //                            //        (decimal)(isMorningShift ? dropOffAreaFareManager.MorningPerMinFare : dropOffAreaFareManager.EveningPerMinFare),
-        //                            //        out outBoundDistanceFare,
-        //                            //        out outBoundTimeFare);
-
-        //                            //    outBoundBaseFare = Convert.ToDecimal(isMorningShift ? dropOffAreaFareManager.MorningBaseFare : dropOffAreaFareManager.EveningBaseFare);
-        //                            //    outBoundTotalFare = outBoundBaseFare + outBoundDistanceFare + outBoundTimeFare;
-        //                            //    outBoundSurchargeAmount = Convert.ToDecimal(inBoundTotalFare * (isMorningShift ? dropOffAreaFareManager.MorningSurcharge : dropOffAreaFareManager.EveningSurcharge) / 100);
-
-        //                            //    totalFare = inBoundTotalFare + inBoundSurchargeAmount + outBoundTotalFare + outBoundSurchargeAmount;
-
-        //                            //    #endregion
-
-        //                            //    polyLine = GetPolyLineFromFireBase(polyLine, trip.TripID.ToString(), trip.CaptainID.ToString());
-        //                            //}
-        //                            //else
-        //                            //{
-        //                            inBoundDistanceInKM = Convert.ToDecimal(trip.InBoundDistanceInMeters / 1000.0);
-        //                            inBoundDistanceFare = Convert.ToDecimal(trip.InBoundDistanceFare);
-        //                            inBoundTimeInMinutes = Convert.ToDecimal(trip.InBoundTimeInSeconds / 60.0);
-        //                            inBoundTimeFare = Convert.ToDecimal(trip.InBoundTimeFare);
-        //                            outBoundDistanceInKM = Convert.ToDecimal(trip.OutBoundDistanceInMeters / 1000.0);
-        //                            outBoundDistanceFare = Convert.ToDecimal(trip.OutBoundDistanceFare);
-        //                            outBoundTimeInMinutes = Convert.ToDecimal(trip.OutBoundTimeInSeconds / 60.0);
-        //                            outBoundTimeFare = Convert.ToDecimal(trip.OutBoundTimeFare);
-        //                            inBoundSurchargeAmount = Convert.ToDecimal(trip.InBoundSurchargeAmount);
-        //                            outBoundSurchargeAmount = Convert.ToDecimal(trip.OutBoundSurchargeAmount);
-        //                            inBoundBaseFare = Convert.ToDecimal(trip.InBoundBaseFare);
-        //                            outBoundBaseFare = Convert.ToDecimal(trip.OutBoundBaseFare);
-
-        //                            totalFare = inBoundDistanceFare + inBoundTimeFare + inBoundBaseFare + inBoundSurchargeAmount +
-        //                                        outBoundDistanceFare + outBoundTimeFare + outBoundBaseFare + outBoundSurchargeAmount;
-
-        //                            polyLine = GetPolyLineFromFireBase(polyLine, trip.TripID.ToString(), trip.CaptainID.ToString());
-        //                            //}
-        //                        }
-        //                        else
-        //                        {
-        //                            //Get ployline ordered lat longs from firebase, (Trips / TripID / CaptainID / polyline / id /latitude + longitude + locationTime (diff / 1000 = seconds)) use first lat long to set pickup faremanager.
-        //                            //Traverse ploygon and find boundary point. 
-        //                            //Get inbound/outbund time using difference of polyline lat long.
-        //                            //Get inbound/outbund distance using difference of polyline lat long.
-
-        //                            var trip = context.Trips.Where(t => t.TripID == TripId).FirstOrDefault();
-
-        //                            FireBaseController fb = new FireBaseController();
-        //                            var ployLineLocations = fb.getTripPolyLineDetails("Trips/" + trip.TripID.ToString() + "/" + trip.CaptainID.ToString() + "/" + "polyline");
-
-        //                            var inBoundDistanceInMeters = 0.0;
-        //                            var inBoundTimeInSeconds = 0.0;
-        //                            var outBoundDistanceInMeters = 0.0;
-        //                            var outBoundTimeInSeconds = 0.0;
-
-        //                            bool isGoneOutBound = false;
-        //                            GeoCoordinate lastPosition = null;
-        //                            DateTime lastLocationUpdateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
-
-        //                            foreach (var location in ployLineLocations)
-        //                            {
-        //                                polyLine += location.Value.latitude + "," + location.Value.longitude + "|";
-
-        //                                if (!isGoneOutBound)
-        //                                {
-        //                                    if (Polygon.IsLatLonExistsInPolygon(Polygon.ConvertLatLonObjectsArrayToPolygonString(pickUpAreaFareManager.AreaLatLong), location.Value.latitude, location.Value.longitude))
-        //                                    {
-        //                                        if (lastPosition != null)
-        //                                        {
-        //                                            var currentPosition = new GeoCoordinate(Convert.ToDouble(location.Value.latitude), Convert.ToDouble(location.Value.longitude));
-        //                                            inBoundDistanceInMeters += currentPosition.GetDistanceTo(lastPosition);  //distance in meters
-
-        //                                            DateTime currentLocationUpdateTime = DateTimeOffset.FromUnixTimeMilliseconds(location.Value.locationTime).UtcDateTime;
-        //                                            inBoundTimeInSeconds += (currentLocationUpdateTime - lastLocationUpdateTime).TotalSeconds;
-        //                                        }
-        //                                    }
-        //                                    else
-        //                                    {
-        //                                        isGoneOutBound = true;
-        //                                        isMorningShift = DateTime.UtcNow.TimeOfDay >= pickUpAreaFareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= pickUpAreaFareManager.MorningShiftEndTime;
-        //                                        inBoundDistanceInKM = Convert.ToDecimal(inBoundDistanceInMeters / 1000.0);
-        //                                        inBoundTimeInMinutes = Convert.ToDecimal(inBoundTimeInSeconds / 60.0);
-
-        //                                        CalculateDistanceAndTimeFare(pickUpAreaFareManager.FareManagerID.ToString(),
-        //                                            isMorningShift,
-        //                                            inBoundDistanceInKM,
-        //                                            (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerKmFare : pickUpAreaFareManager.EveningPerKmFare),
-        //                                            inBoundTimeInMinutes,
-        //                                            (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerMinFare : pickUpAreaFareManager.EveningPerMinFare),
-        //                                            out inBoundDistanceFare,
-        //                                            out inBoundTimeFare);
-
-        //                                        inBoundBaseFare = Convert.ToDecimal(isMorningShift ? pickUpAreaFareManager.MorningBaseFare : pickUpAreaFareManager.EveningBaseFare);
-        //                                        inBoundTotalFare = inBoundBaseFare + inBoundDistanceFare + inBoundTimeFare;
-        //                                        inBoundSurchargeAmount = Convert.ToDecimal(inBoundTotalFare * (isMorningShift ? pickUpAreaFareManager.MorningSurcharge : pickUpAreaFareManager.EveningSurcharge) / 100);
-        //                                    }
-        //                                }
-        //                                else
-        //                                {
-        //                                    var currentPosition = new GeoCoordinate(Convert.ToDouble(location.Value.latitude), Convert.ToDouble(location.Value.longitude));
-        //                                    outBoundDistanceInMeters += currentPosition.GetDistanceTo(lastPosition);  //distance in meters
-
-        //                                    DateTime currentLocationUpdateTime = DateTimeOffset.FromUnixTimeMilliseconds(location.Value.locationTime).UtcDateTime;
-        //                                    outBoundTimeInSeconds += (currentLocationUpdateTime - lastLocationUpdateTime).TotalSeconds;
-
-        //                                }
-        //                                lastPosition = new GeoCoordinate(Convert.ToDouble(location.Value.latitude), Convert.ToDouble(location.Value.longitude));
-        //                                lastLocationUpdateTime = DateTimeOffset.FromUnixTimeMilliseconds(location.Value.locationTime).UtcDateTime;
-        //                            }
-
-        //                            polyLine = polyLine.Length > 0 ? polyLine.Remove(polyLine.Length - 1) : "";
-
-        //                            isMorningShift = DateTime.UtcNow.TimeOfDay >= dropOffAreaFareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= dropOffAreaFareManager.MorningShiftEndTime;
-
-        //                            outBoundDistanceInKM = Convert.ToDecimal(outBoundDistanceInMeters / 1000.0);
-        //                            outBoundTimeInMinutes = Convert.ToDecimal(outBoundTimeInSeconds / 60.0);
-
-        //                            CalculateDistanceAndTimeFare(dropOffAreaFareManager.FareManagerID.ToString(),
-        //                                isMorningShift,
-        //                                outBoundDistanceInKM,
-        //                                (decimal)(isMorningShift ? dropOffAreaFareManager.MorningPerKmFare : dropOffAreaFareManager.EveningPerKmFare),
-        //                                outBoundTimeInMinutes,
-        //                                (decimal)(isMorningShift ? dropOffAreaFareManager.MorningPerMinFare : dropOffAreaFareManager.EveningPerMinFare),
-        //                                out outBoundDistanceFare,
-        //                                out outBoundTimeFare);
-
-        //                            outBoundBaseFare = Convert.ToDecimal(isMorningShift ? dropOffAreaFareManager.MorningBaseFare : dropOffAreaFareManager.EveningBaseFare);
-        //                            outBoundTotalFare = outBoundBaseFare + outBoundDistanceFare + outBoundTimeFare;
-        //                            outBoundSurchargeAmount = Convert.ToDecimal(outBoundTotalFare * (isMorningShift ? dropOffAreaFareManager.MorningSurcharge : dropOffAreaFareManager.EveningSurcharge) / 100);
-
-        //                            totalFare = inBoundTotalFare + inBoundSurchargeAmount + outBoundTotalFare + outBoundSurchargeAmount;
-        //                        }
-        //                    }
-        //                    else //Fare Estimate API call
-        //                    {
-        //                        //Get Polyline from App, traverse and get boundary point. 
-        //                        //Get inbound / outbound time and distance from distance api. 
-        //                        //Apply fare ranges according to relevant fare managers.
-
-        //                        GeoCoordinate outBoundFirstPosition = null;
-        //                        //Need to hit distance api for time estimate, so no need to calcualte manual distance in this case - will be received from api
-
-        //                        foreach (var point in routePolyLine.Split('|'))
-        //                        {
-        //                            if (!Polygon.IsLatLonExistsInPolygon(Polygon.ConvertLatLonObjectsArrayToPolygonString(pickUpAreaFareManager.AreaLatLong), point.Split(',')[0], point.Split(',')[1]))
-        //                            {
-        //                                var result123 = DistanceMatrixAPI.GetTimeAndDistance(pickUpLatitude + "," + pickUpLongitude, point.Split(',')[0] + "," + point.Split(',')[1]);
-        //                                isMorningShift = DateTime.UtcNow.TimeOfDay >= pickUpAreaFareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= pickUpAreaFareManager.MorningShiftEndTime;
-
-        //                                inBoundDistanceInKM = Convert.ToDecimal(result123.distanceInMeters / 1000.0);
-        //                                inBoundTimeInMinutes = Convert.ToDecimal(result123.durationInSeconds / 60.0);
-
-        //                                CalculateDistanceAndTimeFare(pickUpAreaFareManager.FareManagerID.ToString(),
-        //                                    isMorningShift,
-        //                                    inBoundDistanceInKM,
-        //                                    (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerKmFare : pickUpAreaFareManager.EveningPerKmFare),
-        //                                    inBoundTimeInMinutes,
-        //                                    (decimal)(isMorningShift ? pickUpAreaFareManager.MorningPerMinFare : pickUpAreaFareManager.EveningPerMinFare),
-        //                                    out inBoundDistanceFare,
-        //                                    out inBoundTimeFare);
-
-        //                                inBoundBaseFare = Convert.ToDecimal(isMorningShift ? pickUpAreaFareManager.MorningBaseFare : pickUpAreaFareManager.EveningBaseFare);
-        //                                inBoundTotalFare = inBoundBaseFare + inBoundDistanceFare + inBoundTimeFare;
-        //                                inBoundSurchargeAmount = Convert.ToDecimal(inBoundTotalFare * (isMorningShift ? pickUpAreaFareManager.MorningSurcharge : pickUpAreaFareManager.EveningSurcharge) / 100);
-
-        //                                outBoundFirstPosition = new GeoCoordinate(Convert.ToDouble(point.Split(',')[0]), Convert.ToDouble(point.Split(',')[1]));
-
-        //                                break;
-        //                            }
-        //                        }
-
-        //                        isMorningShift = DateTime.UtcNow.TimeOfDay >= dropOffAreaFareManager.MorningShiftStartTime && DateTime.UtcNow.TimeOfDay <= dropOffAreaFareManager.MorningShiftEndTime;
-
-        //                        var result = DistanceMatrixAPI.GetTimeAndDistance(outBoundFirstPosition.Latitude.ToString() + "," + outBoundFirstPosition.Longitude.ToString(), dropOffLatitude + "," + dropOffLongitude);
-        //                        outBoundDistanceInKM = Convert.ToDecimal(result.distanceInMeters / 1000.0);
-        //                        outBoundTimeInMinutes = Convert.ToDecimal(result.durationInSeconds / 60.0);
-
-        //                        CalculateDistanceAndTimeFare(dropOffAreaFareManager.FareManagerID.ToString(),
-        //                            isMorningShift,
-        //                            outBoundDistanceInKM,
-        //                            (decimal)(isMorningShift ? dropOffAreaFareManager.MorningPerKmFare : dropOffAreaFareManager.EveningPerKmFare),
-        //                            outBoundTimeInMinutes,
-        //                            (decimal)(isMorningShift ? dropOffAreaFareManager.MorningPerMinFare : dropOffAreaFareManager.EveningPerMinFare),
-        //                            out outBoundDistanceFare,
-        //                            out outBoundTimeFare);
-
-        //                        outBoundBaseFare = Convert.ToDecimal(isMorningShift ? dropOffAreaFareManager.MorningBaseFare : dropOffAreaFareManager.EveningBaseFare);
-        //                        outBoundTotalFare = outBoundBaseFare + outBoundDistanceFare + outBoundTimeFare;
-        //                        outBoundSurchargeAmount = Convert.ToDecimal(outBoundTotalFare * (isMorningShift ? dropOffAreaFareManager.MorningSurcharge : dropOffAreaFareManager.EveningSurcharge) / 100);
-
-        //                        totalFare = inBoundTotalFare + inBoundSurchargeAmount + outBoundTotalFare + outBoundSurchargeAmount;
-        //                        polyLine = routePolyLine;
-        //                    }
-        //                }
-        //            }
-
-        //            //Trip minimum amount should be 6.6
-        //            if (totalFare <= 6.6M)
-        //            {
-        //                totalFare = 6.60M;
-        //                formattedTotalFare = 6.60M;
-        //            }
-        //            else
-        //            {
-        //                //totalFare = FormatFareValue(totalFare);
-        //                formattedTotalFare = FormatFareValue(totalFare);
-
-        //                inBoundBaseFare += (formattedTotalFare - totalFare); //Adjust fractional parts, for trips history
-        //            }
-
-        //            dic["inBoundDistanceInKM"] = string.Format("{0:0.00}", inBoundDistanceInKM);
-        //            dic["inBoundTimeInMinutes"] = string.Format("{0:0.00}", inBoundTimeInMinutes);
-        //            dic["outBoundDistanceInKM"] = string.Format("{0:0.00}", outBoundDistanceInKM);
-        //            dic["outBoundTimeInMinutes"] = string.Format("{0:0.00}", outBoundTimeInMinutes);
-
-        //            //vehicle with 6,8 seating capacity should be charged 2 euro extra
-        //            dic["inBoundBaseFare"] = string.Format("{0:0.00}", totalFare > 6.6M ? seatingCapacity > 4 ? inBoundBaseFare + 2 : inBoundBaseFare : 6.6M);
-        //            dic["inBoundDistanceFare"] = string.Format("{0:0.00}", totalFare > 6.6M ? inBoundDistanceFare : 0);
-        //            dic["inBoundTimeFare"] = string.Format("{0:0.00}", totalFare > 6.6M ? inBoundTimeFare : 0);
-        //            dic["inBoundSurchargeAmount"] = string.Format("{0:0.00}", totalFare > 6.6M ? inBoundSurchargeAmount : 0);
-        //            dic["outBoundDistanceFare"] = string.Format("{0:0.00}", totalFare > 6.6M ? outBoundDistanceFare : 0);
-        //            dic["outBoundTimeFare"] = string.Format("{0:0.00}", totalFare > 6.6M ? outBoundTimeFare : 0);
-        //            dic["outBoundSurchargeAmount"] = string.Format("{0:0.00}", totalFare > 6.6M ? outBoundSurchargeAmount : 0);
-        //            dic["outBoundBaseFare"] = string.Format("{0:0.00}", totalFare > 6.6M ? outBoundBaseFare : 0);
-        //            dic["polyLine"] = polyLine;
-        //        }
-
-        //        return formattedTotalFare;
-        //    }
-        //}
-
-
-        #endregion
-
     }
 }

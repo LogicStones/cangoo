@@ -10,19 +10,15 @@
 namespace DatabaseModel
 {
     using System;
-    using System.Collections.Generic;
     
-    public partial class PassengerPlace
+    public partial class FetchPopUpNotification_Result
     {
-        public int ID { get; set; }
-        public int PlacesTypesID { get; set; }
+        public Nullable<long> RowNo { get; set; }
+        public Nullable<int> Total { get; set; }
+        public string PopupID { get; set; }
+        public string Title { get; set; }
         public string Name { get; set; }
-        public string Address { get; set; }
-        public string Latitude { get; set; }
-        public string Longitutde { get; set; }
-        public string PassengerId { get; set; }
-        public System.Guid ApplicationID { get; set; }
-        public System.Guid ResellerID { get; set; }
-        public string PostalCode { get; set; }
+        public string StartDate { get; set; }
+        public string ExpiryDate { get; set; }
     }
 }

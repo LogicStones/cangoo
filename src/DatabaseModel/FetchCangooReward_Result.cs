@@ -10,12 +10,16 @@
 namespace DatabaseModel
 {
     using System;
-    using System.Collections.Generic;
     
-    public partial class RideServicesAreaFare
+    public partial class FetchCangooReward_Result
     {
-        public int ID { get; set; }
-        public Nullable<System.Guid> RideServicesID { get; set; }
-        public Nullable<System.Guid> AreaID { get; set; }
+        public Nullable<long> RowNo { get; set; }
+        public Nullable<int> Total { get; set; }
+        public string RewardID { get; set; }
+        public int Deduction { get; set; }
+        public Nullable<int> RedeemAmount { get; set; }
+        public string StartDate { get; set; }
+        public string ExpiryDate { get; set; }
+        public bool IsActive { get; set; }
     }
 }

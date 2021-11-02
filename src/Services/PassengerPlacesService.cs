@@ -29,7 +29,7 @@ namespace Services
             {
               return  await dbContext.Database.ExecuteSqlCommandAsync("UPDATE PassengerPlaces SET PlacesTypesID = @typeId, Name =@name, Address = @address, Latitude = @latitude, Longitutde = @longitude WHERE ID = @Id",
                                                                                     new SqlParameter("@address", model.Address),
-                                                                                    new SqlParameter("@typeId", model.PlacesTypesID),
+                                                                                    new SqlParameter("@typeId", model.PlaceTypeId),
                                                                                     new SqlParameter("@longitude", model.Longitutde),
                                                                                     new SqlParameter("@latitude", model.Latitude),
                                                                                     new SqlParameter("@name", model.Name),

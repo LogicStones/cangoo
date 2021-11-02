@@ -10,7 +10,9 @@ namespace Constants
     {
         public const string pas_NewDeviceLoggedIn = "pas_NewDeviceLoggedIn";
         public const string cap_rideCancel = "cap_rideCancel";
-        public const string cap_laterRideCancel = "cap_laterRideCancel"; 
-        public const string cap_rideRequest = "cap_rideRequest"; 
+        public const string cap_laterRideCancel = "cap_laterRideCancel";
+        public const string cap_rideRequest = "cap_rideRequest";
+        public const string pas_InProcessLaterBookingReRouted = "pas_InProcessLaterBookingReRouted";
+        public const string pas_rideReRouted = "pas_rideReRouted";
     }
 }

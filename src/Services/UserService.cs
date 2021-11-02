@@ -211,7 +211,7 @@ Update Userprofile Set CountryCode = {1} where UserID = {2};", phoneNumber, coun
                                 PassengerId = userId,
                                 DeviceToken = userProfile.DeviceToken
                             };
-                            await NotificationService.UniCast(userProfile.DeviceToken, payload, NotificationKeys.pas_NewDeviceLoggedIn);
+                            await PushyService.UniCast(userProfile.DeviceToken, payload, NotificationKeys.pas_NewDeviceLoggedIn);
                         }
                     }
                     await UpdateDeviceTokenAsync(deviceToken, userProfile.UserID);

@@ -1,6 +1,12 @@
-﻿using DatabaseModel;
+﻿using Constants;
+using DatabaseModel;
+using DTOs.API;
+using DTOs.Shared;
+using Services.Automapper;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.Data.Entity;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -54,5 +60,42 @@ namespace Services
             }
         }
 
+
+        public static async Task<List<DatabaseOlineDriversDTO>> GetDriversByIds(string driverIds)
+        {
+            using (var context = new CangooEntities())
+            {
+                var onlineDrivers = context.spGetOnlineDriver(driverIds).ToList();
+                return AutoMapperConfig._mapper.Map<List<spGetOnlineDriver_Result>, List<DatabaseOlineDriversDTO>>(onlineDrivers);
+            }
+        }
+
+        public static async Task<UpcomingLaterBooking> GetUpcomingLaterBookings(string driverId)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                var upcoming = dbContext.spGetUpcomingLaterBookingByDriverID(driverId, DateTime.UtcNow.ToString(), (int)TripStatuses.LaterBookingAccepted).FirstOrDefault(); //utc date time
+                if (upcoming != null)
+                {
+                    return new UpcomingLaterBooking
+                    {
+                        tripID = upcoming.TripID.ToString(),
+                        pickUpDateTime = Convert.ToDateTime(upcoming.PickUpBookingDateTime).ToString(Formats.DateFormat),
+                        seatingCapacity = Convert.ToInt32(upcoming.Noofperson),
+                        pickUplatitude = upcoming.PickupLocationLatitude,
+                        pickUplongitude = upcoming.PickupLocationLongitude,
+                        pickUpLocation = upcoming.PickUpLocation,
+                        dropOfflatitude = upcoming.DropOffLocationLatitude,
+                        dropOfflongitude = upcoming.DropOffLocationLongitude,
+                        dropOffLocation = upcoming.DropOffLocation,
+                        passengerName = upcoming.Name,
+                        isSend30MinutSendFCM = (Convert.ToDateTime(upcoming.PickUpBookingDateTime) - DateTime.UtcNow).TotalMinutes <= 30 ? true : false,
+                        isSend20MinutSendFCM = (Convert.ToDateTime(upcoming.PickUpBookingDateTime) - DateTime.UtcNow).TotalMinutes <= 20 ? true : false,
+                        isWeb = upcoming.isWeb
+                    };
+                }
+                return null;
+            }
+        }
     }
 }

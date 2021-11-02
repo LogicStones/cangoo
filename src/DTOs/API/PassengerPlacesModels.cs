@@ -22,7 +22,7 @@ namespace DTOs.API
     public class PlaceDetails
     {
         [Required]
-        public int PlacesTypesID { get; set; } 
+        public int PlaceTypeId { get; set; } 
 
         [Required]
         public string Name { get; set; } = "";
@@ -35,6 +35,9 @@ namespace DTOs.API
 
         [Required]
         public string Longitutde { get; set; } = "";
+
+        [Required]
+        public string PostalCode { get; set; } = "";
     }
 
 
@@ -55,4 +58,16 @@ namespace DTOs.API
         public int ID { get; set; }
     }
 
+
+    public class GetRecentLocationResponse
+    {
+        public List<GetRecentLocationDetails> Locations { get; set; } = new List<GetRecentLocationDetails>();
+    }
+
+    public class GetRecentLocationDetails
+    {
+        public string DropOffLatitude { get; set; } = "";
+        public string DropOffLongitude { get; set; } = "";
+        public string DropOffLocation { get; set; } = "";
+    }
 }

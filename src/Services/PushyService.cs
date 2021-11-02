@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Services
 {
-    public class NotificationService
+    public class PushyService
     {
         public static async Task UniCast(string token, dynamic msg, string messageKey)
         {
@@ -37,7 +37,7 @@ namespace Services
             await PushyAPI.SendPush(push);
         }
 
-        public static async Task BroadCastNotification(Dictionary<string, string> lstToken, RideRequestNotification response)
+        public static async Task BroadCastNotification(Dictionary<string, string> lstToken, DriverBookingRequestNotification response)
         {
             foreach (var item in lstToken)
             {
