@@ -666,7 +666,7 @@ namespace API.Controllers
 
             if (result == 0)
             {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper
                 {
                     Message = ResponseKeys.failedToUpdate
                 });

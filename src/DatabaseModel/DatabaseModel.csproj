@@ -380,6 +380,9 @@
     <Compile Include="FetchPromoCodes_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="FetchPublicHolidays_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="FetchResellerAnnualEarningAndProfit_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
@@ -513,6 +516,9 @@
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="PublicHoliday.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="ReportsLog.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>

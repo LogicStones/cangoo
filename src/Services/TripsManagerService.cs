@@ -93,8 +93,9 @@ namespace Services
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<GetRecentLocationDetails>("SELECT TOP(5) DropOffLocationLatitude,DropOffLocationLongitude,DropOffLocation FROM Trips WHERE UserID=@passengerId AND TripStatusID=1 ORDER BY ArrivalDateTime DESC",
-                                                                                                                    new SqlParameter("@passengerId", passengerId));
+                var query = dbContext.Database.SqlQuery<GetRecentLocationDetails>("SELECT TOP(5) DropOffLocationLatitude,DropOffLocationLongitude,DropOffLocation,PickUpLocPostalCode, DropOffLoacPostalCode, MidWayLocPostalCode FROM Trips WHERE UserID=@passengerId AND TripStatusID = @tripStatus ORDER BY ArrivalDateTime DESC",
+                                                                                                                    new SqlParameter("@passengerId", passengerId),
+                                                                                                                    new SqlParameter("@tripStatus", TripStatuses.Completed));
                 return await query.ToListAsync();
             }
         }
