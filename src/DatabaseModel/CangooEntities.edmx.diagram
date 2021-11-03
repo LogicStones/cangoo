@@ -4,7 +4,7 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="42f29706a13c44538fe57eea9ff8d66a" Name="Diagram1">
+      <Diagram DiagramId="42f29706a13c44538fe57eea9ff8d66a" Name="Diagram1" ZoomLevel="32">
         <EntityTypeShape EntityType="CangooModel.Agreement" Width="1.5" PointX="0.75" PointY="6.75" />
         <EntityTypeShape EntityType="CangooModel.AgreementType" Width="1.5" PointX="2.75" PointY="6.75" />
         <EntityTypeShape EntityType="CangooModel.Application" Width="1.5" PointX="4.75" PointY="6.75" />
@@ -73,7 +73,6 @@
         <EntityTypeShape EntityType="CangooModel.SubscriptionType" Width="1.5" PointX="24.75" PointY="18.75" />
         <EntityTypeShape EntityType="CangooModel.Transaction" Width="1.5" PointX="24.75" PointY="21.75" />
         <EntityTypeShape EntityType="CangooModel.TripRequestLog" Width="1.5" PointX="14.75" PointY="25.75" />
-        <EntityTypeShape EntityType="CangooModel.Trip" Width="1.5" PointX="16.75" PointY="25.75" />
         <EntityTypeShape EntityType="CangooModel.TripStatu" Width="1.5" PointX="18.75" PointY="25.75" />
         <EntityTypeShape EntityType="CangooModel.TrustedContact" Width="1.5" PointX="20.75" PointY="25.75" />
         <EntityTypeShape EntityType="CangooModel.UserFavoriteCaptain" Width="1.5" PointX="26.75" PointY="0.75" />
@@ -88,6 +87,7 @@
         <AssociationConnector Association="CangooModel.FK_dbo_AspNetUserClaims_dbo_AspNetUsers_UserId" />
         <AssociationConnector Association="CangooModel.FK_dbo_AspNetUserLogins_dbo_AspNetUsers_UserId" />
         <AssociationConnector Association="CangooModel.AspNetUserRoles" />
+        <EntityTypeShape EntityType="CangooModel.Trip" Width="1.5" PointX="11.375" PointY="27.75" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

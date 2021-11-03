@@ -69,8 +69,8 @@ namespace DTOs.API
         public string DropOffLatitude { get; set; } = "";
         public string DropOffLongitude { get; set; } = "";
         public string DropOffLocation { get; set; } = "";
-        public string PickUpLocPostalCode { get; set; } = "";
-        public string DropOffLoacPostalCode { get; set; } = "";
-        public string MidWayLocPostalCode { get; set; } = "";
+        public string PickupLocationPostalCode { get; set; } = "";
+        public string DropOffLocationPostalCode { get; set; } = "";
+        public string MidwayStop1PostalCode { get; set; } = "";
     }
 }

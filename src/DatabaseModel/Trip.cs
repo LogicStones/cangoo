@@ -101,8 +101,8 @@ namespace DatabaseModel
         public Nullable<System.DateTime> MidwayStop1ArrivalDateTime { get; set; }
         public Nullable<System.DateTime> MidwayStop1LeaveDateTime { get; set; }
         public bool isLogisticRequest { get; set; }
-        public string PickUpLocPostalCode { get; set; }
-        public string DropOffLoacPostalCode { get; set; }
-        public string MidWayLocPostalCode { get; set; }
+        public string PickupLocationPostalCode { get; set; }
+        public string DropOffLocationPostalCode { get; set; }
+        public string MidwayStop1PostalCode { get; set; }
     }
 }
