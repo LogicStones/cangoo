@@ -206,12 +206,12 @@ Update Userprofile Set CountryCode = {1} where UserID = {2};", phoneNumber, coun
                         //Pushy device token never changes. If user is already logged in on some other device then force logout.
                         if (!userProfile.DeviceToken.ToLower().Equals(deviceToken.ToLower()))
                         {
-                            NewDeviceLogInNotification payload = new NewDeviceLogInNotification
+                            NewDeviceLogInNotification notificationPayload = new NewDeviceLogInNotification
                             {
                                 PassengerId = userId,
                                 DeviceToken = userProfile.DeviceToken
                             };
-                            await PushyService.UniCast(userProfile.DeviceToken, payload, NotificationKeys.pas_NewDeviceLoggedIn);
+                            await PushyService.UniCast(userProfile.DeviceToken, notificationPayload, NotificationKeys.pas_NewDeviceLoggedIn);
                         }
                     }
                     await UpdateDeviceTokenAsync(deviceToken, userProfile.UserID);

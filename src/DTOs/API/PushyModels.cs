@@ -13,20 +13,76 @@ namespace DTOs.API
 		public string DeviceToken { get; set; }
 	}
 
-    public class DriverBookingRequestNotification : DiscountTypeDTO
+	public class PassengerRequestAcceptedNotification
+	{
+		public string TripId { get; set; }
+		public string PickUpLatitude { get; set; }
+		public string PickUpLongitude { get; set; }
+		public string MidwayStop1Latitude { get; set; }
+		public string MidwayStop1Longitude { get; set; }
+		public string DropOffLatitude { get; set; }
+		public string DropOffLongitude { get; set; }
+		public string DriverId { get; set; }
+		public string DriverName { get; set; }
+		public string DriverPicture { get; set; }
+		public string DriverRating { get; set; }
+		public string DriverContactNumber { get; set; }
+		public string VehicleNumber { get; set; }
+		public string Model { get; set; }
+		public string Make { get; set; }
+		public string VehicleRating { get; set; }
+		public string IsWeb { get; set; }
+		public string IsLaterBooking { get; set; }
+		public string IsDispatchedRide { get; set; }
+		public string IsReRouteRequest { get; set; }
+		public string SeatingCapacity { get; set; }
+		public string LaterBookingPickUpDateTime { get; set; }
+		public string Description { get; set; }
+		public string VoucherCode { get; set; }
+		public string VoucherAmount { get; set; }
+		public List<CanclReasonsDTO> lstCancel = new List<CanclReasonsDTO>();
+
+    }
+	
+	public class EndRideFCM
+	{
+		public string tripID { get; set; }
+		public string tripRewardPoints { get; set; }
+		public string totalRewardPoints { get; set; }
+		public string driverName { get; set; }
+		public string driverImage { get; set; }
+		public bool isFav { get; set; }
+		public decimal estimateFare { get; set; }
+		public DateTime? bookingDateTime { get; set; }
+		public DateTime? endRideDateTime { get; set; }
+		public string pickLat { get; set; }
+		public string pickLong { get; set; }
+		public string dropLat { get; set; }
+		public string dropLong { get; set; }
+		public string distance { get; set; }
+		public string date { get; set; }
+		public string time { get; set; }
+		public string paymentMode { get; set; }
+	}
+
+	public class DriverBookingRequestNotification : DiscountTypeDTO
     {
         public string PickUpLatitude { get; set; }
         public string PickUpLongitude { get; set; }
         public string PickUpLocation { get; set; }
+        public string MidwayStop1Latitude { get; set; }
+        public string MidwayStop1Longitude { get; set; }
+        public string MidwayStop1Location { get; set; }
         public string DropOffLatitude { get; set; }
         public string DropOffLongitude { get; set; }
         public string DropOffLocation { get; set; }
         public string IsLaterBooking { get; set; }
-        public string NumberOfPerson { get; set; }
+        //public string NumberOfPerson { get; set; }
+        public string SeatingCapacity { get; set; }
         public string PickUpDateTime { get; set; }
         public string TripId { get; set; }
         public string PaymentMethod { get; set; }
-        public string PaymentMethodId { get; set; }
+        public string PaymentModeId { get; set; }
         public string IsDispatchedRide { get; set; }
         public string IsFavorite { get; set; }
         public string IsWeb { get; set; }
@@ -36,14 +92,13 @@ namespace DTOs.API
         public string EstimatedPrice { get; set; }
         public string BookingMode { get; set; }
         public string BookingModeId { get; set; }
-        public string DispatcherID { get; set; }
         public string RequestTimeOut { get; set; }
-        public string SeatingCapacity { get; set; }
         public string VoucherAmount { get; set; }
         public string VoucherCode { get; set; }
         public string DeviceToken { get; set; }
         public string ReRouteRequestTime { get; set; }
         public string PreviousCaptainId { get; set; }
+        public string DispatcherID { get; set; }
         public List<CanclReasonsDTO> CancelReasons { get; set; }
         public List<FacilitiyDTO> Facilities { get; set; }
     }

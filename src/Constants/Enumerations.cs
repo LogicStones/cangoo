@@ -20,7 +20,7 @@ namespace Constants
 	public enum TripStatuses
 	{
 		Completed = 1,  //Payment Received
-		Accepted = 2,   //Start Ride | On The Way
+		OnTheWay = 2,   //Start Ride | On The Way
 		Arrived = 3,
 		RequestSent = 4,    //Request Sent
 		Picked = 5,
@@ -72,4 +72,13 @@ namespace Constants
 		Karhoo,
 		Dispatcher
 	}
+
+	//public enum PaymentMethods
+	//{
+	//	Cash = 1,
+	//	Paypal,
+	//	CreditCard,
+	//	Gift,
+	//	Wallet
+	//}
 }

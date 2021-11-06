@@ -1,6 +1,7 @@
 ﻿using DTOs.Shared;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
@@ -81,60 +82,140 @@ namespace DTOs.API
         public List<FacilitiyDTO> FacilitiesList { get; set; }
     }
 
-    public class BookTripRequest
+    public class BookTripRequest : FareBreakDownDTO
     {
         [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string PassengerId { get; set; }
-        public string ApplicationAuthorizeArea { get; set; }
-        public string DeviceToken { get; set; }
+
         [Required]
+        [DefaultValue("32.1348011158146")]
         public string PickUpLatitude { get; set; }
+        
         [Required]
+        [DefaultValue("74.2097900505854")]
         public string PickUpLongitude { get; set; }
+        
         [Required]
+        [DefaultValue("52250")]
+        public string PickUpPostalCode { get; set; }
+        
+        [Required]
+        [DefaultValue("Madni Masjid, Madni Rd, Sector Y Peoples Colony, Gujranwala, Punjab, Pakistan")]
         public string PickUpLocation { get; set; }
-        public string MidwayLatitude { get; set; }
-        public string MidwayLongitude { get; set; }
-        public string MidwayLocation { get; set; }
+        
+        [DefaultValue("32.1418279")]
+        public string MidwayStop1Latitude { get; set; }
+        
+        [DefaultValue("74.2103029")]
+        public string MidwayStop1Longitude { get; set; }
+        
+        [DefaultValue("52250")]
+        public string MidwayStop1PostalCode { get; set; }
+        
+        [DefaultValue("Madina Park, Sector Z Sector X Peoples Colony, Gujranwala, Pakistan")]
+        public string MidwayStop1Location { get; set; }
+        
         [Required]
+        [DefaultValue("32.1374413236167")]
         public string DropOffLatitude { get; set; }
+        
         [Required]
+        [DefaultValue("74.2070284762054")]
         public string DropOffLongitutde { get; set; }
+        
         [Required]
+        [DefaultValue("52250")]
+        public string DropOffPostalCode { get; set; }
+        
+        [Required]
+        [DefaultValue("Street 21, Sector Y Peoples Colony, Gujranwala, Punjab, Pakistan")]
         public string DropOffLocation { get; set; }
-        public string InBoundDistanceInKM { get; set; }
-        public string InBoundDistanceFare { get; set; }
-        public string InBoundTimeInMinutes { get; set; }
-        public string InBoundTimeFare { get; set; }
-        public string OutBoundDistanceInKM { get; set; }
-        public string OutBoundDistanceFare { get; set; }
-        public string OutBoundTimeInMinutes { get; set; }
-        public string OutBoundTimeFare { get; set; }
-        public string InBoundSurchargeAmount { get; set; }
-        public string OutBoundSurchargeAmount { get; set; }
-        public string InBoundBaseFare { get; set; }
-        public string OutBoundBaseFare { get; set; }
+        
+        [Required]
+        [DefaultValue("345")]
+        public string InBoundTimeInSeconds { get; set; }
+        
+        [Required]
+        [DefaultValue("245")]
+        public string InBoundDistanceInMeters { get; set; }
+        
+        [Required]
+        [DefaultValue("56")]
+        public string OutBoundTimeInSeconds { get; set; }
+        
+        [Required]
+        [DefaultValue("12")]
+        public string OutBoundDistanceInMeters { get; set; }
+        
+        [Required]
+        [DefaultValue("4")]
         public string SeatingCapacity { get; set; }
+        
         [Required]
+        [DefaultValue("Cash")]
         public string SelectedPaymentMethod { get; set; }
+        
         [Required]
+        [DefaultValue("1")]
         public string SelectedPaymentMethodId { get; set; }
-        public string TripID { get; set; }
+        //public string PaymentModeId { get; set; }
+
+        [Required]
+        [DefaultValue("1")]
+        public string CategoryId { get; set; }
+        
+        [Required]
+        [DefaultValue("False")]
+        public string IsWishCarRequest { get; set; }
+        
+        [Required]
+        [DefaultValue("False")]
+        public string IsCourierRequest { get; set; }
+        
+        [Required]
+        [DefaultValue("3")]
         public string BookingModeId { get; set; }
-        public string KarhooTripID { get; set; }
+        
         [Required]
-        public string IsLaterBooking { get; set; }
-        public string LaterBookingDate { get; set; }
+        [DefaultValue("False")]
         public string IsReRouteRequest { get; set; }
-        public string Description { get; set; }
-        public string DriverID { get; set; }
+        
         [Required]
+        [DefaultValue("18000")]
         public string TimeZoneOffset { get; set; }
-        public string PromoDiscountAmount { get; set; }
-        public string PromoCodeID { get; set; }
-        public string Distance { get; set; }
-        public string RequiredFacilities { get; set; }
+        
+        [Required]
+        [DefaultValue("False")]
+        public string IsLaterBooking { get; set; }
+        
+        [Required]
+        [DefaultValue("normal")]
         public string DiscountType { get; set; }
+        
+        [DefaultValue("0.0")]
+        public string PromoDiscountAmount { get; set; }
+        
+        [DefaultValue("")]
+        public string LaterBookingDate { get; set; }
+        
+        [DefaultValue("")]
+        public string TripId { get; set; }
+        
+        [DefaultValue("")]
+        public string KarhooTripId { get; set; }
+        
+        [DefaultValue("")]
+        public string Description { get; set; }
+        
+        [DefaultValue("")]
+        public string DriverId { get; set; }
+        
+        [DefaultValue("")]
+        public string PromoCodeId { get; set; }
+        
+        [DefaultValue("")]
+        public string RequiredFacilities { get; set; }
     }
 
     public class BookTripResponse : DiscountTypeDTO
@@ -154,6 +235,16 @@ namespace DTOs.API
         public string CaptainLocationLongitude { get; set; }
         public double DistanceToPickUpLocation { get; set; }
         public bool isReRouteRequest { get; set; }
+    }
+
+    public class DispatchedRideLogDTO
+    {
+        public Guid DispatchLogID { get; set; }
+        public Guid TripID { get; set; }
+        public Guid CaptainID { get; set; }
+        public Guid DispatchedBy { get; set; }
+        public DateTime LogTime { get; set; }
+        public Guid ApplicationID { get; set; }
     }
 
     public class TripTimeOutRequest

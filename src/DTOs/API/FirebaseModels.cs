@@ -9,7 +9,7 @@ namespace DTOs.API
 {
 	public class DriverStatus
 	{
-		public string OngoingRide { get; set; } = "";
+		public string ongoingRide { get; set; } = "";
 		public string isBusy { get; set; } = "";
 	}
 
@@ -37,30 +37,23 @@ namespace DTOs.API
 
 	public class FirebaseDriver
 	{
-		public string DriverID { get; set; }
-		public string IsBusy { get; set; }
-		public string DriverFacilities { get; set; }
-		public bool IsPriorityHoursActive { get; set; }
-		public Location Location { get; set; }
-		public string SeatingCapacity { get; set; }
-		public string VehicleFacilities { get; set; }
-		public string OngoingRide { get; set; }
-
+		public string driverID { get; set; }
+		public string isBusy { get; set; }
+		public string driverFacilities { get; set; }
+		public bool isPriorityHoursActive { get; set; }
+		public Location location { get; set; }
+		public string seatingCapacity { get; set; }
+		public string vehicleFacilities { get; set; }
+		public string ongoingRide { get; set; }
 		public string companyID { get; set; }
-		public string tripID { get; set; }
 		public string userName { get; set; }
 		public string driverName { get; set; }
 		public string phoneNumber { get; set; }
-		public double lat { get; set; }
-		public double lon { get; set; }
-		public double dropOfflat { get; set; }
-		public double dropOfflong { get; set; }
 		public string priorityHourEndTime { get; set; }
 		public string earningPoints { get; set; }
 		public string priorityHourRemainingTime { get; set; }
 		public string onlineSince { get; set; }
 		public string lastUpdated { get; set; }
-		public long bearing { get; set; }
 		public string deviceToken { get; set; }
 		public int makeID { get; set; }
 		public string make { get; set; }
@@ -72,6 +65,12 @@ namespace DTOs.API
 		public string plateNumber { get; set; }
 		public string registrationYear { get; set; }
 		public string color { get; set; }
+		//public double lat { get; set; }
+		//public double lon { get; set; }
+		//public string tripID { get; set; }
+		//public double dropOfflat { get; set; }
+		//public double dropOfflong { get; set; }
+		//public long bearing { get; set; }
 	}
 
 	public class Location

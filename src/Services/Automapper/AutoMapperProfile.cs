@@ -35,6 +35,7 @@ namespace Services.Automapper
             CreateMap<TrustedContact, UpdateTrustedContactRequest>().ReverseMap();
             CreateMap<spGetOnlineDriver_Result, DatabaseOlineDriversDTO>().ReverseMap();
             CreateMap<TripRequestLogDTO, TripRequestLog>().ReverseMap();
+            CreateMap<DispatchedRideLogDTO, DispatchedRidesLog>();
             //CreateMap<Trip, TripDTO>().ReverseMap();
 
 

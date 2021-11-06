@@ -27,7 +27,8 @@ namespace API
                 @in = "header",
                 type = "string",
                 //description = "My header field",
-                required = true
+                required = true,
+                @default = "73BABE98-3CA1-49E0-BE0A-1638B154762D"
             });
 
             operation.parameters.Add(new Parameter
@@ -36,7 +37,8 @@ namespace API
                 @in = "header",
                 type = "string",
                 //description = "My header field",
-                required = true
+                required = true,
+                @default = "CF8AF4B2-371D-46DD-AD66-65B6A26FB889"
             });
 
             operation.parameters.Add(new Parameter
@@ -44,8 +46,9 @@ namespace API
                 name = "Authorization",
                 @in = "header",
                 type = "string",
-                description = "bearer iXwrsdj...",
-                required = false
+                //description = "bearer iXwrsdj...",
+                required = false,
+                @default = "bearer "
             });
 
             operation.parameters.Add(new Parameter

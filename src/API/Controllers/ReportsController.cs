@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
 
@@ -261,7 +262,7 @@ namespace API.Controllers
         //            }
         //        }
 
-        public ActionResult Index()
+        public async Task<ActionResult> Index()
         {
             var ApplicationId = System.Configuration.ConfigurationManager.AppSettings["ApplicationID"];
 
@@ -450,7 +451,7 @@ namespace API.Controllers
                         };
 
 
-                    EmailService.SendReports(fleet.Email,//"developer.cantaxi@gmail.com"
+                    await EmailService.SendReports(fleet.Email,//"developer.cantaxi@gmail.com"
                                 string.Format(@"<pre>Lieber Partner, 
 
 in der Beilage übermitteln wir deine wöchentliche Abrechnung für {0}. 

@@ -1750,7 +1750,7 @@ namespace API.Controllers
         {
             if (passengerId != string.Empty)
             {
-                var lstLocation = await TripsManagerService.GetRecentLocation(passengerId);
+                var lstLocation = await PassengerPlacesService.GetRecentTripsLocations(passengerId);
                 return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
                 {
                     Error = false,
@@ -1779,14 +1779,14 @@ namespace API.Controllers
                     Error = false,
                     Message = ResponseKeys.msgSuccess,
                     Data = await FareManagerService.GetFareEstimate(model.PickUpPostalCode, model.PickUpLatitude, model.PickUpLongitude,
-                    model.MidwayPostalCode, model.MidwayLatitude, model.MidwayLongitude,
+                    model.MidwayStop1PostalCode, model.MidwayStop1Latitude, model.MidwayStop1Longitude,
                     model.DropOffPostalCode, model.DropOffLatitude, model.DropOffLongitutde,
                     model.PolyLine, model.InBoundTimeInSeconds, model.InBoundDistanceInMeters, model.OutBoundTimeInSeconds, model.OutBoundDistanceInMeters)
                 });
             }
             else
             {
-                return Request.CreateResponse(HttpStatusCode.NoContent, new ResponseWrapper
+                return Request.CreateResponse(HttpStatusCode.Forbidden, new ResponseWrapper
                 {
                     Error = true,
                     Message = ResponseKeys.userOutOfRange,
@@ -1798,23 +1798,12 @@ namespace API.Controllers
         [Route("book-trip")]
         public async Task<HttpResponseMessage> BookTrip([FromBody] BookTripRequest model)
         {
-            if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(model.ApplicationAuthorizeArea), model.PickUpLatitude, model.PickUpLongitude))
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
-                await TripsManagerService.BookNewTrip(model);
-
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.NoContent, new ResponseWrapper
-                {
-                    Message = ResponseKeys.userOutOfRange,
-                });
-            }
+                Error = false,
+                Data = await TripsManagerService.BookNewTrip(model),
+                Message = ResponseKeys.msgSuccess,
+            });
         }
 
         [HttpPost]  //Cancel normal booking which is not accepted yet
@@ -1828,7 +1817,7 @@ namespace API.Controllers
             }
             else if (responseKey.Equals(ResponseKeys.tripAlreadyBooked))
             {
-                return Request.CreateResponse(HttpStatusCode.NoContent, new ResponseWrapper { Message = ResponseKeys.tripAlreadyBooked });
+                return Request.CreateResponse(HttpStatusCode.Forbidden, new ResponseWrapper { Message = ResponseKeys.tripAlreadyBooked });
             }
             else
             {

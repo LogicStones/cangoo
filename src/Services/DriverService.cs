@@ -60,8 +60,33 @@ namespace Services
             }
         }
 
+        public static async Task<string> GetDriverDeviceToken(string driverId)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                return dbContext.Captains.Where(c => c.CaptainID.ToString().Equals(driverId)).FirstOrDefault().DeviceToken;
+            }
+        }
 
-        public static async Task<List<DatabaseOlineDriversDTO>> GetDriversByIds(string driverIds)
+        public static async Task<spGetUpdateTripDataOnAcceptRide_Result> GetUpdateTripDataOnAcceptRide(
+            string tripId, string driverId, string vehicleId, int oldBookingStatus, int isLaterBooking)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                return dbContext.spGetUpdateTripDataOnAcceptRide(tripId, driverId, (int)TripStatuses.OnTheWay, vehicleId, oldBookingStatus, 
+                    isLaterBooking, DateTime.UtcNow).FirstOrDefault();
+            }
+        }
+
+        public static async Task<Captain> GetDriverById(string driverId)
+        {
+            using (var context = new CangooEntities())
+            {
+                return context.Captains.Where(c => c.CaptainID.ToString().Equals(driverId)).FirstOrDefault();
+            }
+        }
+
+        public static async Task<List<DatabaseOlineDriversDTO>> GetOnlineDriversByIds(string driverIds)
         {
             using (var context = new CangooEntities())
             {
@@ -70,7 +95,7 @@ namespace Services
             }
         }
 
-        public static async Task<UpcomingLaterBooking> GetUpcomingLaterBookings(string driverId)
+        public static async Task<UpcomingLaterBooking> GetUpcomingLaterBooking(string driverId)
         {
             using (var dbContext = new CangooEntities())
             {
@@ -95,6 +120,15 @@ namespace Services
                     };
                 }
                 return null;
+            }
+        }
+
+        public static async Task<spGetDriverVehicleDetail_Result> GetDriverVehicleDetail(string driverId, string vehicleId, string passengerId, bool isWeb)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                return dbContext.spGetDriverVehicleDetail(driverId, vehicleId, passengerId, isWeb).FirstOrDefault();
+                
             }
         }
     }

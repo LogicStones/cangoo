@@ -287,6 +287,8 @@ namespace DTOs.API
     {
         public string pickupLocationLatitude { get; set; }
         public string pickupLocationLongitude { get; set; }
+        public string midwayStop1LocationLatitude { get; set; }
+        public string midwayStop1LocationLongitude { get; set; }
         public string dropOffLocationLatitude { get; set; }
         public string dropOffLocationLongitude { get; set; }
         public string passengerID { get; set; }

@@ -19,55 +19,28 @@ namespace Integrations
             BasePath = ConfigurationManager.AppSettings["FirebaseBasePath"].ToString()
         };
 
-        public static async Task RideDataWriteOnFireBase(string statusRide, bool isUser, string path, dynamic data, string driverID, string userID, bool isWeb)
-        {
-            SetClient();
-
-            SetResponse rs = client.Set(path + "/TripStatus", statusRide);
-            if (isUser)
-            {
-                //if (Enumration.returnRideFirebaseStatus(RideFirebaseStatus.RequestSent).Equals(statusRide))
-                //{
-                //    PassengerRideRequest pr = data;
-                //    client.Set(path + "/Info", new Dictionary<string, dynamic> {
-                //        {"isLaterBooking", pr.isLaterBooking },
-                //        {"requestTimeOut", 300 },
-                //        {"bookingDateTime", Common.getUtcDateTime() },
-                //        {"bookingMode", pr.bookingMode },
-                //    });
-                //}
-
-                rs = await client.SetTaskAsync(path + "/" + userID, data);
-            }
-            else
-            {
-                rs = await client.SetTaskAsync(path + "/" + driverID, data);
-            }
-        }
-
         public static async Task Write(string path, dynamic data)
         {
             SetClient();
-            await client.SetTaskAsync("", data);
+            await client.SetAsync(path, data);
         }
 
-        public static async Task<FirebaseResponse> Read(string path)
+        public static async Task<dynamic> Read(string path)
         {
             SetClient();
-            FirebaseResponse response = await client.GetTaskAsync(path);
-            return response;
+            return await client.GetAsync(path);
         }
 
         public static async Task Update(string path, dynamic data)
         {
             SetClient();
-            await client.UpdateTaskAsync(path, data);
+            await client.UpdateAsync(path, data);
         }
 
         public static async Task Delete(string path)
         {
             SetClient();
-            await client.DeleteTaskAsync(path);
+            await client.DeleteAsync(path);
         }
 
         private static void SetClient()
