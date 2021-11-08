@@ -73,12 +73,12 @@ namespace Constants
 		Dispatcher
 	}
 
-	//public enum PaymentMethods
-	//{
-	//	Cash = 1,
-	//	Paypal,
-	//	CreditCard,
-	//	Gift,
-	//	Wallet
-	//}
+    public enum PaymentModes
+    {
+        Cash = 1,
+        Paypal,
+        CreditCard,
+        Gift,
+        Wallet
+    }
 }

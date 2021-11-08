@@ -122,7 +122,7 @@ namespace DTOs.API
         
         [Required]
         [DefaultValue("74.2070284762054")]
-        public string DropOffLongitutde { get; set; }
+        public string DropOffLongitude { get; set; }
         
         [Required]
         [DefaultValue("52250")]
@@ -213,9 +213,12 @@ namespace DTOs.API
         
         [DefaultValue("")]
         public string PromoCodeId { get; set; }
-        
+
         [DefaultValue("")]
         public string RequiredFacilities { get; set; }
+        
+        [DefaultValue("")]
+        public string DeviceToken { get; set; }
     }
 
     public class BookTripResponse : DiscountTypeDTO

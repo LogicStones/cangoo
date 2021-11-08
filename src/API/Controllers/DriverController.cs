@@ -542,73 +542,66 @@ namespace API.Controllers
         #region Booked Ride Scenario
 
         [HttpPost]      //accept pending later booking
-        public async Task<HttpResponseMessage> acceptLateBooking([FromBody] RequestModel model)
+        public async Task<HttpResponseMessage> acceptLateBooking([FromBody] DriverAcceptLaterBookingRequest model)
         {
-            if (model != null && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID))
+            //App_Start.Enumration.isRequestAccepted = false;
+            using (CangooEntities context = new CangooEntities())
             {
-                //App_Start.Enumration.isRequestAccepted = false;
-                using (CangooEntities context = new CangooEntities())
+                if (model.isCheckLaterBookingConflict)
                 {
-                    if (model.isCheckLaterBookingConflict)
+                    var conf = checkLaterBookingDate(model.driverID, Convert.ToDateTime(model.pickUpDateTime));
+                    if (conf.isConflict)
                     {
-                        var conf = checkLaterBookingDate(model.driverID, Convert.ToDateTime(model.pickUpDateTime));
-                        if (conf.isConflict)
-                        {
-                            dic = new Dictionary<dynamic, dynamic>
+                        dic = new Dictionary<dynamic, dynamic>
                                 {
                                     { "alreadyBooked", DateTime.Parse(conf.pickUpDateTime).ToString(Formats.DateFormat) }
                                 };
-                            response.data = dic;
-                            response.error = false;
-                            response.message = ResponseKeys.laterBookingConflict;
-                            return Request.CreateResponse(HttpStatusCode.OK, response);
-                        }
-                    }
-
-                    var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID && t.TripStatusID == (int)TripStatuses.RequestSent && t.isLaterBooking == true).FirstOrDefault();
-                    if (tp == null)
-                    {
-                        response.error = true;
-                        response.message = ResponseKeys.tripAlreadyBooked;
+                        response.data = dic;
+                        response.error = false;
+                        response.message = ResponseKeys.laterBookingConflict;
                         return Request.CreateResponse(HttpStatusCode.OK, response);
                     }
-                    tp.TripStatusID = (int)TripStatuses.LaterBookingAccepted;
-                    tp.CaptainID = new Guid(model.driverID);
-                    await context.SaveChangesAsync();
+                }
 
-                    //New Implemention
-                    //var tripDiscountDetails = await FirebaseService.GetTripDiscountDetails(model.tripID);
-                    //var tripDispatchedStatus = await FirebaseService.GetTripDispatchedStatus(model.tripID);
-                    //await FirebaseService.DeleteTrip(model.tripID);
-
-                    await FirebaseService.DeletePendingLaterBooking(model.tripID);
-                    await FirebaseService.SetDriverLaterBookingCancelReasons();
-                    await FirebaseService.AddUpcomingLaterBooking(model.driverID, await DriverService.GetUpcomingLaterBooking(model.driverID));
-
-                    /* REFACTOR
-                    * If we stop deleting trip node then following look up implementation will be no more needed. */
-
-                    //New Implementation (Trip node is not delted, so discont details already exist)
-                    //await FirebaseService.UpdateDiscountTypeAndAmount(model.tripID, tripDiscountDetails.DiscountAmount, tripDiscountDetails.DiscountType);
-                    //await FirebaseService.SetTripDispatchedStatus(model.tripID, tripDispatchedStatus);
-
-                    response.error = false;
-                    response.message = ResponseKeys.msgSuccess;
+                var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID && t.TripStatusID == (int)TripStatuses.RequestSent && t.isLaterBooking == true).FirstOrDefault();
+                if (tp == null)
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.tripAlreadyBooked;
                     return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
-            }
-            else
-            {
-                response.error = true;
-                response.message = ResponseKeys.invalidParameters;
+                tp.TripStatusID = (int)TripStatuses.LaterBookingAccepted;
+                tp.CaptainID = new Guid(model.driverID);
+                await context.SaveChangesAsync();
+
+                //New Implemention
+                //var tripDiscountDetails = await FirebaseService.GetTripDiscountDetails(model.tripID);
+                //var tripDispatchedStatus = await FirebaseService.GetTripDispatchedStatus(model.tripID);
+                //await FirebaseService.DeleteTrip(model.tripID);
+
+                await FirebaseService.DeletePendingLaterBooking(model.tripID);
+                await FirebaseService.SetDriverLaterBookingCancelReasons();
+                await FirebaseService.AddUpcomingLaterBooking(model.driverID, await DriverService.GetUpcomingLaterBooking(model.driverID));
+
+                /* REFACTOR
+                * If we stop deleting trip node then following look up implementation will be no more needed. */
+
+                //New Implementation (Trip node is not delted, so discont details already exist)
+                //await FirebaseService.UpdateDiscountTypeAndAmount(model.tripID, tripDiscountDetails.DiscountAmount, tripDiscountDetails.DiscountType);
+                //await FirebaseService.SetTripDispatchedStatus(model.tripID, tripDispatchedStatus);
+
+                response.error = false;
+                response.message = ResponseKeys.msgSuccess;
                 return Request.CreateResponse(HttpStatusCode.OK, response);
             }
         }
 
         [HttpPost]      //Start later booking / accept normal request
-        public async Task<HttpResponseMessage> acceptRequest([FromBody] RequestModel model)
+        public async Task<HttpResponseMessage> acceptRequest([FromBody] DriverAcceptTripRequest model)
         {
-            int bookingStatus = 0;
+            if (model != null && !string.IsNullOrEmpty(model.tripID) && model.isAccept && !string.IsNullOrEmpty(model.driverID) && !string.IsNullOrEmpty(model.vehicleID))
+            {                }
+                int bookingStatus = 0;
 
             //Get trip current status before any status change
             if (model.isLaterBooking)
@@ -712,8 +705,8 @@ namespace API.Controllers
                 dic = new Dictionary<dynamic, dynamic>
                                     {
                                 //REFACTOR - These lat long keys are no more in use. Remove these keys.
-                                        { "lat", detail.PickupLocationLatitude },
-                                        { "lon", detail.PickupLocationLongitude },
+                                        //{ "lat", detail.PickupLocationLatitude },
+                                        //{ "lon", detail.PickupLocationLongitude },
                                         { "passengerID", detail.UserID },
                                         { "minDistance", detail.ArrivedTime },
                                         { "requestTime", detail.RequestWaitingTime },
@@ -748,7 +741,9 @@ namespace API.Controllers
                     //Writer later booking on firebase in Trips node to deal ride flow as normal booking
                     await FirebaseService.SetTripCancelReasonsForPassenger(model.tripID, detail.UserID.ToString(), dic);
 
-                    //NEW IMPLEMENTATION
+                    //NEW IMPLEMENTATION(No need to reset / recheck reset upcoming later bookings for all drivers, just adjust upcoming of current driver)
+
+                    await FirebaseService.AddUpcomingLaterBooking(model.driverID, await DriverService.GetUpcomingLaterBooking(model.driverID));
 
                     //Dictionary<string, LaterBooking> dicLaterBooking = new Dictionary<string, LaterBooking>();
                     ////check if driver have any other later booking then save the record on fb as UpcomingLaterBooking
@@ -771,181 +766,139 @@ namespace API.Controllers
             }
         }
 
+        [HttpPost]
+        public async Task<HttpResponseMessage> cancelRide([FromBody] DriverCancelTripRequest model, HttpRequestMessage request = null)
+        {
+            using (CangooEntities context = new CangooEntities())
+            {
+                //TBD: Add new trip status Cancel
+                var tp = context.spCaptainCancelRide(model.tripID, model.driverID, (int)TripStatuses.Cancel, model.cancelID, model.isWeb, bool.Parse(model.isAtPickupLocation), DateTime.UtcNow).FirstOrDefault();
 
-        //[HttpPost]
-        //public HttpResponseMessage cancelRide([FromBody] RequestModel model, HttpRequestMessage request = null)
-        //{
-        //        if (model != null && !string.IsNullOrEmpty(model.tripID) && model.cancelID > 0 && !string.IsNullOrEmpty(model.driverID) &&
-        //            !string.IsNullOrEmpty(model.isAtPickupLocation) && !string.IsNullOrEmpty(model.resellerArea))
-        //        {
-        //            using (CangooEntities context = new CangooEntities())
-        //            {
-        //                //TBD: Add new trip status Cancel
-        //                var tp = context.spCaptainCancelRide(model.tripID, model.driverID, (int)App_Start.TripStatus.Cancel, model.cancelID, model.isWeb, bool.Parse(model.isAtPickupLocation), (DateTime)Common.getUtcDateTime()).FirstOrDefault();
+                if (tp == null)
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.tripNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
 
-        //                if (tp == null)
-        //                {
-        //                    response.error = true;
-        //                    response.message = ResponseKeys.tripNotFound;
-        //                    return Request.CreateResponse(HttpStatusCode.OK, response);
-        //                }
+                //Regardless of ride statud (Accepted / On The Way / Arrived), if it is cancelled at least 2 min before pick up time 
+                //then request should be rerouted as new later booking
 
-        //                UserController uc = new UserController();
-        //                FireBaseController fc = new FireBaseController();
+                model.isLaterBooking = (bool)tp.isLaterBooking ?
+                        (((DateTime)tp.PickUpBookingDateTime) - DateTime.UtcNow).TotalMinutes > 2 ? true : false
+                    : false;
 
-        //                //Regardless of ride statud (Accepted / On The Way / Arrived), if it is cancelled at least 2 min before pick up time 
-        //                //then request should be rerouted as new later booking
+                //From app laterbooking of less than 5 min is not allowed, but rerouted later booking can be of at least 2 min.
+                if (model.isLaterBooking)
+                {
+                    //Step 1: Refresh pending later bookings (not accepted by any driver) node on firebase
+                    await FirebaseService.AddPendingLaterBookings(tp.UserID.ToString(), tp.TripID.ToString(), ((DateTime)tp.PickUpBookingDateTime).ToString(Formats.DateFormat), tp.NoOfPerson.ToString());
 
-        //                model.isLaterBooking = (bool)tp.isLaterBooking ?
-        //                        (((DateTime)tp.PickUpBookingDateTime) - DateTime.UtcNow).TotalMinutes > 2 ? true : false
-        //                    : false;
+                    //Step 2: Refresh current driver upcoming later booking on firebase
+                    await FirebaseService.DeleteUpcomingLaterBooking(model.driverID);
+                    await FirebaseService.AddUpcomingLaterBooking(model.driverID, await DriverService.GetUpcomingLaterBooking(model.driverID));
+                }
 
-        //                //From app laterbooking of less than 5 min is not allowed, but rerouted later booking can be of at least 2 min.
-        //                if (model.isLaterBooking)
-        //                {
-        //                    //Step 1: Refresh pending later bookings (not accepted by any driver) node on firebase
-        //                    fc.addRemovePendingLaterBookings(true, tp.UserID.ToString(), tp.TripID.ToString(), ((DateTime)tp.PickUpBookingDateTime).ToString(Common.dateFormat), (int)tp.NoOfPerson);
+                await FirebaseService.SetDriverBusy(model.driverID, model.tripID);
+                await FirebaseService.UpdateDriverEarnedPoints(model.driverID, tp.EarningPoints.ToString());
 
-        //                    //Step 2: Refresh current driver upcoming later booking on firebase
-        //                    fc.addDeleteNode(true, null, "UpcomingLaterBooking/" + model.driverID);
-        //                    Common.getUpcomingLaterBookingByDriverID(model.driverID);
-        //                }
+                dic = new Dictionary<dynamic, dynamic>
+                        {
+                            { "tripID", model.tripID }
+                        };
 
-        //                fc.updateDriverStatus(model.driverID, "false", model.tripID);
-        //                fc.updateDriverEarnedPoints(model.driverID, tp.EarningPoints.ToString());
+                //in normal booking if captain is arrived and cancels the ride then don't reroute
+                //in later booking if less than or equal to 2 min are remainig, captain cancels trip after arrival then don't reroute
 
-        //                dic = new Dictionary<dynamic, dynamic>
-        //                {
-        //                    { "tripID", model.tripID }
-        //                };
+                if (!model.isLaterBooking && tp.ArrivalDateTime != null)
+                {
+                    await FirebaseService.FreePassengerFromCurrentTrip(tp.TripID.ToString(), tp.UserID.ToString());
 
-        //                //in normal booking if captain is arrived and cancels the ride then don't reroute
-        //                //in later booking if less than or equal to 2 min are remainig, captain cancels trip after arrival then don't reroute
+                    await PushyService.UniCast(tp.DeviceToken, dic, NotificationKeys.pas_rideCancel);
+                    await FirebaseService.DeleteTrip(tp.TripID.ToString());
+                }
+                else
+                {
+                    //Reroute Request
+                    response.data = await TripsManagerService.BookNewTrip(GetCancelledTripRequestObject(model, tp));
+                }
 
-        //                if (!model.isLaterBooking && tp.ArrivalDateTime != null)
-        //                {
-        //                    fc.freeUserFromTrip(tp.TripID.ToString(), tp.UserID.ToString());
+                response.error = false;
+                response.data = dic;
+                response.message = ResponseKeys.msgSuccess;
 
-        //                    var task = Task.Run(async () =>
-        //                    {
-        //                        await fc.sentSingleFCM(tp.DeviceToken, dic, "pas_rideCancel");
-        //                        await fc.delTripNode(tp.TripID.ToString());
-        //                    });
-        //                }
-        //                else
-        //                {
-        //                    //Reroute Request
-        //                    uc.rideRequest(GetCancelledTripRequestObject(model, tp), Request ?? request);
-        //                }
+                //If later booking was over due and cancelled by cron-job (if driver app was not active)
+                if (Request == null)
+                    return request.CreateResponse(HttpStatusCode.OK, response);
+                else
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+        }
 
-        //                response.error = false;
-        //                response.data = dic;
-        //                response.message = ResponseKeys.msgSuccess;
+        [HttpPost]
+        public async Task<HttpResponseMessage> driverArrived([FromBody] DriverArrivedRequest model)
+        {
+            using (CangooEntities context = new CangooEntities())
+            {
+                var estDist = await FirebaseService.GetTripEstimatedDistanceOnArrival(model.driverID);
 
-        //                //If later booking was over due and cancelled by cron-job (if driver app was not active)
-        //                if (Request == null)
-        //                    return request.CreateResponse(HttpStatusCode.OK, response);
-        //                else
-        //                    return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //        else
-        //        {
-        //            response.error = true;
-        //            response.message = ResponseKeys.invalidParameters;
+                //Update earned points in case of normal booking only.
+                var trip = context.spGetUpdateTripOnCaptainArrived(DateTime.UtcNow,
+                    ((double.Parse(model.distanceToPickUpLocation) <= estDist ? double.Parse(model.distanceToPickUpLocation) : estDist) / 100),
+                    model.tripID,
+                    model.driverID,
+                    model.isWeb).FirstOrDefault();
 
-        //            if (Request == null)
-        //                return request.CreateResponse(HttpStatusCode.OK, response);
-        //            else
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //    //}
-        //    //catch (Exception ex)
-        //    //{
-        //    //    response.error = true;
-        //    //    Logger.WriteLog(ex);
-        //    //    Logger.WriteLog(model);
-        //    //    response.message = ResponseKeys.serverError;
+                if (trip != null)
+                {
+                    ArrivedDriverRideModel adr = new ArrivedDriverRideModel()
+                    {
+                        passengerName = trip.Name,
+                        passengerRating = trip.Rating,
+                        dropOffLatitude = trip.DropOffLocationLatitude,
+                        dropOffLongitude = trip.DropOffLocationLongitude,
+                        passenger_Pic = trip.pic,
+                        //bookingMode = trip.BookingModeID == (int)TripBookingMod.Karhoo ? Enum.GetName(typeof(TripBookingMod), (int)App_Start.TripBookingMod.Karhoo).ToLower() : ""
+                        bookingMode = Enum.GetName(typeof(BookingModes), (int)trip.BookingModeID).ToLower()
+                    };
 
-        //    //    if (Request == null)
-        //    //        return request.CreateResponse(HttpStatusCode.OK, response);
-        //    //    else
-        //    //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    //}
-        //}
+                    //NEW IMPLEMENTATION
 
-        //[HttpPost]
-        //public HttpResponseMessage driverArrived([FromBody] RequestModel model)
-        //{
+                    await FirebaseService.UpdateTripDriverDetailsOnArrival(adr, model.tripID, model.driverID, trip.EarningPoints.ToString());
+                    await FirebaseService.SetTripStatus(model.tripID, Enum.GetName(typeof(TripStatuses), (int)TripStatuses.Arrived));
 
-        //    if (model != null && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID))
-        //    {
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
+                    if (model.isWeb)
+                    {
+                        await PushyService.UniCast(trip.DeviceToken, new Dictionary<dynamic, dynamic>
+                            {
+                                { "driverID", model.driverID }
+                            }, NotificationKeys.pas_driverReached);
+                    }
 
-        //            FireBaseController fb = new FireBaseController();
-        //            var estDist = fb.getTripEstimatedDistanceOnArrival(model.driverID);
+                    dic = new Dictionary<dynamic, dynamic>
+                            {
+                                { "Name", trip.Name },
+                                { "Rating", trip.Rating },
+                                { "dropOffLat", trip.DropOffLocationLatitude != null ? trip.DropOffLocationLatitude : "" },
+                                { "dropOffLon", trip.DropOffLocationLongitude != null ? trip.DropOffLocationLongitude : "" },
+                                { "passenger_Pic", trip.pic },
+                                { "cancel_reasons", await CancelReasonsService.GetCancelReasons(true, false, true)},
+                                { "bookingMode", adr.bookingMode}
+                            };
 
-        //            //Update earned points in case of normal booking only.
-        //            var trip = context.spGetUpdateTripOnCaptainArrived(Common.getUtcDateTime(),
-        //                ((double.Parse(model.distanceToPickUpLocation) <= estDist ? double.Parse(model.distanceToPickUpLocation) : estDist) / 100),
-        //                model.tripID,
-        //                model.driverID,
-        //                model.isWeb).FirstOrDefault();
-        //            if (trip != null)
-        //            {
-        //                ArrivedDriverRideModel adr = new ArrivedDriverRideModel()
-        //                {
-        //                    passengerName = trip.Name,
-        //                    passengerRating = trip.Rating,
-        //                    dropOffLatitude = trip.DropOffLocationLatitude,
-        //                    dropOffLongitude = trip.DropOffLocationLongitude,
-        //                    passenger_Pic = trip.pic,
-        //                    //bookingMode = trip.BookingModeID == (int)TripBookingMod.Karhoo ? Enum.GetName(typeof(TripBookingMod), (int)App_Start.TripBookingMod.Karhoo).ToLower() : ""
-        //                    bookingMode = Enum.GetName(typeof(TripBookingMod), (int)trip.BookingModeID).ToLower()
-        //                };
-
-        //                FireBaseController fc = new FireBaseController();
-        //                var task = Task.Run(async () =>
-        //                {
-        //                    await fc.sendFCMAfterDriverArrived(model.driverID, trip.DeviceToken, adr, model.tripID, model.isWeb);
-        //                });
-        //                fc.updateDriverEarnedPoints(model.driverID, trip.EarningPoints.ToString());
-        //                fc.updateArrivalTime(model.tripID, model.driverID, trip.EarningPoints.ToString());
-
-        //                List<CanclReasonsModel> lstcr = Common.GetCancelReasons(context, true, false, true);
-
-        //                dic = new Dictionary<dynamic, dynamic>
-        //                    {
-        //                        { "Name", trip.Name },
-        //                        { "Rating", trip.Rating },
-        //                        { "dropOffLat", trip.DropOffLocationLatitude != null ? trip.DropOffLocationLatitude : "" },
-        //                        { "dropOffLon", trip.DropOffLocationLongitude != null ? trip.DropOffLocationLongitude : "" },
-        //                        { "passenger_Pic", trip.pic },
-        //                        { "cancel_reasons", lstcr},
-        //                        { "bookingMode", adr.bookingMode}
-        //                    };
-
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-        //                response.data = dic;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                response.error = true;
-        //                response.message = ResponseKeys.tripNotFound;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.error = true;
-        //        response.message = ResponseKeys.invalidParameters;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    response.data = dic;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.tripNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+            }
+        }
 
         //[HttpPost]
         //public HttpResponseMessage sendChangeFareRequest([FromBody] RequestModel model)
@@ -1002,368 +955,348 @@ namespace API.Controllers
         //    }
         //}
 
-        //[HttpPost]
-        //public HttpResponseMessage startTrip([FromBody] RequestModel model)
-        //{
-        //    if (model != null && !string.IsNullOrEmpty(model.tripID) && model.driverID != string.Empty)
-        //    {
+        [HttpPost]
+        public async Task<HttpResponseMessage> startTrip([FromBody] DriverStartTripRequest model)
+        {
+            using (CangooEntities context = new CangooEntities())
+            {
+                var trip = context.spGetUserUpdateTripOnStartRide(DateTime.UtcNow, model.tripID, model.driverID, model.isWeb).FirstOrDefault();
+                if (trip != null)
+                {
+                    startDriverRideModel sdr = new startDriverRideModel()
+                    {
+                        dropOffLatitude = trip.DropOffLocationLatitude,
+                        dropOffLongitude = trip.DropOffLocationLongitude,
+                        //bookingMode = trip.BookingModeID == (int)TripBookingMod.Karhoo ? Enum.GetName(typeof(TripBookingMod), (int)App_Start.TripBookingMod.Karhoo).ToLower() : ""
+                        bookingMode = Enum.GetName(typeof(BookingModes), (int)trip.BookingModeID).ToLower()
+                    };
 
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
-        //            var trip = context.spGetUserUpdateTripOnStartRide(Common.getUtcDateTime(), model.tripID, model.driverID, model.isWeb).FirstOrDefault(); //datetime utc
-        //            if (trip != null)
-        //            {
-        //                startDriverRideModel sdr = new startDriverRideModel()
-        //                {
-        //                    dropOffLatitude = trip.DropOffLocationLatitude,
-        //                    dropOffLongitude = trip.DropOffLocationLongitude,
-        //                    //bookingMode = trip.BookingModeID == (int)TripBookingMod.Karhoo ? Enum.GetName(typeof(TripBookingMod), (int)App_Start.TripBookingMod.Karhoo).ToLower() : ""
-        //                    bookingMode = Enum.GetName(typeof(TripBookingMod), (int)trip.BookingModeID).ToLower()
-        //                };
-        //                dic = new Dictionary<dynamic, dynamic>
-        //                        {
-        //                            { "destination_lat", trip.DropOffLocationLatitude },
-        //                            { "destination_lon", trip.DropOffLocationLongitude },
-        //                            { "passengerName",  trip.Name},
-        //                            { "bookingMode", sdr.bookingMode}
-        //                        };
+                    dic = new Dictionary<dynamic, dynamic>
+                                {
+                                    { "destination_lat", trip.DropOffLocationLatitude },
+                                    { "destination_lon", trip.DropOffLocationLongitude },
+                                    { "passengerName",  trip.Name},
+                                    { "bookingMode", sdr.bookingMode}
+                                };
 
-        //                var task = Task.Run(async () =>
-        //                {
-        //                    FireBaseController fc = new FireBaseController();
-        //                    await fc.sendFCMAfterRideStarted(model.tripID, model.driverID, trip.DeviceToken, sdr, model.isWeb);
-        //                    await fc.updateGo4Module(trip.CaptainName, trip.Name, trip.Go4ModuleDeviceToken);
+                    await FirebaseService.UpdateTripDriverDetailsOnStart(sdr, model.tripID, model.driverID);
+                    await FirebaseService.SetTripStatus(model.tripID, Enum.GetName(typeof(TripStatuses), (int)TripStatuses.Picked));
+                    //await FirebaseService.updateGo4Module(trip.CaptainName, trip.Name, trip.Go4ModuleDeviceToken);
 
-        //                });
+                    if (model.isWeb)
+                    {
+                        await PushyService.UniCast(trip.DeviceToken, new Dictionary<dynamic, dynamic>
+                            {
+                                 { "driverID", model.driverID }
+                            }, NotificationKeys.pas_rideStarted);
+                    }
 
-        //                response.error = false;
-        //                response.data = dic;
-        //                response.message = ResponseKeys.msgSuccess;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                response.error = true;
-        //                response.message = ResponseKeys.tripNotFound;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.error = true;
-        //        response.message = ResponseKeys.invalidParameters;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
+                    response.error = false;
+                    response.data = dic;
+                    response.message = ResponseKeys.msgSuccess;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.tripNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+            }
+        }
 
-        //[HttpPost]
-        //public HttpResponseMessage endTrip([FromBody] RequestModel model)
-        //{
-        //    if (model != null && model.tripID != string.Empty && model.driverID != string.Empty && model.resellerID != string.Empty &&
-        //        model.resellerArea != string.Empty && !string.IsNullOrEmpty(model.dropOffLocation) && !string.IsNullOrEmpty(model.distance) &&
-        //        !string.IsNullOrEmpty(model.isAtDropOffLocation))
-        //    {
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
-        //            var trip = context.Trips.Where(t => t.TripID.ToString() == model.tripID && t.CaptainID.ToString() == model.driverID).FirstOrDefault();
-        //            if (trip != null)
-        //            {
-        //                decimal totalFare = 0;
-        //                FareManager fareManag = new FareManager();
-        //                FareManager dropOffAreafareManag = new FareManager();
+        [HttpPost]
+        public async Task<HttpResponseMessage> endTrip([FromBody] DriverEndTripRequest model)
+        {
+            using (CangooEntities context = new CangooEntities())
+            {
+                var trip = context.Trips.Where(t => t.TripID.ToString() == model.tripID && t.CaptainID.ToString() == model.driverID).FirstOrDefault();
+                if (trip != null)
+                {
+                    decimal totalFare = 0;
+                    FareManager fareManag = new FareManager();
+                    FareManager dropOffAreafareManag = new FareManager();
 
-        //                dic = new Dictionary<dynamic, dynamic>() {
-        //                        { "discountType", "normal"},
-        //                        { "discountAmount", "0.00" }
-        //                    };
+                    dic = new Dictionary<dynamic, dynamic>() {
+                                { "discountType", "normal"},
+                                { "discountAmount", "0.00" }
+                            };
 
-        //                //get waiting time
-        //                DateTime arrivalTime = model.isLaterBooking ? Convert.ToDateTime(trip.PickUpBookingDateTime) : Convert.ToDateTime(trip.ArrivalDateTime);
-        //                DateTime startTime = Convert.ToDateTime(trip.TripStartDatetime);
-        //                TimeSpan waitingDur = startTime.Subtract(arrivalTime);
+                    //get waiting time
+                    DateTime arrivalTime = model.isLaterBooking ? Convert.ToDateTime(trip.PickUpBookingDateTime) : Convert.ToDateTime(trip.ArrivalDateTime);
+                    DateTime startTime = Convert.ToDateTime(trip.TripStartDatetime);
+                    TimeSpan waitingDur = startTime.Subtract(arrivalTime);
 
-        //                //in case of later booking if driver arrived and started ride before scheduled pickup time then no waiting charges
-        //                if (waitingDur.Seconds <= 0)
-        //                {
-        //                    waitingDur = new TimeSpan();
-        //                }
+                    //in case of later booking if driver arrived and started ride before scheduled pickup time then no waiting charges
+                    if (waitingDur.Seconds <= 0)
+                    {
+                        waitingDur = new TimeSpan();
+                    }
 
-        //                //save trip detail
-        //                trip.DropOffLocation = model.dropOffLocation;
-        //                trip.TripEndDatetime = Common.getUtcDateTime();//utc date time
-        //                trip.TripStatusID = (int)App_Start.TripStatus.PaymentPending;
-        //                trip.DropOffLocationLatitude = Convert.ToDouble(trip.DropOffLocationLatitude) == 0 ? model.lat.ToString() : trip.DropOffLocationLatitude;
-        //                trip.DropOffLocationLongitude = Convert.ToDouble(trip.DropOffLocationLongitude) == 0 ? model.lon.ToString() : trip.DropOffLocationLongitude;
-        //                trip.WaitingMinutes = waitingDur.TotalMinutes;
-        //                //trip.DistanceTraveled = double.Parse(model.distance);
+                    //save trip detail
+                    trip.DropOffLocation = model.dropOffLocation;
+                    trip.TripEndDatetime = DateTime.UtcNow;//utc date time
+                    trip.TripStatusID = (int)TripStatuses.PaymentPending;
+                    trip.DropOffLocationLatitude = Convert.ToDouble(trip.DropOffLocationLatitude) == 0 ? model.lat.ToString() : trip.DropOffLocationLatitude;
+                    trip.DropOffLocationLongitude = Convert.ToDouble(trip.DropOffLocationLongitude) == 0 ? model.lon.ToString() : trip.DropOffLocationLongitude;
+                    trip.WaitingMinutes = waitingDur.TotalMinutes;
+                    //trip.DistanceTraveled = double.Parse(model.distance);
 
-        //                CheckWalletBalance(trip.UserID.ToString(), context, ref dic);
+                    CheckWalletBalance(trip.UserID.ToString(), context, ref dic);
 
-        //                string promotionId = Common.IsSpecialPromotionApplicable(trip.PickupLocationLatitude, trip.PickupLocationLongitude, model.lat.ToString(), model.lon.ToString(), ApplicationID, context, ref dic);
+                    //string promotionId = await FareManagerService.IsSpecialPromotionApplicable(trip.PickupLocationLatitude, trip.PickupLocationLongitude, model.lat.ToString(), model.lon.ToString(), ApplicationID, context, ref dic);
+                    string promotionId = string.Empty;
 
-        //                if (!string.IsNullOrEmpty(promotionId))
-        //                {
-        //                    //Special  promotion ID
-        //                    trip.PromoCodeID = Guid.Parse(promotionId);
-        //                    dic.Add("estimatedPrice", dic["discountAmount"]);
 
-        //                    //trip.BaseFare = 0;
-        //                    //trip.BookingFare = 0;
-        //                    //trip.WaitingFare = 0;
-        //                    //trip.PerKMFare = 0;
+                    if (!string.IsNullOrEmpty(promotionId))
+                    {
+                        //Special  promotion ID
+                        trip.PromoCodeID = Guid.Parse(promotionId);
+                        dic.Add("estimatedPrice", dic["discountAmount"]);
 
-        //                    /*
-        //                     * trip isOverridedFare scenario is deprecated, fare is not saved on                                
-        //                     * api/driver/CollectCashPayment                                
-        //                     * api/user/PayPalPayment                                
-        //                     * api/user/creditCardPayment
-        //                     */
+                        //trip.BaseFare = 0;
+                        //trip.BookingFare = 0;
+                        //trip.WaitingFare = 0;
+                        //trip.PerKMFare = 0;
 
-        //                    trip.PerKMFare = decimal.Parse(dic["discountAmount"].ToString());
-        //                    //No need to use totalFare, function is called just to calculate other required fields i.e. PolyLine, Distance, Time etc
-        //                    totalFare = Common.CalculateEstimatedFare((int)trip.NoOfPerson, false, true, "", bool.Parse(model.isAtDropOffLocation), true, trip.TripID, ApplicationID, trip.PickupLocationLatitude, trip.PickupLocationLongitude, model.lat.ToString(), model.lon.ToString(), ref fareManag, ref dropOffAreafareManag, ref dic);//(Convert.ToDecimal(model.distance) / 1000).ToString(), waitingDur
-        //                }
-        //                else
-        //                {
-        //                    totalFare = Common.CalculateEstimatedFare((int)trip.NoOfPerson, false, true, "", bool.Parse(model.isAtDropOffLocation), (bool)trip.isFareChangePermissionGranted, trip.TripID, ApplicationID, trip.PickupLocationLatitude, trip.PickupLocationLongitude, model.lat.ToString(), model.lon.ToString(), ref fareManag, ref dropOffAreafareManag, ref dic);//(Convert.ToDecimal(model.distance) / 1000).ToString(), waitingDur
+                        /*
+                         * trip isOverridedFare scenario is deprecated, fare is not saved on                                
+                         * api/driver/CollectCashPayment                                
+                         * api/user/PayPalPayment                                
+                         * api/user/creditCardPayment
+                         */
 
-        //                    dic.Add("estimatedPrice", string.Format("{0:0.00}", totalFare));
+                        trip.PerKMFare = decimal.Parse(dic["discountAmount"].ToString());
+                        //No need to use totalFare, function is called just to calculate other required fields i.e. PolyLine, Distance, Time etc
+                        totalFare = 0;
+                        //totalFare = await FareManagerService.CalculateEstimatedFare((int)trip.NoOfPerson, false, true, "", bool.Parse(model.isAtDropOffLocation), true, trip.TripID, ApplicationID, trip.PickupLocationLatitude, trip.PickupLocationLongitude, model.lat.ToString(), model.lon.ToString(), ref fareManag, ref dropOffAreafareManag, ref dic);//(Convert.ToDecimal(model.distance) / 1000).ToString(), waitingDur
+                    }
+                    else
+                    {
+                        totalFare = 0;
+                        //totalFare = await FareManagerService.CalculateEstimatedFare((int)trip.NoOfPerson, false, true, "", bool.Parse(model.isAtDropOffLocation), (bool)trip.isFareChangePermissionGranted, trip.TripID, ApplicationID, trip.PickupLocationLatitude, trip.PickupLocationLongitude, model.lat.ToString(), model.lon.ToString(), ref fareManag, ref dropOffAreafareManag, ref dic);//(Convert.ToDecimal(model.distance) / 1000).ToString(), waitingDur
 
-        //                    promotionId = Common.ApplyPromoCode(ApplicationID, trip.UserID.ToString(), context, ref dic);
+                        dic.Add("estimatedPrice", string.Format("{0:0.00}", totalFare));
 
-        //                    if (!string.IsNullOrEmpty(promotionId))
-        //                    {
-        //                        trip.PromoCodeID = Guid.Parse(promotionId);
-        //                    }
+                        promotionId = FareManagerService.ApplyPromoCode(ApplicationID, trip.UserID.ToString(), context, ref dic);
 
-        //                    //trip.BaseFare = fareManag.BaseFare;
-        //                    //trip.BookingFare = fareManag.BookingFare;
-        //                    //trip.WaitingFare = fareManag.WaitingFare * Convert.ToDecimal(waitingDur.TotalMinutes);
-        //                    //trip.PerKMFare = totalFare - fareManag.BookingFare - (fareManag.WaitingFare * Convert.ToDecimal(waitingDur.TotalMinutes));
+                        if (!string.IsNullOrEmpty(promotionId))
+                        {
+                            trip.PromoCodeID = Guid.Parse(promotionId);
+                        }
 
-        //                    trip.BaseFare = decimal.Parse(dic["inBoundBaseFare"].ToString()) + decimal.Parse(dic["outBoundBaseFare"].ToString());
-        //                    trip.BookingFare = decimal.Parse(dic["inBoundSurchargeAmount"].ToString()) + decimal.Parse(dic["outBoundSurchargeAmount"].ToString());
-        //                    trip.WaitingFare = decimal.Parse(dic["inBoundTimeFare"].ToString()) + decimal.Parse(dic["outBoundTimeFare"].ToString());
-        //                    trip.PerKMFare = decimal.Parse(dic["inBoundDistanceFare"].ToString()) + decimal.Parse(dic["outBoundDistanceFare"].ToString());
-        //                }
+                        //trip.BaseFare = fareManag.BaseFare;
+                        //trip.BookingFare = fareManag.BookingFare;
+                        //trip.WaitingFare = fareManag.WaitingFare * Convert.ToDecimal(waitingDur.TotalMinutes);
+                        //trip.PerKMFare = totalFare - fareManag.BookingFare - (fareManag.WaitingFare * Convert.ToDecimal(waitingDur.TotalMinutes));
 
-        //                trip.FareManagerID = string.IsNullOrEmpty(trip.FareManagerID) ? fareManag.FareManagerID.ToString() : trip.FareManagerID;
-        //                trip.DropOffFareMangerID = string.IsNullOrEmpty(trip.DropOffFareMangerID.ToString()) ? dropOffAreafareManag.FareManagerID : trip.DropOffFareMangerID;
+                        trip.BaseFare = decimal.Parse(dic["inBoundBaseFare"].ToString()) + decimal.Parse(dic["outBoundBaseFare"].ToString());
+                        trip.BookingFare = decimal.Parse(dic["inBoundSurchargeAmount"].ToString()) + decimal.Parse(dic["outBoundSurchargeAmount"].ToString());
+                        trip.WaitingFare = decimal.Parse(dic["inBoundTimeFare"].ToString()) + decimal.Parse(dic["outBoundTimeFare"].ToString());
+                        trip.PerKMFare = decimal.Parse(dic["inBoundDistanceFare"].ToString()) + decimal.Parse(dic["outBoundDistanceFare"].ToString());
+                    }
 
-        //                trip.InBoundDistanceInMeters = (int)(double.Parse(dic["inBoundDistanceInKM"].ToString()) * 1000);
-        //                trip.InBoundTimeInSeconds = (int)(double.Parse(dic["inBoundTimeInMinutes"].ToString()) * 60);
-        //                trip.OutBoundDistanceInMeters = (int)(double.Parse(dic["outBoundDistanceInKM"].ToString()) * 1000);
-        //                trip.OutBoundTimeInSeconds = (int)(double.Parse(dic["outBoundTimeInMinutes"].ToString()) * 60);
+                    trip.FareManagerID = string.IsNullOrEmpty(trip.FareManagerID) ? fareManag.FareManagerID.ToString() : trip.FareManagerID;
+                    trip.DropOffFareMangerID = string.IsNullOrEmpty(trip.DropOffFareMangerID.ToString()) ? dropOffAreafareManag.FareManagerID : trip.DropOffFareMangerID;
 
-        //                trip.InBoundBaseFare = decimal.Parse(dic["inBoundBaseFare"].ToString());
-        //                trip.InBoundDistanceFare = decimal.Parse(dic["inBoundDistanceFare"].ToString());
-        //                trip.InBoundTimeFare = decimal.Parse(dic["inBoundTimeFare"].ToString());
-        //                trip.InBoundSurchargeAmount = decimal.Parse(dic["inBoundSurchargeAmount"].ToString());
-        //                trip.OutBoundBaseFare = decimal.Parse(dic["outBoundBaseFare"].ToString());
-        //                trip.OutBoundDistanceFare = decimal.Parse(dic["outBoundDistanceFare"].ToString());
-        //                trip.OutBoundTimeFare = decimal.Parse(dic["outBoundTimeFare"].ToString());
-        //                trip.OutBoundSurchargeAmount = decimal.Parse(dic["outBoundSurchargeAmount"].ToString());
+                    trip.InBoundDistanceInMeters = (int)(double.Parse(dic["inBoundDistanceInKM"].ToString()) * 1000);
+                    trip.InBoundTimeInSeconds = (int)(double.Parse(dic["inBoundTimeInMinutes"].ToString()) * 60);
+                    trip.OutBoundDistanceInMeters = (int)(double.Parse(dic["outBoundDistanceInKM"].ToString()) * 1000);
+                    trip.OutBoundTimeInSeconds = (int)(double.Parse(dic["outBoundTimeInMinutes"].ToString()) * 60);
 
-        //                trip.DistanceTraveled = trip.InBoundDistanceInMeters + trip.OutBoundDistanceInMeters;
-        //                trip.PolyLine = dic["polyLine"].ToString();
-        //                model.distance = trip.DistanceTraveled.ToString();
+                    trip.InBoundBaseFare = decimal.Parse(dic["inBoundBaseFare"].ToString());
+                    trip.InBoundDistanceFare = decimal.Parse(dic["inBoundDistanceFare"].ToString());
+                    trip.InBoundTimeFare = decimal.Parse(dic["inBoundTimeFare"].ToString());
+                    trip.InBoundSurchargeAmount = decimal.Parse(dic["inBoundSurchargeAmount"].ToString());
+                    trip.OutBoundBaseFare = decimal.Parse(dic["outBoundBaseFare"].ToString());
+                    trip.OutBoundDistanceFare = decimal.Parse(dic["outBoundDistanceFare"].ToString());
+                    trip.OutBoundTimeFare = decimal.Parse(dic["outBoundTimeFare"].ToString());
+                    trip.OutBoundSurchargeAmount = decimal.Parse(dic["outBoundSurchargeAmount"].ToString());
 
-        //                //Update earned points, priority hour and booking type check applied
+                    trip.DistanceTraveled = trip.InBoundDistanceInMeters + trip.OutBoundDistanceInMeters;
+                    trip.PolyLine = dic["polyLine"].ToString();
+                    model.distance = trip.DistanceTraveled.ToString();
 
-        //                var captain = context.Captains.Where(c => c.CaptainID == trip.CaptainID).FirstOrDefault();
+                    //Update earned points, priority hour and booking type check applied
 
-        //                if ((bool)trip.isLaterBooking)
-        //                {
-        //                    if (captain.IsPriorityHoursActive != null)
-        //                    {
-        //                        if (!(bool)captain.IsPriorityHoursActive)
-        //                        {
-        //                            trip.DriverEarnedPoints = 50;
-        //                            captain.EarningPoints = captain.EarningPoints == null ? 50 :
-        //                                captain.EarningPoints + 50 <= 300 ? captain.EarningPoints + 50 : 300;
-        //                        }
-        //                    }
-        //                    else
-        //                    {
-        //                        trip.DriverEarnedPoints = 50;
-        //                        captain.EarningPoints = captain.EarningPoints == null ? 50 :
-        //                            captain.EarningPoints + 50 <= 300 ? captain.EarningPoints + 50 : 300;
-        //                    }
-        //                }
+                    var captain = context.Captains.Where(c => c.CaptainID == trip.CaptainID).FirstOrDefault();
 
-        //                context.SaveChanges();
+                    if ((bool)trip.isLaterBooking)
+                    {
+                        if (captain.IsPriorityHoursActive != null)
+                        {
+                            if (!(bool)captain.IsPriorityHoursActive)
+                            {
+                                trip.DriverEarnedPoints = 50;
+                                captain.EarningPoints = captain.EarningPoints == null ? 50 :
+                                    captain.EarningPoints + 50 <= 300 ? captain.EarningPoints + 50 : 300;
+                            }
+                        }
+                        else
+                        {
+                            trip.DriverEarnedPoints = 50;
+                            captain.EarningPoints = captain.EarningPoints == null ? 50 :
+                                captain.EarningPoints + 50 <= 300 ? captain.EarningPoints + 50 : 300;
+                        }
+                    }
 
-        //                FireBaseController fc = new FireBaseController();
-        //                fc.updateDriverEarnedPoints(captain.CaptainID.ToString(), captain.EarningPoints.ToString());
+                    await context.SaveChangesAsync();
 
-        //                DateTime startRideTime = Convert.ToDateTime(trip.TripStartDatetime);
-        //                DateTime endRideTime = Convert.ToDateTime(Common.getUtcDateTime());//utc date time
-        //                TimeSpan totalRideDuration = endRideTime.Subtract(startRideTime);
+                    await FirebaseService.UpdateDriverEarnedPoints(captain.CaptainID.ToString(), captain.EarningPoints.ToString());
 
-        //                var userFav = context.UserFavoriteCaptains.Where(u => u.UserID == trip.UserID.ToString() && u.CaptainID == trip.CaptainID).FirstOrDefault();
+                    DateTime startRideTime = Convert.ToDateTime(trip.TripStartDatetime);
+                    DateTime endRideTime = Convert.ToDateTime(DateTime.UtcNow);//utc date time
+                    TimeSpan totalRideDuration = endRideTime.Subtract(startRideTime);
 
-        //                //Object to update data in trip's driver node
-        //                EndDriverRideModel edr = new EndDriverRideModel
-        //                {
-        //                    //What if totalFare was less than base fare?
-        //                    //travelCharges = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" :
-        //                    //(totalFare - fareManag.BookingFare - (fareManag.WaitingFare * Convert.ToDecimal(waitingDur.TotalMinutes))).ToString()),
+                    var userFav = context.UserFavoriteCaptains.Where(u => u.UserID == trip.UserID.ToString() && u.CaptainID == trip.CaptainID).FirstOrDefault();
 
-        //                    //waitingCharges = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" :
-        //                    //(fareManag.WaitingFare * Convert.ToDecimal(waitingDur.TotalMinutes)).ToString()),
+                    //Object to update data in trip's driver node
+                    EndDriverRideModel edr = new EndDriverRideModel
+                    {
+                        //What if totalFare was less than base fare?
+                        //travelCharges = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" :
+                        //(totalFare - fareManag.BookingFare - (fareManag.WaitingFare * Convert.ToDecimal(waitingDur.TotalMinutes))).ToString()),
 
-        //                    //bookingCharges = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" :
-        //                    //fareManag.BookingFare.ToString()),
+                        //waitingCharges = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" :
+                        //(fareManag.WaitingFare * Convert.ToDecimal(waitingDur.TotalMinutes)).ToString()),
 
-        //                    //baseCharges = string.Format("{0:0.00}", fareManag.BaseFare != null ? fareManag.BaseFare : 0),
+                        //bookingCharges = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" :
+                        //fareManag.BookingFare.ToString()),
 
-        //                    travelCharges = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.PerKMFare.ToString()),
-        //                    waitingCharges = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.WaitingFare.ToString()),
-        //                    bookingCharges = string.Format("{0:0.00}", "0.00"),
-        //                    baseCharges = string.Format("{0:0.00}", trip.BaseFare.ToString()),
-        //                    estimatedPrice = string.Format("{0:0.00}", dic["estimatedPrice"]),
-        //                    paymentMethod = trip.TripPaymentMode,
-        //                    distance = string.Format("{0:0.00}", trip.DistanceTraveled.ToString()),
-        //                    duration = totalRideDuration.TotalMinutes,
-        //                    isPaymentRequested = false,
-        //                    isFavUser = userFav == null ? false : (userFav.IsFavByCaptain == null ? false : (bool)userFav.IsFavByCaptain),
-        //                    discountAmount = dic["discountAmount"],
-        //                    discountType = dic["discountType"],
-        //                    availableWalletBalance = dic["availableWalletBalance"],
-        //                    isWalletPreferred = dic["isWalletPreferred"].ToString(),
-        //                    isFareChangePermissionGranted = (bool)trip.isFareChangePermissionGranted,
-        //                    InBoundDistanceInMeters = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundDistanceInMeters.ToString()),
-        //                    InBoundTimeInSeconds = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundTimeInSeconds.ToString()),
-        //                    OutBoundDistanceInMeters = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundDistanceInMeters.ToString()),
-        //                    OutBoundTimeInSeconds = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundTimeInSeconds.ToString()),
-        //                    InBoundDistanceFare = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundDistanceFare.ToString()),
-        //                    InBoundTimeFare = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundTimeFare.ToString()),
-        //                    InBoundSurchargeAmount = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundSurchargeAmount.ToString()),
-        //                    OutBoundDistanceFare = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundDistanceFare.ToString()),
-        //                    OutBoundTimeFare = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundTimeFare.ToString()),
-        //                    OutBoundSurchargeAmount = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundSurchargeAmount.ToString()),
-        //                    //bookingMode = trip.BookingModeID == (int)TripBookingMod.Karhoo ? Enum.GetName(typeof(TripBookingMod), (int)TripBookingMod.Karhoo).ToLower() : ""
-        //                    bookingMode = Enum.GetName(typeof(TripBookingMod), (int)trip.BookingModeID).ToLower()
-        //                };
+                        //baseCharges = string.Format("{0:0.00}", fareManag.BaseFare != null ? fareManag.BaseFare : 0),
 
-        //                var voucher = context.CompanyVouchers.Where(v => v.VoucherID == trip.VoucherID &&
-        //                v.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())).FirstOrDefault();
-        //                if (voucher != null)
-        //                {
-        //                    edr.isVoucherApplied = "true";
-        //                    edr.voucherAmount = voucher.Amount.ToString();
-        //                    edr.voucherCode = voucher.VoucherCode;
-        //                }
-        //                else
-        //                {
-        //                    edr.isVoucherApplied = "false";
-        //                    edr.voucherAmount = "0.00";
-        //                    edr.voucherCode = "";
-        //                }
+                        travelCharges = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.PerKMFare.ToString()),
+                        waitingCharges = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.WaitingFare.ToString()),
+                        bookingCharges = string.Format("{0:0.00}", "0.00"),
+                        baseCharges = string.Format("{0:0.00}", trip.BaseFare.ToString()),
+                        estimatedPrice = string.Format("{0:0.00}", dic["estimatedPrice"]),
+                        paymentMethod = trip.TripPaymentMode,
+                        distance = string.Format("{0:0.00}", trip.DistanceTraveled.ToString()),
+                        duration = totalRideDuration.TotalMinutes,
+                        isPaymentRequested = false,
+                        isFavUser = userFav == null ? false : (userFav.IsFavByCaptain == null ? false : (bool)userFav.IsFavByCaptain),
+                        discountAmount = dic["discountAmount"],
+                        discountType = dic["discountType"],
+                        availableWalletBalance = dic["availableWalletBalance"],
+                        isWalletPreferred = dic["isWalletPreferred"].ToString(),
+                        isFareChangePermissionGranted = (bool)trip.isFareChangePermissionGranted,
+                        InBoundDistanceInMeters = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundDistanceInMeters.ToString()),
+                        InBoundTimeInSeconds = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundTimeInSeconds.ToString()),
+                        OutBoundDistanceInMeters = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundDistanceInMeters.ToString()),
+                        OutBoundTimeInSeconds = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundTimeInSeconds.ToString()),
+                        InBoundDistanceFare = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundDistanceFare.ToString()),
+                        InBoundTimeFare = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundTimeFare.ToString()),
+                        InBoundSurchargeAmount = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundSurchargeAmount.ToString()),
+                        OutBoundDistanceFare = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundDistanceFare.ToString()),
+                        OutBoundTimeFare = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundTimeFare.ToString()),
+                        OutBoundSurchargeAmount = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundSurchargeAmount.ToString()),
+                        //bookingMode = trip.BookingModeID == (int)TripBookingMod.Karhoo ? Enum.GetName(typeof(TripBookingMod), (int)TripBookingMod.Karhoo).ToLower() : ""
+                        bookingMode = Enum.GetName(typeof(BookingModes), (int)trip.BookingModeID).ToLower()
+                    };
 
-        //                var pas = (from up in context.UserProfiles
-        //                           join anu in context.AspNetUsers on up.UserID equals anu.Id
-        //                           where anu.Id.Equals(trip.UserID.ToString())
-        //                           select new
-        //                           {
-        //                               up.FirstName,
-        //                               up.LastName,
-        //                               anu.Email
-        //                           }).FirstOrDefault();
+                    var voucher = context.CompanyVouchers.Where(v => v.VoucherID == trip.VoucherID &&
+                    v.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())).FirstOrDefault();
+                    if (voucher != null)
+                    {
+                        edr.isVoucherApplied = "true";
+                        edr.voucherAmount = voucher.Amount.ToString();
+                        edr.voucherCode = voucher.VoucherCode;
+                    }
+                    else
+                    {
+                        edr.isVoucherApplied = "false";
+                        edr.voucherAmount = "0.00";
+                        edr.voucherCode = "";
+                    }
 
-        //                if (pas != null)
-        //                {
-        //                    dic.Add("passengerName", pas.FirstName + " " + pas.LastName);
-        //                    edr.isUserProfileUpdated = !string.IsNullOrEmpty(pas.Email);
-        //                }
-        //                else
-        //                {
-        //                    dic.Add("passengerName", "");
-        //                    edr.isUserProfileUpdated = false;
-        //                }
+                    var pas = (from up in context.UserProfiles
+                               join anu in context.AspNetUsers on up.UserID equals anu.Id
+                               where anu.Id.Equals(trip.UserID.ToString())
+                               select new
+                               {
+                                   up.FirstName,
+                                   up.LastName,
+                                   anu.Email
+                               }).FirstOrDefault();
 
-        //                dic.Add("travelCharges", edr.travelCharges);
-        //                dic.Add("waitingCharges", edr.waitingCharges);
-        //                dic.Add("bookingCharges", edr.bookingCharges);
-        //                dic.Add("baseCharges", edr.baseCharges);
+                    if (pas != null)
+                    {
+                        dic.Add("passengerName", pas.FirstName + " " + pas.LastName);
+                        edr.isUserProfileUpdated = !string.IsNullOrEmpty(pas.Email);
+                    }
+                    else
+                    {
+                        dic.Add("passengerName", "");
+                        edr.isUserProfileUpdated = false;
+                    }
 
-        //                dic.Add("paymentMethod", edr.paymentMethod);
-        //                dic.Add("distance", edr.distance);
+                    dic.Add("travelCharges", edr.travelCharges);
+                    dic.Add("waitingCharges", edr.waitingCharges);
+                    dic.Add("bookingCharges", edr.bookingCharges);
+                    dic.Add("baseCharges", edr.baseCharges);
 
-        //                dic.Add("duration", edr.duration);
-        //                dic.Add("isFavUser", edr.isFavUser);
+                    dic.Add("paymentMethod", edr.paymentMethod);
+                    dic.Add("distance", edr.distance);
 
-        //                dic.Add("isVoucherApplied", edr.isVoucherApplied);
-        //                dic.Add("voucherAmount", edr.voucherAmount);
-        //                dic.Add("voucherCode", edr.voucherCode);
+                    dic.Add("duration", edr.duration);
+                    dic.Add("isFavUser", edr.isFavUser);
 
-        //                dic.Add("isUserProfileUpdated", edr.isUserProfileUpdated);
-        //                dic.Add("isFareChangePermissionGranted", edr.isFareChangePermissionGranted);
-        //                dic.Add("bookingMode", edr.bookingMode);
-        //                dic.Add("isWeb", model.isWeb);
+                    dic.Add("isVoucherApplied", edr.isVoucherApplied);
+                    dic.Add("voucherAmount", edr.voucherAmount);
+                    dic.Add("voucherCode", edr.voucherCode);
 
-        //                var task = Task.Run(async () =>
-        //                {
-        //                    await fc.sendFCMRideDetailPassengerAfterEndRide(model.tripID, model.distance, edr, model.driverID,
-        //                        edr.paymentMethod, trip.UserID.ToString(), model.isWeb);
-        //                });
+                    dic.Add("isUserProfileUpdated", edr.isUserProfileUpdated);
+                    dic.Add("isFareChangePermissionGranted", edr.isFareChangePermissionGranted);
+                    dic.Add("bookingMode", edr.bookingMode);
+                    dic.Add("isWeb", model.isWeb);
 
-        //                if (trip.BookingModeID == (int)TripBookingMod.Karhoo ||
-        //                    (trip.BookingModeID == (int)TripBookingMod.Dispatcher && trip.TripPaymentMode.ToLower().Equals("wallet")))
-        //                {
+                        await FirebaseService.sendFCMRideDetailPassengerAfterEndRide(model.tripID, model.distance, edr, model.driverID,
+                            edr.paymentMethod, trip.UserID.ToString(), model.isWeb);
 
-        //                    //Quik fix to avoid application side changes.
-        //                    dic["bookingMode"] = "karhoo";
+                    if (trip.BookingModeID == (int)BookingModes.Karhoo ||
+                        (trip.BookingModeID == (int)BookingModes.Dispatcher && trip.TripPaymentMode.ToLower().Equals("wallet")))
+                    {
 
-        //                    trip.isOverRided = false;
-        //                    trip.TripStatusID = (int)TripStatus.Completed;
-        //                    trip.CompanyID = captain.CompanyID;
-        //                    trip.TripPaymentMode = "Wallet";
+                        //Quik fix to avoid application side changes.
+                        dic["bookingMode"] = "karhoo";
 
-        //                    Transaction tr = new Transaction()
-        //                    {
-        //                        TransactionID = Guid.NewGuid(),
-        //                        DebitedFrom = Guid.Parse(trip.UserID.ToString()),
-        //                        CreditedTo = Guid.Parse(ApplicationID),
-        //                        DateTime = Common.getUtcDateTime(),
-        //                        Amount = Convert.ToDecimal(edr.estimatedPrice), //Adjusted wallet amount and voucher amount is considered as mobile payment - RECEIVABLE
-        //                        PaymentModeID = (int)App_Start.PaymentMode.Wallet,
-        //                        Reference = trip.BookingModeID == (int)TripBookingMod.Karhoo ? "Karhoo trip completed." : "Dispatcher mobile payment trip completed."
-        //                    };
-        //                    context.Transactions.Add(tr);
-        //                    context.SaveChanges();
+                        trip.isOverRided = false;
+                        trip.TripStatusID = (int)TripStatuses.Completed;
+                        trip.CompanyID = captain.CompanyID;
+                        trip.TripPaymentMode = "Wallet";
 
-        //                    task = Task.Run(async () =>
-        //                    {
-        //                        fc.updateDriverStatus(model.driverID, "false", model.tripID);
-        //                        fc.freeUserFromTrip(model.tripID, trip.UserID.ToString());
+                        Transaction tr = new Transaction()
+                        {
+                            TransactionID = Guid.NewGuid(),
+                            DebitedFrom = Guid.Parse(trip.UserID.ToString()),
+                            CreditedTo = Guid.Parse(ApplicationID),
+                            DateTime = DateTime.UtcNow,
+                            Amount = Convert.ToDecimal(edr.estimatedPrice), //Adjusted wallet amount and voucher amount is considered as mobile payment - RECEIVABLE
+                            PaymentModeID = (int)PaymentModes.Wallet,
+                            Reference = trip.BookingModeID == (int)BookingModes.Karhoo ? "Karhoo trip completed." : "Dispatcher mobile payment trip completed."
+                        };
+                        context.Transactions.Add(tr);
+                        await context.SaveChangesAsync();
 
-        //                        await fc.delTripNode(model.tripID);
-        //                    });
-        //                }
+                        await FirebaseService.SetDriverFree(model.driverID, model.tripID);
+                        await FirebaseService.FreePassengerFromCurrentTrip(model.tripID, trip.UserID.ToString());
+                        await FirebaseService.DeleteTrip(model.tripID);
+                    }
 
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-        //                response.data = dic;
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    response.data = dic;
 
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                response.error = true;
-        //                response.message = ResponseKeys.tripNotFound;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.error = true;
-        //        response.message = ResponseKeys.invalidParameters;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.tripNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+            }
+        }
 
         //[HttpPost]
         //public HttpResponseMessage collectPayment([FromBody] RequestModel model)
@@ -2910,64 +2843,75 @@ namespace API.Controllers
         //    }
         //}
 
-        //private void CheckWalletBalance(string userID, CangooEntities context, ref Dictionary<dynamic, dynamic> dic)
-        //{
-        //    var user = context.UserProfiles.Where(u => u.UserID.ToString().Equals(userID)).FirstOrDefault();
-        //    //When ride was booked by some hotel / company 
-        //    if (user != null)
-        //    {
-        //        dic.Add("isWalletPreferred", user.isWalletPreferred);
+        private void CheckWalletBalance(string userID, CangooEntities context, ref Dictionary<dynamic, dynamic> dic)
+        {
+            var user = context.UserProfiles.Where(u => u.UserID.ToString().Equals(userID)).FirstOrDefault();
+            //When ride was booked by some hotel / company 
+            if (user != null)
+            {
+                dic.Add("isWalletPreferred", user.isWalletPreferred);
 
-        //        if (user.WalletBalance != null)
-        //            dic.Add("availableWalletBalance", string.Format("{0:0.00}", (decimal)user.WalletBalance));
-        //        else
-        //            dic.Add("availableWalletBalance", string.Format("{0:0.00}", 0));
-        //    }
-        //    else
-        //    {
-        //        dic.Add("isWalletPreferred", false);
-        //        dic.Add("availableWalletBalance", string.Format("{0:0.00}", 0));
-        //    }
-        //}
+                if (user.WalletBalance != null)
+                    dic.Add("availableWalletBalance", string.Format("{0:0.00}", (decimal)user.WalletBalance));
+                else
+                    dic.Add("availableWalletBalance", string.Format("{0:0.00}", 0));
+            }
+            else
+            {
+                dic.Add("isWalletPreferred", false);
+                dic.Add("availableWalletBalance", string.Format("{0:0.00}", 0));
+            }
+        }
 
-        //private PassengerRequest GetCancelledTripRequestObject(RequestModel req, spCaptainCancelRide_Result tp)
-        //{
-        //    PassengerRequest pr = new PassengerRequest
-        //    {
-        //        pickUplatitude = tp.PickupLocationLatitude,
-        //        pickUplongitude = tp.PickupLocationLongitude,
-        //        pickUpLocation = tp.PickUpLocation,
-        //        dropOfflatitude = tp.DropOffLocationLatitude,
-        //        dropOfflongitude = tp.DropOffLocationLongitude,
-        //        dropOffLocation = tp.DropOffLocation,
-        //        pID = tp.UserID.ToString(),
-        //        selectedPaymentMethod = tp.TripPaymentMode,//Enum.GetName(typeof(ResellerPaymentModes), tp.TripPaymentMode),
-        //        timeZoneOffset = "0", //Will not be considered, in case of later booking reroute, PickUpBookingDateTime is being fetched from db
-        //        resellerArea = req.resellerArea,
-        //        isLaterBooking = req.isLaterBooking,
-        //        laterBookingDate = tp.PickUpBookingDateTime.ToString(),
-        //        isReRouteRequest = true,
-        //        tripID = tp.TripID.ToString(),
-        //        seatingCapacity = tp.NoOfPerson.ToString(),
-        //        driverID = req.driverID,
-        //        requiredFacilities = tp.facilities,
-        //        deviceToken = tp.DeviceToken
-        //    };
+        private  BookTripRequest GetCancelledTripRequestObject(DriverCancelTripRequest req, spCaptainCancelRide_Result tp)
+        {
+            BookTripRequest pr = new BookTripRequest
+            {
+                PickUpLatitude = tp.PickupLocationLatitude,
+                PickUpLongitude = tp.PickupLocationLongitude,
+                PickUpPostalCode = "",
+                PickUpLocation = tp.PickUpLocation,
 
-        //    string path = "Trips/" + req.tripID.ToString() + "/discount";
+                MidwayStop1Latitude = "",
+                MidwayStop1Longitude = "",
+                MidwayStop1PostalCode = "",
+                MidwayStop1Location = "",
 
-        //    client = new FireSharp.FirebaseClient(config);
-        //    FirebaseResponse resp = client.Get(path);
+                DropOffLatitude = tp.DropOffLocationLatitude,
+                DropOffLongitude = tp.DropOffLocationLongitude,
+                DropOffPostalCode = "",
+                DropOffLocation = tp.DropOffLocation,
 
-        //    if (!string.IsNullOrEmpty(resp.Body) && !resp.Body.Equals("null"))
-        //    {
-        //        Dictionary<string, dynamic> discountDetails = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(resp.Body);
-        //        pr.discountType = discountDetails["type"].ToString();
-        //        pr.promoDiscountAmount = discountDetails["amount"].ToString();
-        //    }
+                PassengerId = tp.UserID.ToString(),
+                SelectedPaymentMethod = tp.TripPaymentMode,
+                //SelectedPaymentMethodId = tp.TripPaymentModeId,//Enum.GetName(typeof(ResellerPaymentModes), tp.TripPaymentMode),
+                LaterBookingDate = tp.PickUpBookingDateTime.ToString(),
+                TripId = tp.TripID.ToString(),
+                SeatingCapacity = tp.NoOfPerson.ToString(),
+                RequiredFacilities = tp.facilities,
+                IsLaterBooking = req.isLaterBooking.ToString(),
+                DriverId = req.driverID,
+                TimeZoneOffset = "0", //Will not be considered, in case of later booking reroute, PickUpBookingDateTime is being fetched from db
+                IsReRouteRequest = true.ToString()
+                //DeviceToken = tp.DeviceToken,
+                //resellerArea = req.resellerArea,
+            };
 
-        //    return pr;
-        //}
+            //NEW IMPLEMENTATION : Adjusted in Firebase Service (SendRideRequestToOnlineDrivers)
+
+            //string path = "Trips/" + req.tripID.ToString() + "/discount";
+
+            //client = new FireSharp.FirebaseClient(config);
+            //FirebaseResponse resp = client.Get(path);
+            //if (!string.IsNullOrEmpty(resp.Body) && !resp.Body.Equals("null"))
+            //{
+            //    Dictionary<string, dynamic> discountDetails = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(resp.Body);
+            //    pr.discountType = discountDetails["type"].ToString();
+            //    pr.promoDiscountAmount = discountDetails["amount"].ToString();
+            //}
+
+            return pr;
+        }
 
         private LaterBookingConflict checkLaterBookingDate(string captainID, DateTime pickUpDateTime)
         {

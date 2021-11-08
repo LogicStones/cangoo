@@ -12,6 +12,9 @@ namespace Constants
         public const string pas_InProcessLaterBookingReRouted = "pas_InProcessLaterBookingReRouted";
         public const string pas_rideReRouted = "pas_rideReRouted";
         public const string pas_rideAccepted = "pas_rideAccepted";
+        public const string pas_rideCancel = "pas_rideCancel";
+        public const string pas_driverReached = "pas_driverReached";
+        public const string pas_rideStarted = "pas_rideStarted";
 
         public const string cap_rideCancel = "cap_rideCancel";
         public const string cap_laterRideCancel = "cap_laterRideCancel";

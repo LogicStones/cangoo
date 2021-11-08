@@ -48,6 +48,46 @@ namespace Services
             }
         }
 
+        public static string ApplyPromoCode(string applicationID, string userID, CangooEntities context, ref Dictionary<dynamic, dynamic> dic)
+        {
+            DateTime dt = DateTime.UtcNow;
+            var availablePromoCodes = context.PromoManagers.Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == false && p.StartDate <= dt && p.ExpiryDate >= dt).OrderBy(p => p.StartDate).ToList();
+
+            string promoCodeID = "";
+
+            if (availablePromoCodes.Any())
+            {
+                var appliedPromoCode = context.UserPromos.Where(up => up.UserID == userID && up.isActive == true).FirstOrDefault();
+                if (appliedPromoCode != null)
+                {
+                    //Business Rule: Only one promo can be applied 
+                    if (availablePromoCodes.Exists(p => p.PromoID == appliedPromoCode.PromoID))
+                    {
+                        var promo = availablePromoCodes.Find(p => p.PromoID == appliedPromoCode.PromoID);
+
+                        if (appliedPromoCode.NoOfUsage < promo.Repetition)
+                        {
+
+                            if (promo.isFixed == true)
+                            {
+                                dic["discountType"] = "fixed";
+                                dic["discountAmount"] = string.Format("{0:0.00}", (decimal)promo.Amount);
+                            }
+                            else
+                            {
+                                dic["discountType"] = "percentage";
+                                dic["discountAmount"] = string.Format("{0:0.00}", (decimal)promo.Amount);
+                            }
+                            promoCodeID = promo.PromoID.ToString();
+                        }
+                    }
+                }
+            }
+            return promoCodeID;
+        }
+
+
+
         //TBD : ETA & Special Promotion
         public static async Task<EstimateFareResponse> GetFareEstimate(
             string pickUpPostalCode, string pickUpLatitude, string pickUpLongitude,

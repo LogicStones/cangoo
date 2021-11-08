@@ -116,7 +116,7 @@ namespace Services
                     PickUpLatitude = model.PickUpLatitude,
                     PickUpLongitude = model.PickUpLongitude,
                     DropOffLatitude = model.DropOffLatitude,
-                    DropOffLongitude = model.DropOffLongitutde,
+                    DropOffLongitude = model.DropOffLongitude,
                     IsLaterBooking = model.IsLaterBooking,
                     SeatingCapacity = model.SeatingCapacity,
                     RequiredFacilities = model.RequiredFacilities,
@@ -205,7 +205,7 @@ namespace Services
                     tp.MidwayStop1Location = model.MidwayStop1Location;
 
                     tp.DropOffLocationLatitude = model.DropOffLatitude;
-                    tp.DropOffLocationLongitude = model.DropOffLongitutde;
+                    tp.DropOffLocationLongitude = model.DropOffLongitude;
                     tp.DropOffLocationPostalCode = model.DropOffPostalCode;
                     tp.DropOffLocation = model.DropOffLocation;
 
@@ -313,7 +313,7 @@ namespace Services
                     //result.DiscountType = "normal";
                     //result.DiscountAmount = "0.00";
 
-                    var specialPromoDetails = await FareManagerService.IsSpecialPromotionApplicable(model.PickUpLatitude, model.PickUpLongitude, model.DropOffLatitude, model.DropOffLongitutde, applicationId, true, DateTime.Parse(bookingRN.PickUpDateTime));
+                    var specialPromoDetails = await FareManagerService.IsSpecialPromotionApplicable(model.PickUpLatitude, model.PickUpLongitude, model.DropOffLatitude, model.DropOffLongitude, applicationId, true, DateTime.Parse(bookingRN.PickUpDateTime));
 
                     bookingRN.DiscountType = specialPromoDetails.DiscountType;
                     bookingRN.DiscountAmount = specialPromoDetails.DiscountAmount;
@@ -475,6 +475,15 @@ namespace Services
             using (var dbContext = new CangooEntities())
             {
                 return dbContext.CompanyVouchers.Where(cv => cv.VoucherID == voucherId && cv.isUsed == false).FirstOrDefault();
+            }
+        }
+
+
+        public static async Task<spGetRideDetail_Result> GetRideDetail(string tripID, bool isWeb)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                return dbContext.spGetRideDetail(tripID, (int)TripStatuses.PaymentPending, isWeb).FirstOrDefault();
             }
         }
 

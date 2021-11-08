@@ -145,13 +145,10 @@ namespace Services
             await FirebaseIntegration.Write("OnlineDriver/" + driverId, fd);
         }
 
-
         public static async Task OfflineDriver(string driverId)
         {
            await FirebaseIntegration.Delete("OnlineDriver/" + driverId);
         }
-
-
 
         #endregion
 
@@ -185,6 +182,9 @@ namespace Services
             {
                 await WriteTripPassengerDetails(bookingRN, passengerId);
                 await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.RequestSent));
+
+                //NEW IMPLEMENTATION
+                await UpdateDiscountTypeAndAmount(tripId, bookingRN.DiscountAmount ?? "0.00", bookingRN.DiscountType ?? "normal");
             }
 
             #region MakePreferredAndNormalDriversList
@@ -285,8 +285,9 @@ namespace Services
             //Double check the logic, following nodes are not added anywhere else before, in case of first time ride request.
             //Probably same function is called when scheduling later booking (either in user of driver controller)
 
-            await FirebaseService.UpdateDiscountTypeAndAmount(tripId, bookingRN.DiscountAmount ?? "0.00", bookingRN.DiscountType ?? "normal");
-            await FirebaseService.SetTripDispatchedStatus(tripId, bookingRN.IsDispatchedRide ?? false.ToString());
+            //NEW IMPLEMENTATION : Moved to IsReRouteRequest else part
+            //await UpdateDiscountTypeAndAmount(tripId, bookingRN.DiscountAmount ?? "0.00", bookingRN.DiscountType ?? "normal");
+            await SetTripDispatchedStatus(tripId, bookingRN.IsDispatchedRide ?? false.ToString());
 
             string applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
             var applicationSettings = await ApplicationSettingService.GetApplicationSettings(applicationId);
@@ -728,7 +729,6 @@ namespace Services
             return await FirebaseIntegration.Read("Trips/" + tripID);
         }
 
-
         public static async Task<DiscountTypeDTO> GetTripDiscountDetails(string tripId)
         {
             dynamic resp = await GetTripDetails(tripId);
@@ -774,13 +774,13 @@ namespace Services
             await FirebaseIntegration.Write("Trips/" + tripId + "/isDispatchedRide", isDispatchedRide);
         }
         
-        private static async Task SendInProcessLaterBookingReRouteNotfication(string bookingModeId, string captainId, string tripId, string userId, string deviceToken)
+        private static async Task SendInProcessLaterBookingReRouteNotfication(string bookingModeId, string captainId, string tripId, string passengerId, string deviceToken)
         {
             //step 1 : Free current captain
 
             await SetDriverFree(captainId, tripId);
             await RemoveDriverFromTrip(captainId, tripId);
-            await DeletePassengerTrip(userId);
+            await DeletePassengerTrip(passengerId);
 
             //step 2 : update passenger about trip status
             if (int.Parse(bookingModeId) == (int)BookingModes.UserApplication)
@@ -823,7 +823,21 @@ namespace Services
 
         public static async Task DeletePassengerTrip(string passengerId)
         {
-            await FirebaseIntegration.Delete("CustomerTrips/" + passengerId);
+            await FirebaseIntegration.Delete("CustomerTrips/" + passengerId + "/tripID");
+        }
+
+        public static async Task FreePassengerFromCurrentTrip(string passengerId, string tripId)
+        {
+            var oldResp = await FirebaseIntegration.Read("CustomerTrips/" + passengerId);
+            if (!string.IsNullOrEmpty(oldResp.Body) && !oldResp.Body.Equals("null"))
+            {
+                //make sure if user is in in same trip (may be in another trip, or in walkin trip payment processing)
+                //TBD: Create new class for firebase user
+                var customerTrips = JsonConvert.DeserializeObject<FirebaseDriver>(oldResp.Body);
+
+                if (customerTrips.tripId.Equals(tripId))
+                    await DeletePassengerTrip(passengerId);
+            }
         }
 
         private static async Task RemoveDriverFromTrip(string captainId, string tripId)
@@ -831,7 +845,7 @@ namespace Services
             await FirebaseIntegration.Delete("Trips/" + tripId + "/" + captainId);
         }
 
-        private static async Task SetDriverFree(string driverId, string tripId)
+        public static async Task SetDriverFree(string driverId, string tripId)
         {
             FirebaseDriver onlineDriver = await GetOnlineDriver(driverId);
             if (onlineDriver != null)
@@ -939,8 +953,7 @@ namespace Services
         {
             await FirebaseIntegration.Write("OnlineDriver/" + driverId + "/EstDistToPickUpLoc/", estDistToPickUpLoc);
         }
-
-
+        
         public async static Task UpdateTripsAndNotifyPassengerOnRequestAcceptd(string driverId, string passengerId, AcceptRideDriverModel arm, string tripId, bool isWeb)
         {
             var fd = await GetOnlineDriver(driverId);
@@ -990,47 +1003,17 @@ namespace Services
             }
         }
 
-    //#endregion
+        //#endregion
 
-    //#region Driver Arrived
+        //#region Driver Arrived
 
-    //public async Task<bool> sendFCMAfterDriverArrived(string driverID, string deviceToken, ArrivedDriverRideModel adr, string tripID, bool isWeb)
-    //{
-    //    Dictionary<string, dynamic> dic = new Dictionary<string, dynamic>();
-    //    dic.Add("driverID", driverID);
-    //    if (!isWeb)
-    //    {
-    //        await sentSingleFCM(deviceToken, dic, "pas_driverReached");
-    //    }
-    //    client = new FireSharp.FirebaseClient(config);
-
-    //    string path = "Trips/" + tripID + "/";
-    //    //driver data
-    //    await FirebaseIntegration.RideDataWriteOnFireBase(App_Start.Enumration.returnRideFirebaseStatus(App_Start.RideFirebaseStatus.Waiting), false, path, adr, driverID, "", isWeb);
-    //    //SetResponse rs = await client.SetTaskAsync(path + driverID, adr);
-    //    return true;
-    //}
-
-    public static async Task UpdateDriverEarnedPoints(string driverId, string earnedPoints)
+        public static async Task UpdateDriverEarnedPoints(string driverId, string earnedPoints)
         {
             await FirebaseIntegration.Update("OnlineDriver/" + driverId + "/", new DriverEarnedPoints
             {
                 earningPoints = earnedPoints
             });
         }
-
-        //public bool updateArrivalTime(string tripID, string driverID, string earnedPoints)
-        //{
-        //    client = new FireSharp.FirebaseClient(config);
-
-        //    Dictionary<string, string> dic = new Dictionary<string, string>
-        //    {
-        //        { "arrivalTime", Common.getUtcDateTime().ToString(Common.dateFormat) }
-        //    };
-        //    client.Update("Trips/" + tripID + "/" + driverID + "/", dic);
-
-        //    return true;
-        //}
 
         public static async Task<double> GetTripEstimatedDistanceOnArrival(string driverId)
         {
@@ -1050,25 +1033,9 @@ namespace Services
 
         //#region Ride started
 
-        //public async Task<bool> sendFCMAfterRideStarted(string tripID, string driverID, string deviceToken, startDriverRideModel sdr, bool isWeb)
-        //{
-        //    Dictionary<string, dynamic> dic = new Dictionary<string, dynamic>
-        //    {
-        //        { "driverID", driverID }
-        //    };
 
-        //    if (!isWeb)
-        //    {
-        //        await sentSingleFCM(deviceToken, dic, "pas_rideStarted");
-        //    }
-        //    client = new FireSharp.FirebaseClient(config);
-        //    string path = "Trips/" + tripID + "/";
 
-        //    await FirebaseIntegration.RideDataWriteOnFireBase(App_Start.Enumration.returnRideFirebaseStatus(App_Start.RideFirebaseStatus.Picked), false, path, sdr, driverID, "", isWeb);
-        //    return true;
-        //}
-
-        //public async Task<bool> updateGo4Module(string captainName, string userName, string deviceToken)
+        //public async Task updateGo4Module(string captainName, string userName, string deviceToken)
         //{
         //    Go4ModuleModel fcm = new Go4ModuleModel()
         //    {
@@ -1076,8 +1043,32 @@ namespace Services
         //        passengerName = userName
         //    };
         //    await sentSingleFCM(deviceToken, fcm, "g4m_rideStarted");
+        //}
 
-        //    return true;
+        //private async void rideDataWriteOnFireBase(string statusRide, bool isUser, string path, dynamic data, string driverID, string userID, bool isWeb)
+        //{
+        //    client = new FireSharp.FirebaseClient(config);
+
+        //    SetResponse rs = client.Set(path + "/TripStatus", statusRide);
+        //    if (isUser)
+        //    {
+        //        //if (Enumration.returnRideFirebaseStatus(RideFirebaseStatus.RequestSent).Equals(statusRide))
+        //        //{
+        //        //    PassengerRideRequest pr = data;
+        //        //    client.Set(path + "/Info", new Dictionary<string, dynamic> {
+        //        //        {"isLaterBooking", pr.isLaterBooking },
+        //        //        {"requestTimeOut", 300 },
+        //        //        {"bookingDateTime", Common.getUtcDateTime() },
+        //        //        {"bookingMode", pr.bookingMode },
+        //        //    });
+        //        //}
+
+        //        rs = await client.SetTaskAsync(path + "/" + userID, data);
+        //    }
+        //    else
+        //    {
+        //        rs = await client.SetTaskAsync(path + "/" + driverID, data);
+        //    }
         //}
 
         //public async Task<bool> updateChangeFareRequestStatus(string tripID, string captainID, string captainDeviceToken, string response, dynamic notificationData)
@@ -1099,57 +1090,53 @@ namespace Services
 
         //#region Ride End
 
-        //public async Task<bool> sendFCMRideDetailPassengerAfterEndRide(string tripID, string distance, EndDriverRideModel edr, string driverID, string paymentMode, string userID, bool isWeb)
-        //{
-        //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-        //    {
-        //        var trp = context.spGetRideDetail(tripID, (Int32)App_Start.TripStatus.PaymentPending, isWeb).FirstOrDefault();
-        //        if (trp != null)
-        //        {
-        //            string path = "Trips/" + tripID + "/";
+        public static async Task sendFCMRideDetailPassengerAfterEndRide(string tripID, string distance, EndDriverRideModel edr, string driverID, string paymentMode, string userID, bool isWeb)
+        {
+            var trp = await TripsManagerService.GetRideDetail(tripID, isWeb);
+            if (trp != null)
+            {
+                string path = "Trips/" + tripID + "/";
 
-        //            PaymentPendingPassenger pp = new PaymentPendingPassenger()
-        //            {
-        //                isPaymentRequested = false,
-        //                isFareChangePermissionGranted = edr.isFareChangePermissionGranted,
-        //                PaymentMode = paymentMode
-        //            };
+                PaymentPendingPassenger pp = new PaymentPendingPassenger()
+                {
+                    isPaymentRequested = false,
+                    isFareChangePermissionGranted = edr.isFareChangePermissionGranted,
+                    PaymentMode = paymentMode
+                };
 
-        //            //driver data
-        //            await FirebaseIntegration.RideDataWriteOnFireBase(App_Start.Enumration.returnRideFirebaseStatus(App_Start.RideFirebaseStatus.PaymentPending), false, path, edr, driverID, "", isWeb);
+                //driver data
+                await FirebaseIntegration.RideDataWriteOnFireBase(App_Start.Enumration.returnRideFirebaseStatus(App_Start.RideFirebaseStatus.PaymentPending), false, path, edr, driverID, "", isWeb);
 
-        //            //user data
-        //            await FirebaseIntegration.RideDataWriteOnFireBase(App_Start.Enumration.returnRideFirebaseStatus(App_Start.RideFirebaseStatus.PaymentPending), true, path, pp, "", userID, isWeb);
+                //user data
+                await FirebaseIntegration.RideDataWriteOnFireBase(App_Start.Enumration.returnRideFirebaseStatus(App_Start.RideFirebaseStatus.PaymentPending), true, path, pp, "", userID, isWeb);
 
-        //            if (!isWeb)
-        //            {
-        //                EndRideFCM efcm = new EndRideFCM()
-        //                {
-        //                    tripID = tripID,
-        //                    driverName = trp.Name,
-        //                    driverImage = trp.Picture,
-        //                    pickLat = trp.PickupLocationLatitude,
-        //                    pickLong = trp.PickupLocationLongitude,
-        //                    dropLat = trp.DropOffLocationLatitude,
-        //                    dropLong = trp.DropOffLocationLongitude,
-        //                    estimateFare = Convert.ToDecimal((trp.BaseFare != null ? trp.BaseFare : 0) + (trp.BookingFare != null ? trp.BookingFare : 0) + Convert.ToDecimal(trp.travelledFare != null ? trp.travelledFare : 0)),
-        //                    bookingDateTime = trp.BookingDateTime,
-        //                    endRideDateTime = trp.TripEndDatetime,
-        //                    totalRewardPoints = (trp.RewardPoints + (int.Parse(distance) / 500)).ToString(),
-        //                    tripRewardPoints = (int.Parse(distance) / 500).ToString(),
-        //                    distance = distance,
-        //                    date = string.Format("{0:dd MM yyyy}", trp.BookingDateTime),
-        //                    time = string.Format("{0:hh:mm tt}", trp.BookingDateTime),
-        //                    paymentMode = paymentMode,
-        //                    isFav = trp.favorite == 1 ? true : false
-        //                };
+                if (!isWeb)
+                {
+                    EndRideFCM efcm = new EndRideFCM()
+                    {
+                        tripID = tripID,
+                        driverName = trp.Name,
+                        driverImage = trp.Picture,
+                        pickLat = trp.PickupLocationLatitude,
+                        pickLong = trp.PickupLocationLongitude,
+                        dropLat = trp.DropOffLocationLatitude,
+                        dropLong = trp.DropOffLocationLongitude,
+                        estimateFare = Convert.ToDecimal((trp.BaseFare != null ? trp.BaseFare : 0) + (trp.BookingFare != null ? trp.BookingFare : 0) + Convert.ToDecimal(trp.travelledFare != null ? trp.travelledFare : 0)),
+                        bookingDateTime = trp.BookingDateTime,
+                        endRideDateTime = trp.TripEndDatetime,
+                        totalRewardPoints = (trp.RewardPoints + (int.Parse(distance) / 500)).ToString(),
+                        tripRewardPoints = (int.Parse(distance) / 500).ToString(),
+                        distance = distance,
+                        date = string.Format("{0:dd MM yyyy}", trp.BookingDateTime),
+                        time = string.Format("{0:hh:mm tt}", trp.BookingDateTime),
+                        paymentMode = paymentMode,
+                        isFav = trp.favorite == 1 ? true : false
+                    };
 
-        //                await sentSingleFCM(trp.DeviceToken, efcm, "pas_endRideDetail");
-        //            }
-        //        }
-        //        return true;
-        //    }
-        //}
+                    await sentSingleFCM(trp.DeviceToken, efcm, "pas_endRideDetail");
+                }
+            }
+        }
 
         //public string getTripDistance(string tripPath)
         //{
@@ -1389,6 +1376,17 @@ namespace Services
         public static async Task WriteTripDriverDetails(AcceptRideDriverModel data, string driverId)
         {
             await FirebaseIntegration.Write("Trips/" + data.tripID + "/" + driverId, data);
+        }
+
+        public static async Task UpdateTripDriverDetailsOnArrival(ArrivedDriverRideModel data, string tripID, string driverId, string earnedPoints)
+        {
+            await FirebaseIntegration.Write("Trips/" + tripID + "/" + driverId, data);
+            await UpdateDriverEarnedPoints(driverId, earnedPoints);
+        }
+
+        public static async Task UpdateTripDriverDetailsOnStart(startDriverRideModel data, string tripID, string driverId)
+        {
+            await FirebaseIntegration.Write("Trips/" + tripID + "/" + driverId, data);
         }
 
         public static async Task RemoveTripDriverDetails(string tripId, string driverId)

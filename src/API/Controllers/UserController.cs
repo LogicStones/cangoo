@@ -1780,7 +1780,7 @@ namespace API.Controllers
                     Message = ResponseKeys.msgSuccess,
                     Data = await FareManagerService.GetFareEstimate(model.PickUpPostalCode, model.PickUpLatitude, model.PickUpLongitude,
                     model.MidwayStop1PostalCode, model.MidwayStop1Latitude, model.MidwayStop1Longitude,
-                    model.DropOffPostalCode, model.DropOffLatitude, model.DropOffLongitutde,
+                    model.DropOffPostalCode, model.DropOffLatitude, model.DropOffLongitude,
                     model.PolyLine, model.InBoundTimeInSeconds, model.InBoundDistanceInMeters, model.OutBoundTimeInSeconds, model.OutBoundDistanceInMeters)
                 });
             }

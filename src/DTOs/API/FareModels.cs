@@ -61,7 +61,7 @@ namespace DTOs.API
         
         [Required]
         [DefaultValue("74.2070284762054")]
-        public string DropOffLongitutde { get; set; }
+        public string DropOffLongitude { get; set; }
         
         [Required]
         [DefaultValue("52250")]

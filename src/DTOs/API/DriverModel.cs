@@ -1,6 +1,8 @@
 ﻿using DTOs.Shared;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Web;
 
@@ -96,46 +98,192 @@ namespace DTOs.API
         public bool isBrainTree { get; set; }
         public bool isFareChangePermissionGranted { get; set; }
     }
-   
+
+    public class DriverAcceptLaterBookingRequest
+    {
+        [Required]
+        [DefaultValue("")]
+        public string tripID { get; set; }
+
+        [Required]
+        [DefaultValue("")]
+        public string driverID { get; set; }
+
+        [DefaultValue("2021-11-22 14:44:22")]
+        public DateTime pickUpDateTime { get; set; }
+
+        [DefaultValue("False")]
+        public bool isCheckLaterBookingConflict { get; set; }
+    }
+
+    public class DriverAcceptTripRequest
+    {
+        [Required]
+        [DefaultValue("")]
+        public string tripID { get; set; }
+        
+        [Required]
+        [DefaultValue("")]
+        public string driverID { get; set; }
+        
+        [Required]
+        [DefaultValue("")]
+        public string vehicleID { get; set; }
+        
+        [Required]
+        [DefaultValue("True")]
+        public bool isAccept { get; set; }
+        
+        [DefaultValue("False")]
+        public bool isReRouteRequest { get; set; }
+
+        [DefaultValue("False")]
+        public bool isLaterBooking { get; set; }
+        
+        [DefaultValue("123")]
+        public string distanceToPickUpLocation { get; set; }
+        
+        [DefaultValue("False")]
+        public string isDispatchedRide { get; set; }
+        
+        [DefaultValue("")]
+        public string dispatcherID { get; set; }
+        
+        [DefaultValue("False")]
+        public bool isWeb { get; set; }
+    }
+
+    public class DriverCancelTripRequest
+    {
+        [Required]
+        [DefaultValue("")]
+        public string tripID { get; set; }
+        [Required]
+        [DefaultValue("")]
+        public string driverID { get; set; }
+        [Required]
+        [DefaultValue("")]
+        public int cancelID { get; set; }
+        [Required]
+        [DefaultValue("True")]
+        public string isAtPickupLocation { get; set; }
+        [Required]
+        [DefaultValue("[{\"lat\":68.3908316470314,\"lng\":-169.25109883759296},{\"lat\":38.39278982958803,\"lng\":171.06140116240704},{\"lat\":-57.243772723990084,\"lng\":154.71374491240704},{\"lat\":-33.0092509544725,\"lng\":66.64733866240704},{\"lat\":-41.525554039286014,\"lng\":13.912963662407037},{\"lat\":-45.549637304437304,\"lng\":-18.423294077947503},{\"lat\":-52.710099753168834,\"lng\":-100.16906758759296},{\"lat\":56.546179852988224,\"lng\":-176.950561665387},{\"lat\":82.84011158544916,\"lng\":-53.90546558717142},{\"lat\":82.53196871665712,\"lng\":5.8348478588152375},{\"lat\":82.76804348272478,\"lng\":88.83966180216396}]")]
+        public string resellerArea { get; set; }
+        [DefaultValue("False")]
+        public bool isWeb { get; set; }
+        [DefaultValue("False")]
+        public bool isLaterBooking { get; set; }
+    }
+    
+    public class DriverArrivedRequest
+    {
+        [Required]
+        [DefaultValue("")]
+        public string tripID { get; set; }
+        [Required]
+        [DefaultValue("")]
+        public string driverID { get; set; }
+        [DefaultValue("False")]
+        public bool isWeb { get; set; }
+        [DefaultValue("123")]
+        public string distanceToPickUpLocation { get; set; }
+    }
+
+    public class DriverStartTripRequest
+    {
+        [Required]
+        [DefaultValue("")]
+        public string tripID { get; set; }
+        [Required]
+        [DefaultValue("")]
+        public string driverID { get; set; }
+        [DefaultValue("False")]
+        public bool isWeb { get; set; }
+    }
+
+    public class DriverEndTripRequest
+    {
+        [Required]
+        [DefaultValue("")]
+        public string tripID { get; set; }
+
+        [Required]
+        [DefaultValue("")]
+        public string driverID { get; set; }
+
+        [Required]
+        [DefaultValue("")]
+        public string resellerID { get; set; }
+
+        [Required]
+        [DefaultValue("[{\"lat\":68.3908316470314,\"lng\":-169.25109883759296},{\"lat\":38.39278982958803,\"lng\":171.06140116240704},{\"lat\":-57.243772723990084,\"lng\":154.71374491240704},{\"lat\":-33.0092509544725,\"lng\":66.64733866240704},{\"lat\":-41.525554039286014,\"lng\":13.912963662407037},{\"lat\":-45.549637304437304,\"lng\":-18.423294077947503},{\"lat\":-52.710099753168834,\"lng\":-100.16906758759296},{\"lat\":56.546179852988224,\"lng\":-176.950561665387},{\"lat\":82.84011158544916,\"lng\":-53.90546558717142},{\"lat\":82.53196871665712,\"lng\":5.8348478588152375},{\"lat\":82.76804348272478,\"lng\":88.83966180216396}]")]
+        public string resellerArea { get; set; }
+
+        [Required]
+        [DefaultValue("123")]
+        public string distance { get; set; }
+
+        [Required]
+        [DefaultValue("True")]
+        public string isAtDropOffLocation { get; set; }
+
+        [Required]
+        [DefaultValue("")]
+        public string dropOffLocation { get; set; }
+
+        [DefaultValue("32.1374413236167")]
+        public double lat { get; set; }
+        
+        [DefaultValue("74.2070284762054")]
+        public double lon { get; set; }
+
+        [DefaultValue("False")]
+        public bool isWeb { get; set; }
+
+        [DefaultValue("False")]
+        public bool isLaterBooking { get; set; }
+    }
+
     public class RequestModel
     {
         public string resellerID { get; set; }
-        public string fleetID { get; set; }
         public string tripID { get; set; }
+        public string driverID { get; set; }
         public double lat { get; set; }
         public double lon { get; set; }
+        public string distance { get; set; }
+        public string resellerArea { get; set; }
+        public string isAtDropOffLocation { get; set; }
+        public bool isWeb { get; set; }
+        public string dropOffLocation { get; set; }
+        public DateTime pickUpDateTime { get; set; }
+        public bool isCheckLaterBookingConflict { get; set; }
+        public bool isLaterBooking { get; set; }
+        public string fleetID { get; set; }
         public bool isAccept { get; set; }
         public bool isReRouteRequest { get; set; }
-        public string driverID { get; set; }
         public string userID { get; set; }
         public string walkInOldUserID { get; set; }
         public string reDateTime { get; set; }
         public double customerRating { get; set; }
         public string duration { get; set; }
-        public string distance { get; set; }
         public string paymentMode { get; set; }
-        public string resellerArea { get; set; }
         public string vehicleID { get; set; }
         public string phoneNumber { get; set; }
         public int cancelID { get; set; }
         public int bookingModeID { get; set; }
         public bool passengerFav { get; set; }
-        public bool isWeb { get; set; }
         public string pickUplatitude { get; set; }
         public string pickUplongitude { get; set; }
         public string dropOfflatitude { get; set; }
         public string dropOfflongitude { get; set; }
-        public string dropOffLocation { get; set; }
-        public DateTime pickUpDateTime { get; set; }
-        public bool isCheckLaterBookingConflict { get; set; }
-        public bool isLaterBooking { get; set; }
         public string timeZoneOffset { get; set; }
         public string distanceToPickUpLocation { get; set; }
         public string isAtPickupLocation { get; set; }
         public string estimatedFare { get; set; }
         public string discountType { get; set; }
         public string isOverride { get; set; }
-        public string isAtDropOffLocation { get; set; }
         public string collectedAmount { get; set; }
         public string promoDiscountAmount { get; set; }
         public string walletUsedAmount { get; set; }
@@ -320,6 +468,7 @@ namespace DTOs.API
         public string dropOffLongitude { get; set; }
         public string passenger_Pic { get; set; }
         public string bookingMode { get; set; }
+        public string arrivalTime { get; set; }
     }
    
     public class startDriverRideModel
