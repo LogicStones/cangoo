@@ -993,7 +993,7 @@ namespace Services
             await WriteTripDriverDetails(arm, driverId);
 
             //passenger data
-            await UpdateTripPassengerDetailsOnRideAccepted(notificationPayLoad, passengerId);
+            await UpdateTripPassengerDetailsOnAccepted(notificationPayLoad, passengerId);
 
             await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.OnTheWay));
 
@@ -1092,50 +1092,7 @@ namespace Services
 
         public static async Task sendFCMRideDetailPassengerAfterEndRide(string tripID, string distance, EndDriverRideModel edr, string driverID, string paymentMode, string userID, bool isWeb)
         {
-            var trp = await TripsManagerService.GetRideDetail(tripID, isWeb);
-            if (trp != null)
-            {
-                string path = "Trips/" + tripID + "/";
-
-                PaymentPendingPassenger pp = new PaymentPendingPassenger()
-                {
-                    isPaymentRequested = false,
-                    isFareChangePermissionGranted = edr.isFareChangePermissionGranted,
-                    PaymentMode = paymentMode
-                };
-
-                //driver data
-                await FirebaseIntegration.RideDataWriteOnFireBase(App_Start.Enumration.returnRideFirebaseStatus(App_Start.RideFirebaseStatus.PaymentPending), false, path, edr, driverID, "", isWeb);
-
-                //user data
-                await FirebaseIntegration.RideDataWriteOnFireBase(App_Start.Enumration.returnRideFirebaseStatus(App_Start.RideFirebaseStatus.PaymentPending), true, path, pp, "", userID, isWeb);
-
-                if (!isWeb)
-                {
-                    EndRideFCM efcm = new EndRideFCM()
-                    {
-                        tripID = tripID,
-                        driverName = trp.Name,
-                        driverImage = trp.Picture,
-                        pickLat = trp.PickupLocationLatitude,
-                        pickLong = trp.PickupLocationLongitude,
-                        dropLat = trp.DropOffLocationLatitude,
-                        dropLong = trp.DropOffLocationLongitude,
-                        estimateFare = Convert.ToDecimal((trp.BaseFare != null ? trp.BaseFare : 0) + (trp.BookingFare != null ? trp.BookingFare : 0) + Convert.ToDecimal(trp.travelledFare != null ? trp.travelledFare : 0)),
-                        bookingDateTime = trp.BookingDateTime,
-                        endRideDateTime = trp.TripEndDatetime,
-                        totalRewardPoints = (trp.RewardPoints + (int.Parse(distance) / 500)).ToString(),
-                        tripRewardPoints = (int.Parse(distance) / 500).ToString(),
-                        distance = distance,
-                        date = string.Format("{0:dd MM yyyy}", trp.BookingDateTime),
-                        time = string.Format("{0:hh:mm tt}", trp.BookingDateTime),
-                        paymentMode = paymentMode,
-                        isFav = trp.favorite == 1 ? true : false
-                    };
-
-                    await sentSingleFCM(trp.DeviceToken, efcm, "pas_endRideDetail");
-                }
-            }
+            
         }
 
         //public string getTripDistance(string tripPath)
@@ -1368,9 +1325,14 @@ namespace Services
             await FirebaseIntegration.Write("Trips/" + data.TripId + "/" + passengerId, data);
         }
 
-        public static async Task UpdateTripPassengerDetailsOnRideAccepted(PassengerRequestAcceptedNotification data, string passengerId)
+        public static async Task UpdateTripPassengerDetailsOnAccepted(PassengerRequestAcceptedNotification data, string passengerId)
         {
             await FirebaseIntegration.Write("Trips/" + data.TripId + "/" + passengerId, data);
+        }
+
+        public static async Task UpdateTripPassengerDetailsOnEnd(PaymentPendingPassenger data, string tripId, string passengerId)
+        {
+            await FirebaseIntegration.Write("Trips/" + tripId + "/" + passengerId, data);
         }
 
         public static async Task WriteTripDriverDetails(AcceptRideDriverModel data, string driverId)
@@ -1385,6 +1347,10 @@ namespace Services
         }
 
         public static async Task UpdateTripDriverDetailsOnStart(startDriverRideModel data, string tripID, string driverId)
+        {
+            await FirebaseIntegration.Write("Trips/" + tripID + "/" + driverId, data);
+        }
+        public static async Task UpdateTripDriverDetailsOnEnd(EndDriverRideModel data, string tripID, string driverId)
         {
             await FirebaseIntegration.Write("Trips/" + tripID + "/" + driverId, data);
         }

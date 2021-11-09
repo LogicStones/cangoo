@@ -86,6 +86,12 @@ namespace DTOs.API
 		public string numberOfPerson { get; set; } = "";
 	}
 
+	public class PaymentPendingPassenger
+	{
+		public bool isPaymentRequested { get; set; }
+		public string PaymentMode { get; set; }
+		public bool isFareChangePermissionGranted { get; set; }
+	}
 
 	//public class RequestResponse
 	//{

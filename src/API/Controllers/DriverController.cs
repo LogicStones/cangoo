@@ -1250,8 +1250,49 @@ namespace API.Controllers
                     dic.Add("bookingMode", edr.bookingMode);
                     dic.Add("isWeb", model.isWeb);
 
-                        await FirebaseService.sendFCMRideDetailPassengerAfterEndRide(model.tripID, model.distance, edr, model.driverID,
-                            edr.paymentMethod, trip.UserID.ToString(), model.isWeb);
+                    //driver data
+                    await FirebaseService.UpdateTripDriverDetailsOnEnd(edr, model.tripID, model.driverID);
+
+                    PaymentPendingPassenger pp = new PaymentPendingPassenger()
+                    {
+                        isPaymentRequested = false,
+                        isFareChangePermissionGranted = edr.isFareChangePermissionGranted,
+                        PaymentMode = edr.paymentMethod
+                    };
+
+                    //user data
+                    await FirebaseService.UpdateTripPassengerDetailsOnEnd(pp, model.tripID, trip.UserID.ToString());
+
+                    await FirebaseService.SetTripStatus(model.tripID, Enum.GetName(typeof(TripStatuses), (int)TripStatuses.PaymentPending));
+
+                    if (!model.isWeb)
+                    {
+                        var trp = await TripsManagerService.GetRideDetail(model.tripID, model.isWeb);
+                        if (trp != null)
+                        {
+                            EndRideFCM efcm = new EndRideFCM()
+                            {
+                                tripID = model.tripID,
+                                driverName = trp.Name,
+                                driverImage = trp.Picture,
+                                pickLat = trp.PickupLocationLatitude,
+                                pickLong = trp.PickupLocationLongitude,
+                                dropLat = trp.DropOffLocationLatitude,
+                                dropLong = trp.DropOffLocationLongitude,
+                                estimateFare = Convert.ToDecimal((trp.BaseFare != null ? trp.BaseFare : 0) + (trp.BookingFare != null ? trp.BookingFare : 0) + Convert.ToDecimal(trp.travelledFare != null ? trp.travelledFare : 0)),
+                                bookingDateTime = trp.BookingDateTime,
+                                endRideDateTime = trp.TripEndDatetime,
+                                totalRewardPoints = (trp.RewardPoints + (int.Parse(model.distance) / 500)).ToString(),
+                                tripRewardPoints = (int.Parse(model.distance) / 500).ToString(),
+                                distance = model.distance,
+                                date = string.Format("{0:dd MM yyyy}", trp.BookingDateTime),
+                                time = string.Format("{0:hh:mm tt}", trp.BookingDateTime),
+                                paymentMode = edr.paymentMethod,
+                                isFav = trp.favorite == 1 ? true : false
+                            };
+                            await PushyService.UniCast(trp.DeviceToken, efcm, NotificationKeys.pas_endRideDetail);
+                        }
+                    }
 
                     if (trip.BookingModeID == (int)BookingModes.Karhoo ||
                         (trip.BookingModeID == (int)BookingModes.Dispatcher && trip.TripPaymentMode.ToLower().Equals("wallet")))
