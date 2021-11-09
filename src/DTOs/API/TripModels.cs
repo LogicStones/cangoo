@@ -152,14 +152,14 @@ namespace DTOs.API
         [DefaultValue("4")]
         public string SeatingCapacity { get; set; }
         
-        [Required]
-        [DefaultValue("Cash")]
-        public string SelectedPaymentMethod { get; set; }
+        //[Required]
+        //[DefaultValue("Cash")]
+        //public string SelectedPaymentMethod { get; set; }
         
         [Required]
         [DefaultValue("1")]
-        public string SelectedPaymentMethodId { get; set; }
-        //public string PaymentModeId { get; set; }
+        //public string SelectedPaymentMethodId { get; set; }
+        public string PaymentModeId { get; set; }
 
         [Required]
         [DefaultValue("1")]
@@ -194,8 +194,11 @@ namespace DTOs.API
         public string DiscountType { get; set; }
         
         [DefaultValue("0.0")]
-        public string PromoDiscountAmount { get; set; }
-        
+        public string DiscountAmount { get; set; }
+
+        [DefaultValue("")]
+        public string PromoCodeId { get; set; }
+
         [DefaultValue("")]
         public string LaterBookingDate { get; set; }
         
@@ -211,8 +214,6 @@ namespace DTOs.API
         [DefaultValue("")]
         public string DriverId { get; set; }
         
-        [DefaultValue("")]
-        public string PromoCodeId { get; set; }
 
         [DefaultValue("")]
         public string RequiredFacilities { get; set; }

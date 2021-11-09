@@ -37,13 +37,17 @@ namespace API
                 defaults: new { id = RouteParameter.Optional }
             );
 
+            string logFile = AppDomain.CurrentDomain.BaseDirectory + "Logs\\{Date}.txt";
 
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
                 //.WriteTo.Async(a => a.RollingFile(@"C:\Logs\{Date}.txt", retainedFileCountLimit: 10))
-                .WriteTo.RollingFile(@"C:\Logs\{Date}.txt", retainedFileCountLimit: 10)
+                //.WriteTo.RollingFile(@"C:\Logs\{Date}.txt", retainedFileCountLimit: 10)
+                .WriteTo.RollingFile(logFile, retainedFileCountLimit: 10)
+
                 //.WriteTo.File("log-.txt", rollingInterval: RollingInterval.Day, outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}")
                 .CreateLogger();
         }
     }
 }
+

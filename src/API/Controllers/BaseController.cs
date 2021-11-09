@@ -31,11 +31,5 @@ namespace API.Controllers
 
         public ResponseWrapper ResponseWrapper { get; set; }
 
-        [HttpGet]
-        [Route("auth-token-validation")]
-        public async Task<HttpResponseMessage> TokenValidation()
-        {
-            return Request.CreateResponse(HttpStatusCode.OK);
-        }
     }
 }

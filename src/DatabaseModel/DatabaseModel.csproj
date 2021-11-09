@@ -509,6 +509,9 @@
     <Compile Include="PaymentType.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="PlacesType.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="PriorityHourLog.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>

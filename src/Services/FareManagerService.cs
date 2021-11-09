@@ -16,7 +16,7 @@ namespace Services
 {
     public class FareManagerService
     {
-        public static async Task<SpecialPromotionDTO> IsSpecialPromotionApplicable(string pickUplatitude, string pickUplongitude,
+        public static async Task<DiscountTypeDTO> IsSpecialPromotionApplicable(string pickUplatitude, string pickUplongitude,
             string dropOfflatitude, string dropOfflongitude,
             string applicationID, bool isLaterBooking = false, DateTime? dt = null)
         {
@@ -26,7 +26,7 @@ namespace Services
                 //var specialPromo = await context.PromoManagers.Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == true && p.StartDate <= dt && p.ExpiryDate >= dt).ToListAsync();
                 var specialPromo = dbContext.PromoManagers.Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == true && p.StartDate <= dt && p.ExpiryDate >= dt).ToList();
 
-                var result = new SpecialPromotionDTO();
+                var result = new DiscountTypeDTO();
                 if (specialPromo.Any())
                 {
                     foreach (var promotion in specialPromo)
@@ -39,7 +39,7 @@ namespace Services
                             //promotionID = promotion.PromoID.ToString();
                             result.DiscountType = "special";
                             result.DiscountAmount = string.Format("{0:0.00}", (decimal)promotion.Amount);
-                            result.PromotionId = promotion.PromoID.ToString();
+                            result.PromoCodeId = promotion.PromoID.ToString();
                             break;
                         }
                     }

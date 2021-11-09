@@ -84,6 +84,25 @@ namespace DatabaseModel
         public Nullable<decimal> InBoundBaseFare { get; set; }
         public Nullable<decimal> OutBoundBaseFare { get; set; }
         public string PolyLine { get; set; }
+        public int PaymentModeId { get; set; }
+        public bool isWishCarRequested { get; set; }
+        public Nullable<int> VehicleCategoryId { get; set; }
+        public string DriverUserAgent { get; set; }
+        public string DriverOS { get; set; }
+        public string DriverAppVersion { get; set; }
+        public string PassengerUserAgent { get; set; }
+        public string PassengerOS { get; set; }
+        public string PassengerAppVersion { get; set; }
+        public string Complaint { get; set; }
+        public string MidwayStop1Latitude { get; set; }
+        public string MidwayStop1Longitude { get; set; }
+        public string MidwayStop1Location { get; set; }
+        public Nullable<System.DateTime> MidwayStop1ArrivalDateTime { get; set; }
+        public Nullable<System.DateTime> MidwayStop1LeaveDateTime { get; set; }
+        public bool isLogisticRequest { get; set; }
+        public string PickupLocationPostalCode { get; set; }
+        public string DropOffLocationPostalCode { get; set; }
+        public string MidwayStop1PostalCode { get; set; }
         public string DeviceToken { get; set; }
         public Nullable<double> EarningPoints { get; set; }
     }

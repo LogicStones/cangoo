@@ -86,6 +86,90 @@ namespace DTOs.API
 		public string numberOfPerson { get; set; } = "";
 	}
 
+
+	public class AcceptRideDriverModel
+	{
+		public string pickupLocationLatitude { get; set; }
+		public string pickupLocationLongitude { get; set; }
+		public string midwayStop1LocationLatitude { get; set; }
+		public string midwayStop1LocationLongitude { get; set; }
+		public string dropOffLocationLatitude { get; set; }
+		public string dropOffLocationLongitude { get; set; }
+		public string passengerID { get; set; }
+		public string passengerName { get; set; }
+		public int? minDistance { get; set; }
+		public double? requestTime { get; set; }
+		public string phone { get; set; }
+		public bool isWeb { get; set; }
+		public bool isLaterBooking { get; set; }
+		public List<CanclReasonsDTO> lstCancel = new List<CanclReasonsDTO>();
+		public string tripID { get; set; }
+		public string laterBookingPickUpDateTime { get; set; }
+		public string isDispatchedRide { get; set; }
+		public string distanceTraveled { get; set; }
+		public string isReRouteRequest { get; set; }
+		public string numberOfPerson { get; set; }
+		public string description { get; set; }
+		public string voucherCode { get; set; }
+		public string voucherAmount { get; set; }
+		public string isFareChangePermissionGranted { get; set; }
+		public string bookingMode { get; set; }
+	}
+
+	public class ArrivedDriverRideModel
+	{
+		public string passengerName { get; set; }
+		public double? passengerRating { get; set; }
+		public string dropOffLatitude { get; set; }
+		public string dropOffLongitude { get; set; }
+		public string passenger_Pic { get; set; }
+		public string bookingMode { get; set; }
+		public string arrivalTime { get; set; }
+	}
+
+	public class startDriverRideModel
+	{
+		public string dropOffLatitude { get; set; }
+		public string dropOffLongitude { get; set; }
+		public string bookingMode { get; set; }
+	}
+
+	public class EndDriverRideModel
+	{
+		public string waitingCharges { get; set; }
+		public string baseCharges { get; set; }
+		public string bookingCharges { get; set; }
+		public string travelCharges { get; set; }
+		public string paymentMethod { get; set; }
+		public string distance { get; set; }
+		public double? duration { get; set; }
+		public bool isPaymentRequested { get; set; }
+		public bool isFavUser { get; set; }
+
+		public string estimatedPrice { get; set; }
+		public string discountType { get; set; }
+		public string discountAmount { get; set; }
+		public string availableWalletBalance { get; set; }
+		public string isWalletPreferred { get; set; }
+		public string isVoucherApplied { get; set; }
+		public string voucherCode { get; set; }
+		public string voucherAmount { get; set; }
+		public bool isUserProfileUpdated { get; set; }
+		public bool isFareChangePermissionGranted { get; set; }
+
+		public string InBoundDistanceInMeters { get; set; }
+		public string InBoundTimeInSeconds { get; set; }
+		public string OutBoundDistanceInMeters { get; set; }
+		public string OutBoundTimeInSeconds { get; set; }
+		public string OutBoundTimeFare { get; set; }
+		public string OutBoundDistanceFare { get; set; }
+		public string InBoundTimeFare { get; set; }
+		public string InBoundDistanceFare { get; set; }
+		public string InBoundSurchargeAmount { get; set; }
+		public string OutBoundSurchargeAmount { get; set; }
+		public string bookingMode { get; set; }
+	}
+
 	public class PaymentPendingPassenger
 	{
 		public bool isPaymentRequested { get; set; }

@@ -27,19 +27,8 @@ namespace API.Handlers
                 Data = context.Exception
             });
 
-            Log.Information("Server Error Datetime : " + DateTime.Now);
-
             response.Headers.Add("X-Error", "An unexpected error occured");
             context.Result = new ResponseMessageResult(response);
-
-            //actionContext.Response = actionContext.Request.CreateResponse(HttpStatusCode.BadRequest, new Utilities.API.ResponseWrapper
-            //{
-            //    Error = true,
-            //    Message = Utilities.API.ResponseKeys.invalidParameters,
-            //    Data = actionContext.ModelState.Select(x => x.Value.Errors)
-            //               .Where(y => y.Count > 0)
-            //               .ToList()
-            //});
         }
     }
 }

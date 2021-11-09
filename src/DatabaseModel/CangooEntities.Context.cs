@@ -107,6 +107,7 @@ namespace DatabaseModel
         public virtual DbSet<VehicleModel> VehicleModels { get; set; }
         public virtual DbSet<WalletTransfer> WalletTransfers { get; set; }
         public virtual DbSet<Trip> Trips { get; set; }
+        public virtual DbSet<PlacesType> PlacesTypes { get; set; }
     
         public virtual int AddApplication(Nullable<System.Guid> resellerID, Nullable<System.Guid> applicationID, string ownerName, string companyName, string logo, string originalLogo, string contractFile, string originalContractFile, string authorizedArea, Nullable<double> percentagePayable, Nullable<double> percentageReceiveable, Nullable<int> subscriptionPlanID, Nullable<System.DateTime> subscriptionDate, Nullable<System.DateTime> paymentDueDate, Nullable<int> subscriptionTypeID, Nullable<int> paymentModeID, Nullable<int> paymentTypeID, Nullable<int> paymentStatusID, string paypalAccountNumber, string address, string taxNumber, string subscribedModules, string paypalEmail, string paypalNationalNumber, string paypalCountryCode, string paypalPhoneExt, Nullable<System.Guid> transactionID, Nullable<System.DateTime> dateTime, Nullable<System.Guid> debitFrom, Nullable<System.Guid> creditTo, string reference, Nullable<decimal> amount)
         {
@@ -2700,39 +2701,6 @@ namespace DatabaseModel
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spAfterMobilePayment_Result>("spAfterMobilePayment", isOverrideParameter, tripIDParameter, paypalTransIDParameter, tripStatusIDParameter, pIDParameter, resellerIDParameter, amountParameter, voucherUsedAmountParameter, promoDiscountAmountParameter, walletUsedAmountParameter, paymentTipParameter, trnsDateParameter, paymentModeIDParameter, paymentStatusIDParameter, fleetIDParameter);
         }
     
-        public virtual ObjectResult<spCaptainCancelRide_Result> spCaptainCancelRide(string tripID, string driverID, Nullable<int> tripStatusID, Nullable<int> cancelID, Nullable<bool> isWeb, Nullable<bool> isAtPickupLocation, Nullable<System.DateTime> rideCancelDateTime)
-        {
-            var tripIDParameter = tripID != null ?
-                new ObjectParameter("tripID", tripID) :
-                new ObjectParameter("tripID", typeof(string));
-    
-            var driverIDParameter = driverID != null ?
-                new ObjectParameter("driverID", driverID) :
-                new ObjectParameter("driverID", typeof(string));
-    
-            var tripStatusIDParameter = tripStatusID.HasValue ?
-                new ObjectParameter("tripStatusID", tripStatusID) :
-                new ObjectParameter("tripStatusID", typeof(int));
-    
-            var cancelIDParameter = cancelID.HasValue ?
-                new ObjectParameter("cancelID", cancelID) :
-                new ObjectParameter("cancelID", typeof(int));
-    
-            var isWebParameter = isWeb.HasValue ?
-                new ObjectParameter("isWeb", isWeb) :
-                new ObjectParameter("isWeb", typeof(bool));
-    
-            var isAtPickupLocationParameter = isAtPickupLocation.HasValue ?
-                new ObjectParameter("isAtPickupLocation", isAtPickupLocation) :
-                new ObjectParameter("isAtPickupLocation", typeof(bool));
-    
-            var rideCancelDateTimeParameter = rideCancelDateTime.HasValue ?
-                new ObjectParameter("rideCancelDateTime", rideCancelDateTime) :
-                new ObjectParameter("rideCancelDateTime", typeof(System.DateTime));
-    
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spCaptainCancelRide_Result>("spCaptainCancelRide", tripIDParameter, driverIDParameter, tripStatusIDParameter, cancelIDParameter, isWebParameter, isAtPickupLocationParameter, rideCancelDateTimeParameter);
-        }
-    
         public virtual ObjectResult<spCaptainLaterTrips_Result> spCaptainLaterTrips(Nullable<System.DateTime> currentDateTime, string captainID, Nullable<int> tripStatusID, Nullable<int> pageNumber, Nullable<int> pageSize)
         {
             var currentDateTimeParameter = currentDateTime.HasValue ?
@@ -4175,6 +4143,39 @@ namespace DatabaseModel
                 new ObjectParameter("ApplicationID", typeof(System.Guid));
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<FetchPublicHolidays_Result>("FetchPublicHolidays", displayLengthParameter, displayStartParameter, sortColParameter, sortOrderParameter, searchParameter, applicationIDParameter);
+        }
+    
+        public virtual ObjectResult<spCaptainCancelRide_Result> spCaptainCancelRide(string tripID, string driverID, Nullable<int> tripStatusID, Nullable<int> cancelID, Nullable<bool> isWeb, Nullable<bool> isAtPickupLocation, Nullable<System.DateTime> rideCancelDateTime)
+        {
+            var tripIDParameter = tripID != null ?
+                new ObjectParameter("tripID", tripID) :
+                new ObjectParameter("tripID", typeof(string));
+    
+            var driverIDParameter = driverID != null ?
+                new ObjectParameter("driverID", driverID) :
+                new ObjectParameter("driverID", typeof(string));
+    
+            var tripStatusIDParameter = tripStatusID.HasValue ?
+                new ObjectParameter("tripStatusID", tripStatusID) :
+                new ObjectParameter("tripStatusID", typeof(int));
+    
+            var cancelIDParameter = cancelID.HasValue ?
+                new ObjectParameter("cancelID", cancelID) :
+                new ObjectParameter("cancelID", typeof(int));
+    
+            var isWebParameter = isWeb.HasValue ?
+                new ObjectParameter("isWeb", isWeb) :
+                new ObjectParameter("isWeb", typeof(bool));
+    
+            var isAtPickupLocationParameter = isAtPickupLocation.HasValue ?
+                new ObjectParameter("isAtPickupLocation", isAtPickupLocation) :
+                new ObjectParameter("isAtPickupLocation", typeof(bool));
+    
+            var rideCancelDateTimeParameter = rideCancelDateTime.HasValue ?
+                new ObjectParameter("rideCancelDateTime", rideCancelDateTime) :
+                new ObjectParameter("rideCancelDateTime", typeof(System.DateTime));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spCaptainCancelRide_Result>("spCaptainCancelRide", tripIDParameter, driverIDParameter, tripStatusIDParameter, cancelIDParameter, isWebParameter, isAtPickupLocationParameter, rideCancelDateTimeParameter);
         }
     }
 }

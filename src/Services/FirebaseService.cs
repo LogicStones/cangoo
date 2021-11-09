@@ -184,7 +184,7 @@ namespace Services
                 await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.RequestSent));
 
                 //NEW IMPLEMENTATION
-                await UpdateDiscountTypeAndAmount(tripId, bookingRN.DiscountAmount ?? "0.00", bookingRN.DiscountType ?? "normal");
+                await UpdateDiscountTypeAndAmount(tripId, bookingRN.DiscountAmount, bookingRN.DiscountType);
             }
 
             #region MakePreferredAndNormalDriversList
@@ -287,7 +287,7 @@ namespace Services
 
             //NEW IMPLEMENTATION : Moved to IsReRouteRequest else part
             //await UpdateDiscountTypeAndAmount(tripId, bookingRN.DiscountAmount ?? "0.00", bookingRN.DiscountType ?? "normal");
-            await SetTripDispatchedStatus(tripId, bookingRN.IsDispatchedRide ?? false.ToString());
+            await SetTripDispatchedStatus(tripId, bookingRN.IsDispatchedRide);
 
             string applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
             var applicationSettings = await ApplicationSettingService.GetApplicationSettings(applicationId);
@@ -750,11 +750,11 @@ namespace Services
             Dictionary<string, string> dic = new Dictionary<string, string>
                 {
                     //{ "/isDispatchedRide", isDispatchedRide },
-                    { "/discount/amount", discountAmount },
-                    { "/discount/type", discountType }
+                    { "amount", discountAmount },
+                    { "type", discountType }
                 };
 
-                await FirebaseIntegration.Write("Trips/" + tripId + "/", dic);
+            await FirebaseIntegration.Write("Trips/" + tripId + "/discount/", dic);
         }
 
         public static async Task<string> GetTripDispatchedStatus(string tripId)

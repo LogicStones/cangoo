@@ -83,7 +83,6 @@ namespace Services
 
         public static async Task<BookTripResponse> BookNewTrip(BookTripRequest model)
         {
-
             //TBD : Save Passenger and Driver Device info etc from filter
 
             using (CangooEntities dbContext = new CangooEntities())
@@ -223,8 +222,8 @@ namespace Services
                     tp.isFareChangePermissionGranted = false;
                     tp.isOverRided = false;
                     tp.BookingDateTime = DateTime.UtcNow;
-                    tp.TripPaymentMode = model.SelectedPaymentMethod;
-                    tp.PaymentModeId = int.Parse(model.SelectedPaymentMethodId);
+                    tp.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.PaymentModeId));// model.SelectedPaymentMethod;
+                    tp.PaymentModeId = int.Parse(model.PaymentModeId);
                     tp.isLaterBooking = bool.Parse(model.IsLaterBooking);
                     tp.NoOfPerson = int.Parse(model.SeatingCapacity);
                     tp.BookingTypeID = (int)BookingTypes.Normal;
@@ -317,12 +316,14 @@ namespace Services
 
                     bookingRN.DiscountType = specialPromoDetails.DiscountType;
                     bookingRN.DiscountAmount = specialPromoDetails.DiscountAmount;
+                    bookingRN.PromoCodeId = specialPromoDetails.PromoCodeId;
                 }
                 else
                 {
                     // in case of normal booking discount is applied only if dropoff location is provided (which hits estimated fare api)
                     bookingRN.DiscountType = model.DiscountType;
-                    bookingRN.DiscountAmount = model.PromoDiscountAmount;
+                    bookingRN.DiscountAmount = model.DiscountAmount;
+                    bookingRN.PromoCodeId = model.PromoCodeId;
                     //bookingRN.DiscountType = string.IsNullOrEmpty(model.DiscountType) ? "normal" : model.DiscountType;
                     //bookingRN.DiscountAmount = string.IsNullOrEmpty(model.PromoDiscountAmount) ? "0.00" : model.PromoDiscountAmount;
                 }
@@ -368,6 +369,7 @@ namespace Services
                 //    return Request.CreateResponse(HttpStatusCode.OK, response);
 
             }
+
         }
 
         public static async Task<string> TimeOutTrip(string tripId, string passengerId)

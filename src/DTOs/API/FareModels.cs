@@ -77,6 +77,16 @@ namespace DTOs.API
         public CourierFareEstimate Courier { get; set; }
         public List<FacilitiyDTO> Facilities { get; set; }
         public List<VehicleCategoryFareEstimate> Categories { get; set; }
+        public string DiscountType { get; set; } = "normal";
+        public string DiscountAmount { get; set; } = "0.00";
+        public string PromoCodeId { get; set; } = "";
+    }
+
+    public class DiscountTypeDTO
+    {
+        public string DiscountType { get; set; } = "normal";
+        public string DiscountAmount { get; set; } = "0.00";
+        public string PromoCodeId { get; set; } = "";
     }
 
     public class CourierFareEstimate
@@ -131,16 +141,5 @@ namespace DTOs.API
     {
         public decimal DistanceFare { get; set; } = 0;
         public decimal TimeFare { get; set; } = 0;
-    }
-
-    public class DiscountTypeDTO
-    {
-        public string DiscountType { get; set; } = "normal";
-        public string DiscountAmount { get; set; } = "0.00";
-    }
-
-    public class SpecialPromotionDTO : DiscountTypeDTO
-    {
-        public string PromotionId { get; set; }
     }
 }
