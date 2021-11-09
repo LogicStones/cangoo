@@ -38,11 +38,11 @@ namespace Services
             }
         }
 
-        public static async Task<List<TrustedContactDetails>> GetTrustedContact(string passengerId)
+        public static async Task<List<GetTrustedContact>> GetTrustedContact(string passengerId)
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<TrustedContactDetails>("SELECT FirstName,CountryCode,MobileNo,Email FROM TrustedContacts WHERE PassengerId = @passengerId", 
+                var query = dbContext.Database.SqlQuery<GetTrustedContact>("SELECT Id,FirstName,CountryCode,MobileNo,Email FROM TrustedContacts WHERE PassengerId = @passengerId", 
                                                                                                                                                         new SqlParameter("@passengerId", passengerId));
                 return await query.ToListAsync();
             }

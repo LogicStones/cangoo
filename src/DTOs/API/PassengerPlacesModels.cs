@@ -15,14 +15,36 @@ namespace DTOs.API
 
     public class GetPassengerPlacesResponse
     {
-        public List<PlaceDetails> Places { get; set; } = new List<PlaceDetails>();
+        public List<GetPassengerPlaces> Places { get; set; } = new List<GetPassengerPlaces>();
+    }
+
+    public class GetPassengerPlaces
+    {
+        public int ID { get; set; }
+        [Required]
+        public int PlaceTypeId { get; set; }
+
+        [Required]
+        public string Name { get; set; } = "";
+
+        [Required]
+        public string Address { get; set; } = "";
+
+        [Required]
+        public string Latitude { get; set; } = "";
+
+        [Required]
+        public string Longitutde { get; set; } = "";
+
+        [Required]
+        public string PostalCode { get; set; } = "";
     }
 
 
     public class PlaceDetails
     {
         [Required]
-        public int PlaceTypeId { get; set; } 
+        public int PlacesTypesID { get; set; } 
 
         [Required]
         public string Name { get; set; } = "";
@@ -49,7 +71,7 @@ namespace DTOs.API
 
     public class AddPassengerPlaceResponse : PlaceDetails
     {
-        public string ID { get; set; }
+        public int ID { get; set; }
     }
 
     public class UpdatePassengerPlaceRequest : PlaceDetails
@@ -69,8 +91,14 @@ namespace DTOs.API
         public string DropOffLatitude { get; set; } = "";
         public string DropOffLongitude { get; set; } = "";
         public string DropOffLocation { get; set; } = "";
-        public string PickupLocationPostalCode { get; set; } = "";
         public string DropOffLocationPostalCode { get; set; } = "";
+        public string PickupLocationLatitude { get; set; } = "";
+        public string PickupLocationLongitude { get; set; } = "";
+        public string PickUpLocation { get; set; } = "";
+        public string PickupLocationPostalCode { get; set; } = "";
+        public string MidwayStop1Latitude { get; set; } = "";
+        public string MidwayStop1Longitude { get; set; } = "";
+        public string MidwayStop1Location { get; set; } = "";
         public string MidwayStop1PostalCode { get; set; } = "";
     }
 }

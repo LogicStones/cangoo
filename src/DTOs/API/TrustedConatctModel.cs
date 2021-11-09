@@ -34,8 +34,22 @@ namespace DTOs.API
         
     }
 
+    public class GetTrustedContact
+    {
+        [Required]
+        public int Id { get; set; }
+        [Required]
+        public string FirstName { get; set; }
+        [Required]
+        public string CountryCode { get; set; }
+        [Required]
+        public string MobileNo { get; set; }
+        [Required]
+        public string Email { get; set; }
+    }
+
     public class GetTrustedContactResponse
     {
-        public List<TrustedContactDetails> Contact { get; set; } = new List<TrustedContactDetails>();
+        public List<GetTrustedContact> Contact { get; set; } = new List<GetTrustedContact>();
     }
 }

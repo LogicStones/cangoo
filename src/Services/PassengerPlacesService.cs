@@ -19,20 +19,22 @@ namespace Services
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<GetRecentLocationDetails>("SELECT TOP(5) DropOffLocationLatitude,DropOffLocationLongitude," +
-                    "DropOffLocation,PickupLocationPostalCode, DropOffLocationPostalCode, " +
-                    "MidwayStop1PostalCode FROM Trips WHERE UserID=@passengerId AND TripStatusID = @tripStatus ORDER BY ArrivalDateTime DESC",
+                var query = dbContext.Database.SqlQuery<GetRecentLocationDetails>("SELECT TOP(5) DropOffLocationLatitude,DropOffLocationLongitude,DropOffLocation,DropOffLocationPostalCode," +
+                    "PickupLocationLatitude,PickupLocationLongitude,PickUpLocation,PickupLocationPostalCode, " +
+                    "MidwayStop1Latitude,MidwayStop1Longitude, MidwayStop1Location, MidwayStop1PostalCode " +
+                    "FROM Trips WHERE UserID=@passengerId AND TripStatusID = @tripStatus ORDER BY ArrivalDateTime DESC",
                                                                                                                     new SqlParameter("@passengerId", passengerId),
                                                                                                                     new SqlParameter("@tripStatus", TripStatuses.Completed));
                 return await query.ToListAsync();
             }
         }
 
-        public static async Task<List<PlaceDetails>> GetPassengerPlaces(string passengerId)
+        public static async Task<List<GetPassengerPlaces>> GetPassengerPlaces(string passengerId)
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<PlaceDetails>("SELECT [PlacesTypesID],[Name],[Address],[Latitude],[Longitutde],[PostalCode] FROM [PassengerPlaces] WHERE [PassengerId] = @passengerId", new SqlParameter("@passengerId", passengerId));
+                var query = dbContext.Database.SqlQuery<GetPassengerPlaces>("SELECT [ID],[PlacesTypesID],[Name],[Address],[Latitude],[Longitutde],[PostalCode] FROM [PassengerPlaces] WHERE [PassengerId] = @passengerId", 
+                                                                                                                    new SqlParameter("@passengerId", passengerId));
                 return await query.ToListAsync();
             }
         }
@@ -43,7 +45,7 @@ namespace Services
             {
               return  await dbContext.Database.ExecuteSqlCommandAsync("UPDATE PassengerPlaces SET PlacesTypesID = @typeId, Name =@name, Address = @address, Latitude = @latitude, Longitutde = @longitude, PostalCode = @postalCode WHERE ID = @Id",
                                                                                     new SqlParameter("@address", model.Address),
-                                                                                    new SqlParameter("@typeId", model.PlaceTypeId),
+                                                                                    new SqlParameter("@typeId", model.PlacesTypesID),
                                                                                     new SqlParameter("@longitude", model.Longitutde),
                                                                                     new SqlParameter("@latitude", model.Latitude),
                                                                                     new SqlParameter("@name", model.Name),

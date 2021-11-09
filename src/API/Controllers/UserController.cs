@@ -491,42 +491,58 @@ namespace API.Controllers
         [Route("add-place")]
         public async Task<HttpResponseMessage> AddPlace(AddPassengerPlaceRequest model)
         {
-            var result = await PassengerPlacesService.AddPlace(model);
-            if (result > 0)
+            if (model.PlacesTypesID > 0)
             {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                var result = await PassengerPlacesService.AddPlace(model);
+                if (result > 0)
                 {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess
-                });
+                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                    {
+                        Error = false,
+                        Message = ResponseKeys.msgSuccess
+                    });
+                }
+                else
+                {
+                    return Request.CreateResponse(HttpStatusCode.Forbidden, new ResponseWrapper { Message = ResponseKeys.failedToAdd });
+                }
             }
             else
             {
-                return Request.CreateResponse(HttpStatusCode.Forbidden, new ResponseWrapper { Message = ResponseKeys.failedToAdd });
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
             }
+            
         }
 
         [HttpPost]
         [Route("update-place")]
         public async Task<HttpResponseMessage> UpdatePlace(UpdatePassengerPlaceRequest model)
         {
-            var result = await PassengerPlacesService.UpdatePassengerPlaces(model);
-
-            if (result == 0)
+            if (model.PlacesTypesID > 0)
             {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                var result = await PassengerPlacesService.UpdatePassengerPlaces(model);
+
+                if (result == 0)
                 {
-                    Message = ResponseKeys.failedToUpdate
-                });
+                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                    {
+                        Message = ResponseKeys.failedToUpdate
+                    });
+                }
+                else
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                    {
+                        Error = false,
+                        Message = ResponseKeys.msgSuccess
+                    });
+                }
             }
             else
             {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess
-                });
+                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
             }
+
         }
 
         [HttpGet]
@@ -1645,7 +1661,7 @@ namespace API.Controllers
             return Request.CreateResponse(HttpStatusCode.OK);
         }
 
-        #endregion
+        #endregion  
 
         #region Invite Code
 
