@@ -20,9 +20,9 @@ namespace DTOs.API
 
     public class GetPassengerPlaces
     {
-        public int ID { get; set; }
+        public string ID { get; set; } = "";
         [Required]
-        public int PlaceTypeId { get; set; }
+        public string PlaceTypeId { get; set; } = "";
 
         [Required]
         public string Name { get; set; } = "";
@@ -44,7 +44,7 @@ namespace DTOs.API
     public class PlaceDetails
     {
         [Required]
-        public int PlacesTypesID { get; set; } 
+        public string PlacesTypesID { get; set; } = "";
 
         [Required]
         public string Name { get; set; } = "";
@@ -66,18 +66,18 @@ namespace DTOs.API
     public class AddPassengerPlaceRequest : PlaceDetails
     {
         [Required]
-        public string PassengerId { get; set; }
+        public string PassengerId { get; set; } = "";
     }
 
     public class AddPassengerPlaceResponse : PlaceDetails
     {
-        public int ID { get; set; }
+        public string ID { get; set; } = "";
     }
 
     public class UpdatePassengerPlaceRequest : PlaceDetails
     {
         [Required]
-        public int ID { get; set; }
+        public string ID { get; set; } = "";
     }
 
 

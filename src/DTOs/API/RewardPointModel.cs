@@ -8,13 +8,13 @@ namespace DTOs.API
 {
     public class RewardDetails
     {
-        public int RewardId { get; set; }
-        public int Deduction { get; set; }
-        public int RedeemAmount { get; set; }
-        public DateTime StartDate { get; set; }
+        public string RewardId { get; set; }
+        public string Deduction { get; set; }
+        public string RedeemAmount { get; set; }
+        public string StartDate { get; set; }
         public bool IsActive { get; set; }
         public string Description { get; set; }
-        public DateTime ExpiryDate { get; set; }
+        public string ExpiryDate { get; set; }
     }
 
     public class RewardPointResponse
@@ -25,12 +25,18 @@ namespace DTOs.API
     public class PassengerReedemRewardRequsest
     {
         public string PassengerId { get; set; }
-        public int RewardId { get; set; }
+        public string Deduction { get; set; }
+        public string RedeemAmount { get; set; }
     }
 
     public class PassengerReedemRewardResponse
     {
-        public int RewardPoint { get; set; }
-        public decimal WalletAmount { get; set; }
+        public string RewardPoint { get; set; }
+        public string WalletAmount { get; set; }
+    }
+
+    public class PassengerEarnedRewardRespose
+    {
+        public string RewardPoint { get; set; }
     }
 }

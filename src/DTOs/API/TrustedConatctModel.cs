@@ -10,7 +10,7 @@ namespace DTOs.API
     public class UpdateTrustedContactRequest : TrustedContactDetails
     {
         [Required]
-        public Guid PassengerId { get; set; }
+        public string PassengerId { get; set; }
     }
 
     public class UpdateTrustedContactResponse

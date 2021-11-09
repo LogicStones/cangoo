@@ -33,7 +33,8 @@ namespace Services
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<GetPassengerPlaces>("SELECT [ID],[PlacesTypesID],[Name],[Address],[Latitude],[Longitutde],[PostalCode] FROM [PassengerPlaces] WHERE [PassengerId] = @passengerId", 
+                var query = dbContext.Database.SqlQuery<GetPassengerPlaces>("SELECT CAST(ID as VARCHAR(36)) ID,CAST(PlacesTypesID as VARCHAR(36)) PlaceTypeId,Name," +
+                                                                            "Address,Latitude,Longitutde,PostalCode FROM PassengerPlaces WHERE PassengerId = @passengerId", 
                                                                                                                     new SqlParameter("@passengerId", passengerId));
                 return await query.ToListAsync();
             }

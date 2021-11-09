@@ -16,7 +16,7 @@ namespace DTOs.API
     public class LanguagesDetail
     {
         [Required]
-        public int Id { get; set; }
+        public string Id { get; set; }
         [Required]
         public string Language { get; set; }
         [Required]
@@ -28,7 +28,7 @@ namespace DTOs.API
     public class UpdateLanguageRequest
     {
         [Required]
-        public int Id { get; set; }
+        public string Id { get; set; }
         [Required]
         public string PassengerId { get; set; }
     }

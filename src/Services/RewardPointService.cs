@@ -16,48 +16,58 @@ namespace Services
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<RewardDetails>("SELECT RewardID,Deduction,RedeemAmount,Description,StartDate,ExpiryDate,IsActive FROM RewardPointsManager WHERE IsActive= @active",
-                                                                                                                                        new SqlParameter("@active", true));
+                var query = dbContext.Database.SqlQuery<RewardDetails>("SELECT CAST(RewardID as VARCHAR(36)) RewardId,CAST(Deduction as VARCHAR(36))Deduction," +
+                                                                        "CAST(RedeemAmount as VARCHAR(36))RedeemAmount,Description,CAST(StartDate as VARCHAR(36))StartDate," +
+                                                                        "CAST(ExpiryDate as VARCHAR(36))ExpiryDate,IsActive FROM RewardPointsManager WHERE IsActive= @active",
+                                                                                                  new SqlParameter("@active", 1));
                 return await query.ToListAsync();
             }
         }
 
-        public static async Task<int> ReedemPassengerPoints(PassengerReedemRewardRequsest model)
+        public static async Task<PassengerEarnedRewardRespose> GetPassengerRewardPoint(string passengerId)
+        {
+            using (CangooEntities dbcontext=new CangooEntities())
+            {
+                var result = dbcontext.UserProfiles.Where(x => x.UserID == passengerId).FirstOrDefault();
+                return new PassengerEarnedRewardRespose
+                {
+                    RewardPoint = result.RewardPoints.ToString()
+                };
+            }
+        }
+
+        public static async Task<PassengerReedemRewardResponse> ReedemPassengerPoints(PassengerReedemRewardRequsest model)
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
                 var user = GetUser(model.PassengerId);
                 if (user != null)
                 {
-                    var Points = GetRewardPoints(model.RewardId);
                     var ApplicationId = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString());
                     var ResellerId = Guid.Parse(ConfigurationManager.AppSettings["ResellerID"].ToString());
                     dbContext.WalletTransfers.Add(new WalletTransfer
                     {
-                        Amount = (decimal)Points.RedeemAmount,
+                        Amount = int.Parse(model.RedeemAmount),
                         RechargeDate = DateTime.UtcNow,
                         WalletTransferID = Guid.NewGuid(),
-                        Referrence = Points.Deduction + " Reward points redeemed",
+                        Referrence = model.Deduction + " Reward points redeemed",
                         TransferredBy = ApplicationId,
                         TransferredTo = Guid.Parse(model.PassengerId),
                         ApplicationID = ApplicationId,
                         ResellerID = ResellerId
                     });
-                    user.RewardPoints -= Points.Deduction;
-                    user.WalletBalance += Points.RedeemAmount;
+                    user.RewardPoints -= int.Parse(model.Deduction);
+                    user.WalletBalance += decimal.Parse(model.RedeemAmount);
                     user.LastRechargedAt = DateTime.UtcNow;
+                    await dbContext.SaveChangesAsync();
                 }
-                return await dbContext.SaveChangesAsync();
+                return new PassengerReedemRewardResponse
+                {
+                    RewardPoint = user.RewardPoints.ToString(),
+                    WalletAmount = user.WalletBalance.ToString()
+                };
             }
         }
-
-        //public static async Task<int> GetPassengerPoints(string passengerId)
-        //{
-        //    using (CangooEntities dbContext = new CangooEntities())
-        //    {
-        //        var user = GetUser(passengerId);
-        //    }
-        //}
 
         public static UserProfile GetUser(string passengerId)
         {
@@ -67,12 +77,5 @@ namespace Services
             }
         }
 
-        public static RewardPointsManager GetRewardPoints(int rewardId)
-        {
-            using (CangooEntities dbContext = new CangooEntities())
-            {
-                return dbContext.RewardPointsManagers.Where(u => u.RewardID == rewardId).FirstOrDefault();
-            }
-        }
     }
 }

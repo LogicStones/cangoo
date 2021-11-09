@@ -484,66 +484,51 @@ namespace API.Controllers
         }
 
         #endregion
-        
+
         #region Places
 
         [HttpPost]
         [Route("add-place")]
         public async Task<HttpResponseMessage> AddPlace(AddPassengerPlaceRequest model)
         {
-            if (model.PlacesTypesID > 0)
+            var result = await PassengerPlacesService.AddPlace(model);
+            if (result > 0)
             {
-                var result = await PassengerPlacesService.AddPlace(model);
-                if (result > 0)
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
                 {
-                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                    {
-                        Error = false,
-                        Message = ResponseKeys.msgSuccess
-                    });
-                }
-                else
-                {
-                    return Request.CreateResponse(HttpStatusCode.Forbidden, new ResponseWrapper { Message = ResponseKeys.failedToAdd });
-                }
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess
+                });
             }
             else
             {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
+                return Request.CreateResponse(HttpStatusCode.Forbidden, new ResponseWrapper { Message = ResponseKeys.failedToAdd });
             }
-            
         }
 
         [HttpPost]
         [Route("update-place")]
         public async Task<HttpResponseMessage> UpdatePlace(UpdatePassengerPlaceRequest model)
         {
-            if (model.PlacesTypesID > 0)
-            {
-                var result = await PassengerPlacesService.UpdatePassengerPlaces(model);
+            var result = await PassengerPlacesService.UpdatePassengerPlaces(model);
 
-                if (result == 0)
+            if (result == 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
                 {
-                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                    {
-                        Message = ResponseKeys.failedToUpdate
-                    });
-                }
-                else
-                {
-                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                    {
-                        Error = false,
-                        Message = ResponseKeys.msgSuccess
-                    });
-                }
+                    Message = ResponseKeys.failedToUpdate
+                });
             }
             else
             {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess
+                });
             }
-
         }
+
 
         [HttpGet]
         [Route("get-places")]
@@ -712,37 +697,16 @@ namespace API.Controllers
         [Route("passenger-earned-reward-points")]
         public async Task<HttpResponseMessage> PassengerEarnedRewardPoints(string passengerId)
         {
-            //var result = await RewardPointService.GetPassengerPoints(passengerId);
-            return Request.CreateResponse(HttpStatusCode.OK);
-            //if (!string.IsNullOrEmpty(pID))
-            //{
-            //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //    {
-            //        var user = context.UserProfiles.Where(u => u.UserID == pID).FirstOrDefault();
-
-            //        if (user == null)
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.userNotFound;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-
-            //        dic = new Dictionary<dynamic, dynamic>
-            //                    {
-            //                        { "rewardPoints", user.RewardPoints }
-            //                    };
-            //        response.error = false;
-            //        response.message = AppMessage.msgSuccess;
-            //        response.data = dic;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
-            //}
-            //else
-            //{
-            //    response.error = true;
-            //    response.message = AppMessage.invalidParameters;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
+            var result = await RewardPointService.GetPassengerRewardPoint(passengerId);
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new PassengerEarnedRewardRespose
+                {
+                    RewardPoint = result.RewardPoint
+                }
+            });
         }
 
         [HttpPost]
@@ -750,26 +714,16 @@ namespace API.Controllers
         public async Task<HttpResponseMessage> RedeemRewardPoints([FromBody] PassengerReedemRewardRequsest model)
         {
             var result = await RewardPointService.ReedemPassengerPoints(model);
-            if (result == 0)
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new PassengerReedemRewardResponse
                 {
-                    Message = ResponseKeys.failedToUpdate
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                    //Data = new PassengerReedemRewardResponse
-                    //{
-                    //    RewardPoint = model.,
-                    //    WalletAmount = model.CountryCode,
-                    //}
-                });
-            }
+                    RewardPoint = result.RewardPoint,
+                    WalletAmount = result.WalletAmount
+                }
+            });
         }
 
         [HttpGet]

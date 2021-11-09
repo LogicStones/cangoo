@@ -18,7 +18,8 @@ namespace Services
             {
                 var ApplicationID = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString());
                 var ResellerID = Guid.Parse(ConfigurationManager.AppSettings["ResellerID"].ToString());
-                var query = dbContext.Database.SqlQuery<LanguagesDetail>("SELECT [Id],[Language],[ShortName] FROM [dbo].[Languages] WHERE ApplicationId=@applicationId AND ResellerId = @resellerId",
+                var query = dbContext.Database.SqlQuery<LanguagesDetail>("SELECT CAST(Id as VARCHAR(36)) Id,Language,ShortName,Format " +
+                                                                         "FROM Languages WHERE ApplicationId=@applicationId AND ResellerId = @resellerId",
                                                                                                                     new SqlParameter("@applicationId", ApplicationID),
                                                                                                                     new SqlParameter("@resellerId", ResellerID));
                 return await query.ToListAsync();
@@ -29,7 +30,7 @@ namespace Services
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                return await dbContext.Database.ExecuteSqlCommandAsync("UPDATE [dbo].[UserProfile] SET [LanguageID] = @Id WHERE [UserID] = @passengerId",
+                return await dbContext.Database.ExecuteSqlCommandAsync("UPDATE UserProfile SET LanguageID = @Id WHERE UserID = @passengerId",
                                                                                       new SqlParameter("@Id", model.Id),
                                                                                       new SqlParameter("@passengerId", model.PassengerId));
             }

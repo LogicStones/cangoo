@@ -42,13 +42,13 @@ namespace Services
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<GetTrustedContact>("SELECT Id,FirstName,CountryCode,MobileNo,Email FROM TrustedContacts WHERE PassengerId = @passengerId", 
+                var query = dbContext.Database.SqlQuery<GetTrustedContact>("SELECT CAST(Id as VARCHAR(36))Id,FirstName,CountryCode,MobileNo,Email FROM TrustedContacts WHERE PassengerId = @passengerId", 
                                                                                                                                                         new SqlParameter("@passengerId", passengerId));
                 return await query.ToListAsync();
             }
         }
 
-        public static bool IsContactExist(Guid passengerId)
+        public static bool IsContactExist(string passengerId)
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
