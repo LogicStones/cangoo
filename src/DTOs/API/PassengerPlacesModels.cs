@@ -13,11 +13,6 @@ namespace DTOs.API
         public string PassengerID { get; set; }
     }
 
-    public class GetPassengerPlacesResponse
-    {
-        public List<GetPassengerPlaces> Places { get; set; } = new List<GetPassengerPlaces>();
-    }
-
     public class GetPassengerPlaces
     {
         public string ID { get; set; } = "";
@@ -78,12 +73,6 @@ namespace DTOs.API
     {
         [Required]
         public string ID { get; set; } = "";
-    }
-
-
-    public class GetRecentLocationResponse
-    {
-        public List<GetRecentLocationDetails> Locations { get; set; } = new List<GetRecentLocationDetails>();
     }
 
     public class GetRecentLocationDetails

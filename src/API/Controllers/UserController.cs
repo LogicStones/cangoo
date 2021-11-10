@@ -540,14 +540,12 @@ namespace API.Controllers
         [Route("get-places")]
         public async Task<HttpResponseMessage> GetPlaces(string passengerId)
         {
+            var lstPlaces = PassengerPlacesService.GetPassengerPlaces(passengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
-                Data = new GetPassengerPlacesResponse
-                {
-                    Places = await PassengerPlacesService.GetPassengerPlaces(passengerId)
-                }
+                Data = lstPlaces
             });
         }
 
@@ -819,23 +817,60 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-trip-payment-method")]
-        public async Task<HttpResponseMessage> UpdateTripPaymentMethod(string tripId)
+        public async Task<HttpResponseMessage> UpdateTripPaymentMethod(UpdateTripPaymentMethod model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var result = await TripsManagerService.UpdateTripPaymentMode(model);
+
+            if (result == 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper
+                {
+                    Message = ResponseKeys.failedToUpdate
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess
+                });
+            }
         }
 
         [HttpPost]
         [Route("update-trip-promo-code")]
-        public async Task<HttpResponseMessage> UpdateTripPromoCode(string tripId)
+        public async Task<HttpResponseMessage> UpdateTripPromoCode(UpdateTripPromoCode model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var result = await TripsManagerService.UpdateTripPromo(model);
+
+            if (result == 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper
+                {
+                    Message = ResponseKeys.failedToUpdate
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess
+                });
+            }
         }
 
         [HttpPost]
         [Route("update-trip-tip-amount")]
-        public async Task<HttpResponseMessage> UpdateTripTipAmount(string tripId)
+        public async Task<HttpResponseMessage> UpdateTripTipAmount(UpdateTripTipAmount model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            await FirebaseService.SetTipAmount(model.TripId, model.TipAmount);
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess
+            });
         }
 
         #endregion
@@ -846,115 +881,9 @@ namespace API.Controllers
         [Route("add-promo-code")]
         public async Task<HttpResponseMessage> AddPromoCode([FromBody] string model)
         {
+            await PromoCodeService.AddUserPromoCode();
             return Request.CreateResponse(HttpStatusCode.OK);
-            //if (!string.IsNullOrEmpty(model.passengerID) && !string.IsNullOrEmpty(model.promoCode))
-            //{
-            //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //    {
-            //        if (model.addPromo.ToString().ToLower().Equals("true"))
-            //        {
-            //            var promo = context.PromoManagers.Where(p => p.PromoCode.ToLower().Equals(model.promoCode.ToLower())
-            //            && p.ApplicationID.ToString().ToLower().Equals(this.ApplicationID.ToLower())
-            //            && p.ResellerID.ToString().ToLower().Equals(this.ResellerID.ToLower())
-            //            ).FirstOrDefault();
-
-            //            if (promo != null)
-            //            {
-            //                if (DateTime.Compare(DateTime.Parse(((DateTime)promo.ExpiryDate).ToString(Common.dateFormat)), DateTime.Parse(Common.getUtcDateTime().ToString(Common.dateFormat))) <= 0)
-            //                {
-            //                    response.error = false;
-            //                    response.message = AppMessage.promoExpired;
-            //                    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //                }
-            //                else
-            //                {
-
-            //                    dic = new Dictionary<dynamic, dynamic>()
-            //                    {
-            //                        { "promoCodeAmount",string.Format("{0:0.00}", promo.Amount)},
-            //                        { "promoCodeType",(bool)promo.isFixed ? "Fixed" : "Percentage"},
-            //                        { "promoCode",model.promoCode},
-            //                        { "expiryDateTime", ((DateTime)promo.ExpiryDate).ToString(Common.dateFormat)},
-            //                    };
-
-            //                    var userPromos = context.UserPromos.Where(up => up.UserID.ToLower().Equals(model.passengerID.ToLower())).ToList();
-
-            //                    //Ideally this case should never happen, whenever a promo code is removed it is marked as isActive false.
-            //                    var activePromo = userPromos.Where(up => up.isActive == true).FirstOrDefault();
-            //                    if (activePromo != null)
-            //                        activePromo.isActive = false;
-
-            //                    //In case promo was applied then removed, and now applying again before expiry
-            //                    var alreadyApplied = userPromos.Where(up => up.PromoID == promo.PromoID).FirstOrDefault();
-
-            //                    if (alreadyApplied != null)
-            //                    {
-            //                        if (alreadyApplied.NoOfUsage < promo.Repetition)
-            //                        {
-            //                            dic.Add("promoCodeAllowedRepititions", promo.Repetition);
-            //                            dic.Add("promoCodeNoOfUsage", alreadyApplied.NoOfUsage);
-            //                            alreadyApplied.isActive = true;
-            //                        }
-            //                        else
-            //                        {
-            //                            response.error = true;
-            //                            response.message = AppMessage.promoLimitExceeded;
-            //                            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //                        }
-            //                    }
-            //                    else
-            //                    {
-            //                        var newPromo = new UserPromo
-            //                        {
-            //                            ID = Guid.NewGuid(),
-            //                            isActive = true,
-            //                            UserID = model.passengerID,
-            //                            PromoID = promo.PromoID,
-            //                            ApplicationID = Guid.Parse(this.ApplicationID),
-            //                            NoOfUsage = 0
-            //                        };
-
-            //                        context.UserPromos.Add(newPromo);
-
-            //                        dic.Add("promoCodeAllowedRepititions", promo.Repetition);
-            //                        dic.Add("promoCodeNoOfUsage", 0);
-            //                    }
-
-            //                    context.SaveChanges();
-
-            //                    response.data = dic;
-            //                    response.error = false;
-            //                    response.message = AppMessage.promoCodeApplied;
-            //                    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //                }
-            //            }
-            //            else
-            //            {
-            //                response.error = true;
-            //                response.message = AppMessage.invalidPromo;
-            //                return Request.CreateResponse(HttpStatusCode.OK, response);
-            //            }
-            //        }
-            //        else
-            //        {
-            //            context.UserPromos.Where(up => up.UserID.ToLower().Equals(model.passengerID.ToLower())
-            //            && up.ApplicationID.ToString().ToLower().Equals(this.ApplicationID.ToLower())
-            //            && up.isActive == true).FirstOrDefault().isActive = false;
-
-            //            context.SaveChanges();
-
-            //            response.error = false;
-            //            response.message = AppMessage.promoCodeRemoved;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    response.error = true;
-            //    response.message = AppMessage.invalidParameters;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
+            
         }
 
         [HttpGet]
@@ -966,10 +895,7 @@ namespace API.Controllers
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
-                Data = new GetPromoCodeRespose
-                {
-                    Codes = lstPromoCodes
-                }
+                Data = lstPromoCodes
             });
 
         }
@@ -1525,93 +1451,15 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("notifications-list")]
-        public async Task<HttpResponseMessage> GetNotificationsList([FromBody] string model)
+        public async Task<HttpResponseMessage> GetNotificationsList(string ReceiverId)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
-            //if (!string.IsNullOrEmpty(model.passengerID) && !string.IsNullOrEmpty(model.inviteCode))
-            //{
-            //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //    {
-            //        var result = context.Captains.Where(cap => cap.ShareCode.ToLower().Equals(model.inviteCode.ToLower())
-            //        && cap.ApplicationID.ToString().ToLower().Equals(this.ApplicationID)
-            //        && cap.ResellerID.ToString().ToLower().Equals(this.ResellerID)
-            //        ).FirstOrDefault();
-
-            //        if (result == null)
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.invalidInviteCode;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-
-            //        if (context.Trips.Where(t => t.UserID.ToString().Equals(model.passengerID)
-            //        && t.ApplicationID.ToString().ToLower().Equals(this.ApplicationID)
-            //        && t.ResellerID.ToString().ToLower().Equals(this.ResellerID)
-            //        ).Count() > 0)
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.inviteCodeNotApplicable;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-
-            //        if (context.UserInvites.Where(ui => ui.UserID.ToString().Equals(model.passengerID)
-            //        && ui.ApplicationID.ToString().ToLower().Equals(this.ApplicationID)).Count() > 0)
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.inviteCodeAlreadyApplied;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-
-            //        UserInvite aui = new UserInvite()
-            //        {
-            //            UserInvitesID = Guid.NewGuid(),
-            //            UserID = Guid.Parse(model.passengerID),
-            //            CaptainID = result.CaptainID,
-            //            DateTime = Common.getUtcDateTime(),
-            //            ApplicationID = Guid.Parse(this.ApplicationID)
-            //        };
-
-            //        //Max earningPoints can be 300 only
-            //        result.EarningPoints = result.EarningPoints == null ? 50 : result.EarningPoints + 50 <= 300 ? result.EarningPoints + 50 : 300;
-
-            //        //WalletTransfer wallet = new WalletTransfer
-            //        //{
-            //        //	Amount = 10,
-            //        //	RechargeDate = DateTime.UtcNow,
-            //        //	WalletTransferID = Guid.NewGuid(),
-            //        //	Referrence = "Reward: Captain invite code applied.",
-            //        //	TransferredBy = Guid.Parse(this.ApplicationID),
-            //        //	TransferredTo = Guid.Parse(model.passengerID),
-            //        //	ApplicationID = Guid.Parse(this.ApplicationID),
-            //        //	ResellerID = Guid.Parse(this.ResellerID)
-            //        //};
-
-            //        //var profile = context.UserProfiles.Where(up => up.UserID.ToString().Equals(model.passengerID)).FirstOrDefault();
-            //        //if (profile != null)
-            //        //{
-            //        //	profile.LastRechargedAt = DateTime.UtcNow;
-            //        //	profile.WalletBalance = 10;
-            //        //}
-
-            //        context.UserInvites.Add(aui);
-            //        //context.WalletTransfers.Add(wallet);
-
-            //        context.SaveChanges();
-
-            //        FireBaseController fc = new FireBaseController();
-            //        fc.updateDriverEarnedPoints(result.CaptainID.ToString(), result.EarningPoints.ToString());
-
-            //        response.error = false;
-            //        response.message = AppMessage.msgSuccess;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
-            //}
-            //else
-            //{
-            //    response.error = true;
-            //    response.message = AppMessage.invalidParameters;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
+            var lstNotifications = await NotificationServices.GetNotifications(ReceiverId);
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = lstNotifications
+            });
         }
 
         [HttpPost]
@@ -1731,10 +1579,7 @@ namespace API.Controllers
                 {
                     Error = false,
                     Message = ResponseKeys.msgSuccess,
-                    Data = new GetRecentLocationResponse
-                    {
-                        Locations = lstLocation
-                    }
+                    Data = lstLocation
                 });
             }
             else
@@ -1810,9 +1655,25 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("submit-feedback")]
-        public async Task<HttpResponseMessage> SubmitFeedback(string tripId)
+        public async Task<HttpResponseMessage> SubmitFeedback(UpdateTripUserFeedback model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var result = await TripsManagerService.UserSubmitFeedback(model);
+
+            if (result == 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper
+                {
+                    Message = ResponseKeys.failedToUpdate
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                });
+            }
         }
 
         #endregion

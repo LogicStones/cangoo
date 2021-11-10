@@ -48,6 +48,7 @@
     <Compile Include="API\FareModels.cs" />
     <Compile Include="API\FirebaseModels.cs" />
     <Compile Include="API\LanguagesModel.cs" />
+    <Compile Include="API\NotificationModel.cs" />
     <Compile Include="API\PassengerPlacesModels.cs" />
     <Compile Include="API\FavoriteModels.cs" />
     <Compile Include="API\PromoCodeModel.cs" />

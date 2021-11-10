@@ -278,4 +278,40 @@ namespace DTOs.API
         public string TripId { get; set; } = "";
         public string IsLaterBooking { get; set; } = "";
     }
+
+    public class UpdateTripPromoCode
+    {
+        [Required]
+        public string TripId { get; set; } = "";
+        [Required]
+        public string PassengerId { get; set; } = "";
+        [Required]
+        public string PromoCodeId { get; set; } = "";
+    }
+
+    public class UpdateTripPaymentMethod
+    {
+        [Required]
+        public string PaymentModeId { get; set; } = "";
+        [Required]
+        public string TripId { get; set; } = "";
+        [Required]
+        public string PassengerId { get; set; } = "";
+    }
+
+    public class UpdateTripTipAmount
+    {
+        [Required]
+        public string TripId { get; set; } = "";
+        [Required]
+        public string TipAmount { get; set; } = "";
+    }
+
+    public class UpdateTripUserFeedback
+    {
+        [Required]
+        public string TripId { get; set; }
+        [Required]
+        public string UserFeedBack { get; set; }
+    }
 }
