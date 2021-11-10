@@ -8,14 +8,15 @@ namespace DTOs.API
 {
     public class PromoCodeDetails
     {
-        public string Title { get; set; }
-        public string ShortDescription { get; set; }
-        public string Details { get; set; }
-        public string CreatedAt { get; set; }
-    }
+        public string ID { get; set; } = "";
+        public string PromoID { get; set; } = "";
+        public string NoOfUsage { get; set; } = "";
+        public string PromoCode { get; set; } = "";
+        public string StartDate { get; set; } = "";
+        public string ExpiryDate { get; set; } = "";
+        public string Amount { get; set; } = "";
+        public string PromotionName { get; set; } = "";
+        public string Repetition { get; set; } = "";
 
-    public class GetPromoCodeRespose
-    {
-        public List<PromoCodeDetails> Codes { get; set; } = new List<PromoCodeDetails>();
     }
 }

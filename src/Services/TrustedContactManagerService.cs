@@ -52,7 +52,8 @@ namespace Services
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                return dbContext.TrustedContacts.Where(x => x.PassengerId.Equals(passengerId)).Any();
+                Guid userId = Guid.Parse(passengerId);
+                return dbContext.TrustedContacts.Where(x => x.PassengerId == userId).Any();
             }
         }
     }

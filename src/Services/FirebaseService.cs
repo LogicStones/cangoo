@@ -1362,6 +1362,11 @@ namespace Services
         {
             await FirebaseIntegration.Write("Trips/" + tripId + "/TripStatus", status);
         }
+
+        public static async Task SetTipAmount(string tripId, string tipAmount)
+        {
+            await FirebaseIntegration.Write("Trips/" + tripId + "/TipAmount", tipAmount);
+        }
          
         public static async Task DeleteTrip(string tripId)
         {

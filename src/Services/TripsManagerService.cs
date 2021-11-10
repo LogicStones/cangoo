@@ -65,6 +65,38 @@ namespace Services
             }
         }
 
+        public static async Task<int> UpdateTripPromo(UpdateTripPromoCode model)
+        {
+            using (CangooEntities dbcontext=new CangooEntities())
+            {
+                return (await dbcontext.Database.ExecuteSqlCommandAsync("UPDATE Trips SET PromoCodeID = @promocodeid WHERE TripID = @tripId AND UserID = @passengerId",
+                                                                                      new SqlParameter("@promocodeid", model.PromoCodeId),
+                                                                                      new SqlParameter("@tripId", model.TripId),
+                                                                                      new SqlParameter("@passengerId", model.PassengerId)));
+            }
+        }
+
+        public static async Task<int> UpdateTripPaymentMode(UpdateTripPaymentMethod model)
+        {
+            using (CangooEntities dbcontext=new CangooEntities())
+            {
+                return (await dbcontext.Database.ExecuteSqlCommandAsync("UPDATE Trips SET PaymentModeId = @paymentmodeid WHERE TripID = @tripId AND UserID = @passengerId",
+                                                                                      new SqlParameter("@paymentmodeid", model.PaymentModeId),
+                                                                                      new SqlParameter("@tripId", model.TripId),
+                                                                                      new SqlParameter("@passengerId", model.PassengerId)));
+            }
+        }
+
+        public static async Task<int> UserSubmitFeedback(UpdateTripUserFeedback model)
+        {
+            using (CangooEntities dbcontext=new CangooEntities())
+            {
+                return (await dbcontext.Database.ExecuteSqlCommandAsync("UPDATE Trips SET UserSubmittedFeedback = @userfeedback WHERE TripID = @tripId",
+                                                                                      new SqlParameter("@userfeedback", model.UserFeedBack),
+                                                                                      new SqlParameter("@tripId", model.TripId)));
+            }
+        }
+
         public static async Task<Trip> GetTripById(string tripId)
         {
             using (var dbContext = new CangooEntities())

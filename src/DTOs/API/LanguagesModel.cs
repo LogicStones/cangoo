@@ -16,20 +16,20 @@ namespace DTOs.API
     public class LanguagesDetail
     {
         [Required]
-        public string Id { get; set; }
+        public string Id { get; set; } = "";
         [Required]
-        public string Language { get; set; }
+        public string Language { get; set; } = "";
         [Required]
-        public string ShortName { get; set; }
+        public string ShortName { get; set; } = "";
         [Required]
-        public string Format { get; set; }
+        public string Format { get; set; } = "";
     }
 
     public class UpdateLanguageRequest
     {
         [Required]
-        public string Id { get; set; }
+        public string Id { get; set; } = "";
         [Required]
-        public string PassengerId { get; set; }
+        public string PassengerId { get; set; } = "";
     }
 }
