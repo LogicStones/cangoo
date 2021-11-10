@@ -44,7 +44,7 @@ namespace DTOs.API
     public class PlaceDetails
     {
         [Required]
-        public string PlacesTypesID { get; set; } = "";
+        public string PlaceTypeId { get; set; } = "";
 
         [Required]
         public string Name { get; set; } = "";

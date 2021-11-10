@@ -157,16 +157,16 @@ namespace Services
         public static async Task<bool> SendRideRequestToOnlineDrivers(string tripId, string passengerId, int reqSeatingCapacity, DriverBookingRequestNotification bookingRN, dynamic hotelSetting)
         {
             //Passenger data
-            if (bool.Parse(bookingRN.IsReRouteRequest))
+            if (bookingRN.isReRouteRequest)
             {
-                if (!bool.Parse(bookingRN.IsLaterBooking))
+                if (!bookingRN.isLaterBooking)
                 {
-                    bookingRN.ReRouteRequestTime = DateTime.UtcNow.ToString(Formats.DateFormat);
+                    bookingRN.reRouteRequestTime = DateTime.UtcNow.ToString(Formats.DateFormat);
                     await WriteTripPassengerDetails(bookingRN, passengerId);
                     await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.ReRouting));
 
                     // free captain > update user > send request 
-                    await SendReRouteNotfication(bookingRN.BookingModeId, bookingRN.ReRouteRequestTime, bookingRN.RequestTimeOut.ToString(), bookingRN.PreviousCaptainId.ToString(), tripId, bookingRN.DeviceToken); //passengerId, 
+                    await SendReRouteNotfication(bookingRN.BookingModeId, bookingRN.reRouteRequestTime, bookingRN.requestTimeOut.ToString(), bookingRN.previousCaptainId.ToString(), tripId, bookingRN.deviceToken); //passengerId, 
                 }
                 else
                 {
@@ -175,7 +175,7 @@ namespace Services
 
                     //UPDATE: Captain can canel inprocess later booking, so user / captain should be set free in every case.
                     // free captain > update user > send request 
-                    await SendInProcessLaterBookingReRouteNotfication(bookingRN.BookingModeId, bookingRN.PreviousCaptainId.ToString(), tripId, passengerId, bookingRN.DeviceToken);
+                    await SendInProcessLaterBookingReRouteNotfication(bookingRN.BookingModeId, bookingRN.previousCaptainId.ToString(), tripId, passengerId, bookingRN.deviceToken);
                 }
             }
             else
@@ -184,7 +184,7 @@ namespace Services
                 await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.RequestSent));
 
                 //NEW IMPLEMENTATION
-                await UpdateDiscountTypeAndAmount(tripId, bookingRN.DiscountAmount, bookingRN.DiscountType);
+                await UpdateDiscountTypeAndAmount(tripId, bookingRN.discountAmount, bookingRN.discountType);
             }
 
             #region MakePreferredAndNormalDriversList
@@ -209,9 +209,9 @@ namespace Services
                 else
                 {
                     //If user have requested some facilities then request should be sent to only eligible captains
-                    if (!string.IsNullOrEmpty(bookingRN.RequiredFacilities))
+                    if (!string.IsNullOrEmpty(bookingRN.requiredFacilities))
                     {
-                        var reqFac = bookingRN.RequiredFacilities.ToLower().Split(',');
+                        var reqFac = bookingRN.requiredFacilities.ToLower().Split(',');
                         var vehFac = driver.vehicleFacilities.ToLower().Split(',');
                         var capFac = driver.driverFacilities.ToLower().Split(',');
 
@@ -229,7 +229,7 @@ namespace Services
                         preferredCaptainIDs = string.IsNullOrEmpty(preferredCaptainIDs) ? driver.driverID : preferredCaptainIDs + "," + driver.driverID;
 
                         //If its later booking then send request to captains even if he is already busy
-                        if (bool.Parse(bookingRN.IsLaterBooking))
+                        if (bookingRN.isLaterBooking)
                         {
                             lstPreferredCaptains.Add(driver);
                         }
@@ -247,7 +247,7 @@ namespace Services
                         captainIDs = string.IsNullOrEmpty(captainIDs) ? driver.driverID : captainIDs + "," + driver.driverID;
 
                         //If it's later booking then send request to captains even if he is already busy
-                        if (bool.Parse(bookingRN.IsLaterBooking))
+                        if (bookingRN.isLaterBooking)
                         {
                             lstNormalCaptains.Add(driver);
                         }
@@ -267,10 +267,10 @@ namespace Services
             //CaptainID won't be null in case of ReRouted trip request and don't send request to that captain again who have cancelled the current trip. 
             //TBD: All the captains who ever accepted the trip can be excluded using ReroutedRidesLog table
 
-            if (!string.IsNullOrEmpty(bookingRN.PreviousCaptainId))
+            if (!string.IsNullOrEmpty(bookingRN.previousCaptainId))
             {
-                lstNormalCaptains.RemoveAll(x => x.driverID.Equals(bookingRN.PreviousCaptainId));
-                lstPreferredCaptains.RemoveAll(x => x.driverID.Equals(bookingRN.PreviousCaptainId));
+                lstNormalCaptains.RemoveAll(x => x.driverID.Equals(bookingRN.previousCaptainId));
+                lstPreferredCaptains.RemoveAll(x => x.driverID.Equals(bookingRN.previousCaptainId));
             }
 
             //No driver available
@@ -287,16 +287,16 @@ namespace Services
 
             //NEW IMPLEMENTATION : Moved to IsReRouteRequest else part
             //await UpdateDiscountTypeAndAmount(tripId, bookingRN.DiscountAmount ?? "0.00", bookingRN.DiscountType ?? "normal");
-            await SetTripDispatchedStatus(tripId, bookingRN.IsDispatchedRide);
+            await SetTripDispatchedStatus(tripId, bookingRN.isDispatchedRide);
 
             string applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
             var applicationSettings = await ApplicationSettingService.GetApplicationSettings(applicationId);
             var distanceInterval = applicationSettings.RequestRadiusInterval;
             int? minDistanceRange = 0;
             var maxDistanceRange = distanceInterval;
-            var requestSearchRange = bool.Parse(bookingRN.IsLaterBooking) ? (int)(applicationSettings.LaterBookingRequestSearchRange * 1000) : (int)(applicationSettings.RequestSearchRange * 1000);
+            var requestSearchRange = bookingRN.isLaterBooking ? (int)(applicationSettings.LaterBookingRequestSearchRange * 1000) : (int)(applicationSettings.RequestSearchRange * 1000);
             var captainMinRating = applicationSettings.CaptainMinRating; 
-            var pickPosition = new GeoCoordinate(Convert.ToDouble(bookingRN.PickUpLatitude), Convert.ToDouble(bookingRN.PickUpLongitude));
+            var pickPosition = new GeoCoordinate(Convert.ToDouble(bookingRN.lat), Convert.ToDouble(bookingRN.lan));
 
             var lstPreferredCaptainsDetail = new List<DatabaseOlineDriversDTO>();
             if (!string.IsNullOrEmpty(preferredCaptainIDs))
@@ -328,7 +328,7 @@ namespace Services
                         {
                             if (capDetail.Rating >= captainMinRating && distance >= minDistanceRange && distance <= maxDistanceRange && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
                             {
-                                lstFilteredPreferredCaptains.Add(capDetail.DeviceToken, Convert.ToBoolean(bookingRN.IsLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
+                                lstFilteredPreferredCaptains.Add(capDetail.DeviceToken, bookingRN.isLaterBooking ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
 
                                 lstRequestLog.Add(new TripRequestLogDTO
                                 {
@@ -337,7 +337,7 @@ namespace Services
                                     CaptainLocationLatitude = dr.location.l[0].ToString(),
                                     CaptainLocationLongitude = dr.location.l[1].ToString(),
                                     DistanceToPickUpLocation = distance,
-                                    isReRouteRequest = bool.Parse(bookingRN.IsReRouteRequest),
+                                    isReRouteRequest = bookingRN.isReRouteRequest,
                                     TimeStamp = DateTime.UtcNow,
                                     TripID = Guid.Parse(tripId)
                                 });
@@ -377,7 +377,7 @@ namespace Services
                         {
                             if (capDetail.Rating >= captainMinRating && distance >= minDistanceRange && distance <= maxDistanceRange && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
                             {
-                                lstFilteredNormalCaptains.Add(capDetail.DeviceToken, Convert.ToBoolean(bookingRN.IsLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
+                                lstFilteredNormalCaptains.Add(capDetail.DeviceToken, bookingRN.isLaterBooking ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
 
                                 lstRequestLog.Add(new TripRequestLogDTO
                                 {
@@ -386,7 +386,7 @@ namespace Services
                                     CaptainLocationLatitude = dr.location.l[0].ToString(),
                                     CaptainLocationLongitude = dr.location.l[1].ToString(),
                                     DistanceToPickUpLocation = distance,
-                                    isReRouteRequest = bool.Parse(bookingRN.IsReRouteRequest),
+                                    isReRouteRequest = bookingRN.isReRouteRequest,
                                     TimeStamp = DateTime.UtcNow,
                                     TripID = Guid.Parse(tripId)
                                 });
@@ -1199,19 +1199,17 @@ namespace Services
         //#region Set Driver Busy / Free
 
 
-        //public bool fareAlreadyPaidFreeUserAndDriver(string tripID, string userID, string driverID)
-        //{
-        //    //delete trip node
-        //    addDeleteNode(true, "", "Trips/" + tripID);
+        public static async Task fareAlreadyPaidFreeUserAndDriver(string tripID, string userID, string driverID)
+        {
+            //delete trip node
+            await DeleteTrip(tripID);
 
-        //    //free driver
-        //    updateDriverStatus(driverID, "false", tripID);
+            //free driver
+            await SetDriverFree(driverID, tripID);
 
-        //    //free user
-        //    freeUserFromTrip(tripID, userID);
-
-        //    return true;
-        //}
+            //free user
+            await FreePassengerFromCurrentTrip(userID, tripID);
+        }
 
         //public void freeUserFromTrip(string tripID, string userID)
         //{
@@ -1322,7 +1320,7 @@ namespace Services
 
         public static async Task WriteTripPassengerDetails(DriverBookingRequestNotification data, string passengerId)
         {
-            await FirebaseIntegration.Write("Trips/" + data.TripId + "/" + passengerId, data);
+            await FirebaseIntegration.Write("Trips/" + data.tripID + "/" + passengerId, data);
         }
 
         public static async Task UpdateTripPassengerDetailsOnAccepted(PassengerRequestAcceptedNotification data, string passengerId)
@@ -1474,19 +1472,17 @@ namespace Services
 
         //#region Priority Hour
 
-        //public bool setPriorityHourStatus(bool isActive, string priorityHourRemainingTime, string captainID, string priorityHourEndTime, string earnedPoints)
-        //{
-        //    client = new FireSharp.FirebaseClient(config);
-        //    Dictionary<string, dynamic> dic = new Dictionary<string, dynamic>
-        //        {
-        //            { "isPriorityHoursActive", isActive },
-        //            { "priorityHourEndTime", priorityHourEndTime },
-        //            { "earningPoints", earnedPoints },
-        //            { "priorityHourRemainingTime", priorityHourRemainingTime }
-        //        };
-        //    client.Update("OnlineDriver/" + captainID + "/", dic);
-        //    return true;
-        //}
+        public static async Task SetPriorityHourStatus(bool isActive, string priorityHourRemainingTime, string captainID, string priorityHourEndTime, string earnedPoints)
+        {
+            Dictionary<string, dynamic> dic = new Dictionary<string, dynamic>
+                {
+                    { "isPriorityHoursActive", isActive },
+                    { "priorityHourEndTime", priorityHourEndTime },
+                    { "earningPoints", earnedPoints },
+                    { "priorityHourRemainingTime", priorityHourRemainingTime }
+                };
+            await FirebaseIntegration.Update("OnlineDriver/" + captainID + "/", dic);
+        }
 
         //#endregion
 

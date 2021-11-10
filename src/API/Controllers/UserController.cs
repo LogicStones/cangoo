@@ -280,7 +280,7 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("auth-token-validation")]
-        public async Task<HttpResponseMessage> TokenValidation()
+        public HttpResponseMessage TokenValidation()
         {
             return Request.CreateResponse(HttpStatusCode.OK);
         }

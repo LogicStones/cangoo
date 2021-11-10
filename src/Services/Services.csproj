@@ -107,6 +107,7 @@
     <Compile Include="TrustedContactManagerService.cs" />
     <Compile Include="UserService.cs" />
     <Compile Include="VehiclesService.cs" />
+    <Compile Include="VoucherService.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Constants\Constants.csproj">

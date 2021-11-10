@@ -15,7 +15,7 @@ namespace DatabaseModel
     public partial class PassengerPlace
     {
         public int ID { get; set; }
-        public int PlacesTypesID { get; set; }
+        public int PlaceTypeId { get; set; }
         public string Name { get; set; }
         public string Address { get; set; }
         public string Latitude { get; set; }

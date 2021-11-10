@@ -33,7 +33,7 @@ namespace Services
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<GetPassengerPlaces>("SELECT CAST(ID as VARCHAR(36)) ID,CAST(PlacesTypesID as VARCHAR(36)) PlaceTypeId,Name," +
+                var query = dbContext.Database.SqlQuery<GetPassengerPlaces>("SELECT CAST(ID as VARCHAR(36)) ID,CAST(PlaceTypeId as VARCHAR(36)) PlaceTypeId,Name," +
                                                                             "Address,Latitude,Longitutde,PostalCode FROM PassengerPlaces WHERE PassengerId = @passengerId", 
                                                                                                                     new SqlParameter("@passengerId", passengerId));
                 return await query.ToListAsync();
@@ -44,9 +44,9 @@ namespace Services
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-              return  await dbContext.Database.ExecuteSqlCommandAsync("UPDATE PassengerPlaces SET PlacesTypesID = @typeId, Name =@name, Address = @address, Latitude = @latitude, Longitutde = @longitude, PostalCode = @postalCode WHERE ID = @Id",
+              return  await dbContext.Database.ExecuteSqlCommandAsync("UPDATE PassengerPlaces SET PlaceTypeId = @typeId, Name =@name, Address = @address, Latitude = @latitude, Longitutde = @longitude, PostalCode = @postalCode WHERE ID = @Id",
                                                                                     new SqlParameter("@address", model.Address),
-                                                                                    new SqlParameter("@typeId", model.PlacesTypesID),
+                                                                                    new SqlParameter("@typeId", model.PlaceTypeId),
                                                                                     new SqlParameter("@longitude", model.Longitutde),
                                                                                     new SqlParameter("@latitude", model.Latitude),
                                                                                     new SqlParameter("@name", model.Name),

@@ -296,9 +296,9 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous]    
+        [AllowAnonymous]
         [Route("resetPassword")]//Forgot Password UI
-        public async Task<HttpResponseMessage> resetPassword([FromBody] DriverModel model)
+        public async Task<HttpResponseMessage> resetPassword([FromBody] DriverResetPasswordRequest model)
         {
             if (model != null && !string.IsNullOrEmpty(model.UserName))
             {
@@ -347,7 +347,7 @@ namespace API.Controllers
                 return Request.CreateResponse(HttpStatusCode.OK, response);
             }
         }
-        
+
         [HttpGet]
         [Route("getVehicleList")]
         public async Task<HttpResponseMessage> getVehicleList([FromUri] GetVehicleListRequest model)
@@ -445,7 +445,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("logOutDriver")]
-        public async Task<HttpResponseMessage> logOutDriver([FromBody] VehicleDetail model)
+        public async Task<HttpResponseMessage> logOutDriver([FromBody] DriverLogOutRequest model)
         {
             if (model != null && !string.IsNullOrEmpty(model.driverID) && !string.IsNullOrEmpty(model.DeviceToken))
             {
@@ -484,7 +484,7 @@ namespace API.Controllers
 
         [HttpPost]          //Change Password UI
         [Route("chagePassword")]
-        public async Task<HttpResponseMessage> chagePassword([FromBody] DriverModel model)
+        public async Task<HttpResponseMessage> chagePassword([FromBody] DriverChangePasswordRequest model)
         {
             if (model != null && !string.IsNullOrEmpty(model.UserName) && !string.IsNullOrEmpty(model.password) && !string.IsNullOrEmpty(model.oldPassword))
             {
@@ -610,8 +610,8 @@ namespace API.Controllers
         public async Task<HttpResponseMessage> acceptRequest([FromBody] DriverAcceptTripRequest model)
         {
             if (model != null && !string.IsNullOrEmpty(model.tripID) && model.isAccept && !string.IsNullOrEmpty(model.driverID) && !string.IsNullOrEmpty(model.vehicleID))
-            {                }
-                int bookingStatus = 0;
+            { }
+            int bookingStatus = 0;
 
             //Get trip current status before any status change
             if (model.isLaterBooking)
@@ -1298,149 +1298,1034 @@ namespace API.Controllers
             }
         }
 
-        //[HttpPost]
-        //[Route("collectPayment")]
-        //public HttpResponseMessage collectPayment([FromBody] RequestModel model)
-        //{
-        //    /*
-        //     NEED TO UPDATE FormWebRequest method as well
-        //     */
+        [HttpPost]
+        [Route("collectPayment")]
+        public async Task<HttpResponseMessage> collectPayment([FromBody] CollectPaymentRequest model)
+        {
+            /*
+             NEED TO UPDATE FormWebRequest method as well
+             */
 
-        //    if (model != null && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID) &&
-        //        !string.IsNullOrEmpty(model.fleetID) && !string.IsNullOrEmpty(model.isOverride) &&
-        //        !string.IsNullOrEmpty(model.totalFare) && !string.IsNullOrEmpty(model.tipAmount) &&
-        //        !string.IsNullOrEmpty(model.walletUsedAmount) && !string.IsNullOrEmpty(model.voucherUsedAmount) &&
-        //        !string.IsNullOrEmpty(model.promoDiscountAmount) && !string.IsNullOrEmpty(model.collectedAmount))
-        //    {
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
-        //            dic = new Dictionary<dynamic, dynamic>();
-        //            if (CheckIfAlreadyPaid(model.totalFare, model.tripID, model.driverID, ref dic, false))
-        //            {
-        //                //TBD: send fcm to user - if required.
-        //                response.data = dic;
-        //                response.error = true;
-        //                response.message = ResponseKeys.fareAlreadyPaid;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
+            if (model != null && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID) &&
+                !string.IsNullOrEmpty(model.fleetID) && !string.IsNullOrEmpty(model.isOverride) &&
+                !string.IsNullOrEmpty(model.totalFare) && !string.IsNullOrEmpty(model.tipAmount) &&
+                !string.IsNullOrEmpty(model.walletUsedAmount) && !string.IsNullOrEmpty(model.voucherUsedAmount) &&
+                !string.IsNullOrEmpty(model.promoDiscountAmount) && !string.IsNullOrEmpty(model.collectedAmount))
+            {
+                using (CangooEntities context = new CangooEntities())
+                {
+                    //dic = new Dictionary<dynamic, dynamic>();
+                    if (await CheckIfAlreadyPaid(model.totalFare, model.tripID, model.driverID, dic, false))
+                    {
+                        //TBD: send fcm to user - if required.
+                        response.data = dic;
+                        response.error = true;
+                        response.message = ResponseKeys.fareAlreadyPaid;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
 
-        //            string passengerDeviceToken = "";
-        //            var trip = context.Trips.Where(t => t.TripID.ToString().Equals(model.tripID)).FirstOrDefault();
+                    string passengerDeviceToken = "";
+                    var trip = context.Trips.Where(t => t.TripID.ToString().Equals(model.tripID)).FirstOrDefault();
 
-        //            //In case of partial payment need to send invoice
-        //            if ((decimal.Parse(model.walletUsedAmount) > 0.0M) || (decimal.Parse(model.promoDiscountAmount) > 0.0M))
-        //            {
-        //                var result = context.spAfterMobilePayment(false,//Convert.ToBoolean(model.isOverride), 
-        //                    model.tripID,
-        //                    "",
-        //                    (int)App_Start.TripStatus.Completed,
-        //                    trip.UserID.ToString(),
-        //                    ApplicationID,
-        //                    (decimal.Parse(model.totalFare) - decimal.Parse(model.tipAmount)).ToString(),
-        //                    "0.00",
-        //                    model.promoDiscountAmount,
-        //                    model.walletUsedAmount,
-        //                    model.tipAmount.ToString(),
-        //                    Common.getUtcDateTime(),
-        //                    (int)App_Start.PaymentMode.Cash,
-        //                    (int)App_Start.ResellerPaymentStatus.Paid,
-        //                    model.fleetID).FirstOrDefault();
+                    //In case of partial payment need to send invoice
+                    if ((decimal.Parse(model.walletUsedAmount) > 0.0M) || (decimal.Parse(model.promoDiscountAmount) > 0.0M))
+                    {
+                        var result = context.spAfterMobilePayment(false,//Convert.ToBoolean(model.isOverride), 
+                            model.tripID,
+                            "",
+                            (int)TripStatuses.Completed,
+                            trip.UserID.ToString(),
+                            ApplicationID,
+                            (decimal.Parse(model.totalFare) - decimal.Parse(model.tipAmount)).ToString(),
+                            "0.00",
+                            model.promoDiscountAmount,
+                            model.walletUsedAmount,
+                            model.tipAmount.ToString(),
+                            DateTime.UtcNow,
+                            (int)PaymentModes.Cash,
+                            (int)PaymentStatuses.Paid,
+                            model.fleetID).FirstOrDefault();
 
-        //                SendInvoice(new InvoiceModel
-        //                {
-        //                    CustomerEmail = result.CustomerEmail,// context.AspNetUsers.Where(u => u.Id.Equals(model.passengerID)).FirstOrDefault().Email,
-        //                    TotalAmount = (decimal.Parse(model.collectedAmount) + decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString(),  // model.totalFare,
-        //                    CashAmount = model.collectedAmount,
-        //                    WalletUsedAmount = model.walletUsedAmount,
-        //                    PromoDiscountAmount = model.promoDiscountAmount,
-        //                    CaptainName = result.CaptainName,
-        //                    CustomerName = result.CustomerName,
-        //                    TripDate = result.TripDate,
-        //                    InvoiceNumber = result.InvoiceNumber,
-        //                    FleetName = result.FleetName,
-        //                    ATUNumber = result.FleetATUNumber,
-        //                    Street = result.FleetAddress,
-        //                    BuildingNumber = result.FleetBuildingNumber,
-        //                    PostCode = result.FleetPostalCode,
-        //                    City = result.FleetCity,
-        //                    PickUpAddress = result.PickUpLocation,
-        //                    DropOffAddress = result.DropOffLocation,
-        //                    CaptainUserName = result.CaptainUserName,
-        //                    Distance = result.DistanceInKM.ToString("0.00"),
-        //                    VehicleNumber = result.PlateNumber,
-        //                    FleetEmail = result.FleetEmail
-        //                });
+                        await SendInvoice(new InvoiceModel
+                        {
+                            CustomerEmail = result.CustomerEmail,// context.AspNetUsers.Where(u => u.Id.Equals(model.passengerID)).FirstOrDefault().Email,
+                            TotalAmount = (decimal.Parse(model.collectedAmount) + decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString(),  // model.totalFare,
+                            CashAmount = model.collectedAmount,
+                            WalletUsedAmount = model.walletUsedAmount,
+                            PromoDiscountAmount = model.promoDiscountAmount,
+                            CaptainName = result.CaptainName,
+                            CustomerName = result.CustomerName,
+                            TripDate = result.TripDate,
+                            InvoiceNumber = result.InvoiceNumber,
+                            FleetName = result.FleetName,
+                            ATUNumber = result.FleetATUNumber,
+                            Street = result.FleetAddress,
+                            BuildingNumber = result.FleetBuildingNumber,
+                            PostCode = result.FleetPostalCode,
+                            City = result.FleetCity,
+                            PickUpAddress = result.PickUpLocation,
+                            DropOffAddress = result.DropOffLocation,
+                            CaptainUserName = result.CaptainUserName,
+                            Distance = result.DistanceInKM.ToString("0.00"),
+                            VehicleNumber = result.PlateNumber,
+                            FleetEmail = result.FleetEmail
+                        });
 
-        //                passengerDeviceToken = result.PassengerDeviceToken;
-        //            }
-        //            else
-        //            {
-        //                trip.CompanyID = Guid.Parse(model.fleetID);
+                        passengerDeviceToken = result.PassengerDeviceToken;
+                    }
+                    else
+                    {
+                        trip.CompanyID = Guid.Parse(model.fleetID);
 
-        //                //Fare details are calculated and saved on endTrip requests.
+                        //Fare details are calculated and saved on endTrip requests.
 
-        //                trip.isOverRided = false;
-        //                trip.TripPaymentMode = "Cash";
-        //                trip.Tip = Convert.ToDecimal(model.tipAmount);
+                        trip.isOverRided = false;
+                        trip.TripPaymentMode = "Cash";
+                        trip.Tip = Convert.ToDecimal(model.tipAmount);
 
-        //                model.userID = trip.UserID.ToString();
+                        model.userID = trip.UserID.ToString();
 
-        //                ApplyPromoAdjustWalletUpdateVoucherAmount(model.voucherUsedAmount, model.walletUsedAmount, model.promoDiscountAmount, trip, context);
+                        ApplyPromoAdjustWalletUpdateVoucherAmount(model.voucherUsedAmount, model.walletUsedAmount, model.promoDiscountAmount, trip, context);
 
-        //                Transaction tr = new Transaction()
-        //                {
-        //                    TransactionID = Guid.NewGuid(),
-        //                    DebitedFrom = Guid.Parse(trip.UserID.ToString()),
-        //                    CreditedTo = Guid.Parse(ApplicationID),
-        //                    DateTime = Common.getUtcDateTime(),
-        //                    Amount = Convert.ToDecimal(model.collectedAmount), //Adjusted wallet amount and voucher amount is considered as mobile payment - RECEIVABLE
-        //                    PaymentModeID = (int)App_Start.PaymentMode.Cash,
-        //                    Reference = "Trip cash payment received."
-        //                };
-        //                context.Transactions.Add(tr);
-        //                context.SaveChanges();
+                        Transaction tr = new Transaction()
+                        {
+                            TransactionID = Guid.NewGuid(),
+                            DebitedFrom = Guid.Parse(trip.UserID.ToString()),
+                            CreditedTo = Guid.Parse(ApplicationID),
+                            DateTime = DateTime.UtcNow,
+                            Amount = Convert.ToDecimal(model.collectedAmount), //Adjusted wallet amount and voucher amount is considered as mobile payment - RECEIVABLE
+                            PaymentModeID = (int)PaymentModes.Cash,
+                            Reference = "Trip cash payment received."
+                        };
+                        context.Transactions.Add(tr);
+                        context.SaveChanges();
 
-        //                var result = context.spGetTripPassengerTokenByTripIDOnCollectPayment(model.tripID, (int)App_Start.TripStatus.Completed).FirstOrDefault();
+                        var result = context.spGetTripPassengerTokenByTripIDOnCollectPayment(model.tripID, (int)TripStatuses.Completed).FirstOrDefault();
 
-        //                passengerDeviceToken = result.DeviceToken;
-        //            }
+                        passengerDeviceToken = result.DeviceToken;
+                    }
 
-        //            var paymentDetails = new cashPayment()
-        //            {
-        //                collectedAmount = model.collectedAmount,
-        //                promoDiscountAmount = model.promoDiscountAmount,
-        //                //voucherUsedAmount = model.voucherUsedAmount,  //In case of vouchered ride, user don't have passenger application
-        //                walletAmountUsed = model.walletUsedAmount,
-        //                totalFare = (decimal.Parse(model.collectedAmount) + decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString()
-        //            };
-
-
-        //            FireBaseController fc = new FireBaseController();
-        //            var task = Task.Run(async () =>
-        //            {
-        //                fc.updateDriverStatus(model.driverID, "false", model.tripID);
-        //                fc.freeUserFromTrip(model.tripID, trip.UserID.ToString());
-
-        //                await fc.delTripNode(model.tripID);
-
-        //                //In case of Request from Business it'll be empty. isWeb check can be applied here.
-        //                if (!string.IsNullOrEmpty(passengerDeviceToken))
-        //                    await fc.sentSingleFCM(passengerDeviceToken, paymentDetails, "pas_CashPaymentPaid");
-        //            });
+                    var paymentDetails = new cashPayment()
+                    {
+                        collectedAmount = model.collectedAmount,
+                        promoDiscountAmount = model.promoDiscountAmount,
+                        //voucherUsedAmount = model.voucherUsedAmount,  //In case of vouchered ride, user don't have passenger application
+                        walletAmountUsed = model.walletUsedAmount,
+                        totalFare = (decimal.Parse(model.collectedAmount) + decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString()
+                    };
 
 
-        //            response.error = false;
-        //            response.message = ResponseKeys.msgSuccess;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.error = true;
-        //        response.message = ResponseKeys.invalidParameters;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
+                    await FirebaseService.SetDriverFree(model.driverID, model.tripID);
+                    await FirebaseService.FreePassengerFromCurrentTrip(trip.UserID.ToString(), model.tripID);
+                    await FirebaseService.DeleteTrip(model.tripID);
+
+                    //In case of Request from Business it'll be empty. isWeb check can be applied here.
+                    if (!string.IsNullOrEmpty(passengerDeviceToken))
+                        await PushyService.UniCast(passengerDeviceToken, paymentDetails, NotificationKeys.pas_CashPaymentPaid);
+
+
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+            }
+            else
+            {
+                response.error = true;
+                response.message = ResponseKeys.invalidParameters;
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+        }
+
+        [HttpPost]
+        [Route("passengerRating")]
+        public HttpResponseMessage passengerRating([FromBody] PassengerRatingRequest model)
+        {
+            if (model != null && model.customerRating > 0 && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID))
+            {
+                using (CangooEntities context = new CangooEntities())
+                {
+                    var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
+                    if (tp != null)
+                    {
+                        tp.UserRating = Convert.ToInt32(model.customerRating);
+                        tp.DriverSubmittedFeedback = model.description;
+
+                        var user = context.UserProfiles.Where(u => u.UserID == tp.UserID.ToString()).FirstOrDefault();
+
+                        //Verify if ride was booked by business portal
+                        if (user != null)
+                        {
+                            int userTrips = (int)(user.NoOfTrips == null ? 0 : user.NoOfTrips);
+                            user.Rating = Math.Round((double)((((user.Rating == null ? 0 : user.Rating) * (userTrips - 1)) + tp.UserRating) / userTrips), 1, MidpointRounding.ToEven);
+                        }
+
+                        context.SaveChanges();
+                        response.error = false;
+                        response.message = ResponseKeys.msgSuccess;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                    else
+                    {
+                        response.error = true;
+                        response.message = ResponseKeys.tripNotFound;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                }
+            }
+            else
+            {
+                response.error = true;
+                response.message = ResponseKeys.invalidParameters;
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+        }
+
+        [HttpPost]
+        [Route("passengerFavUnFav")]
+        public HttpResponseMessage passengerFavUnFav([FromBody] PassengerFavUnFavRequest model)
+        {
+            if (model != null && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID))
+            {
+                using (CangooEntities context = new CangooEntities())
+                {
+                    var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
+                    if (tp != null)
+                    {
+                        //if (Request.Headers.Contains("ApplicationID"))
+                        //{
+                        //    ApplicationID = Request.Headers.GetValues("ApplicationID").First();
+                        //}
+                        var capt = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.driverID)).FirstOrDefault();
+                        var usr = context.UserFavoriteCaptains.Where(f => f.UserID == tp.UserID.ToString() && f.CaptainID.ToString() == model.driverID).FirstOrDefault();
+                        if (usr == null)
+                        {
+                            UserFavoriteCaptain uf = new UserFavoriteCaptain
+                            {
+                                ID = Guid.NewGuid(),
+                                UserID = tp.UserID.ToString(),
+                                CaptainID = tp.CaptainID,
+                                IsFavByPassenger = false,
+                                IsFavByCaptain = true,
+                                ApplicationID = Guid.Parse(ApplicationID)
+                            };
+
+                            capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == null ? 1 : (int)capt.NumberOfFavoriteUser + 1;
+                            context.UserFavoriteCaptains.Add(uf);
+                        }
+                        else
+                        {
+                            if ((bool)usr.IsFavByCaptain && (bool)usr.IsFavByPassenger)
+                            {
+                                usr.IsFavByCaptain = false;
+                                capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == 1 ? 0 : (int)capt.NumberOfFavoriteUser - 1;
+                            }
+                            else if ((bool)usr.IsFavByCaptain)
+                            {
+                                context.UserFavoriteCaptains.Remove(usr);
+                                capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == 1 ? 0 : (int)capt.NumberOfFavoriteUser - 1;
+                            }
+                            else
+                            {
+                                usr.IsFavByCaptain = true;
+                                capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == null ? 1 : (int)capt.NumberOfFavoriteUser + 1;
+                            }
+                        }
+                        context.SaveChanges();
+                        response.error = false;
+                        response.message = ResponseKeys.msgSuccess;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                    else
+                    {
+                        response.error = true;
+                        response.message = ResponseKeys.tripNotFound;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                }
+            }
+            else
+            {
+                response.error = true;
+                response.message = ResponseKeys.invalidParameters;
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+        }
+
+        #endregion
+
+        #region Priority Hour
+
+        [HttpPost]
+        [Route("activatePriorityHour")]
+        public async Task<HttpResponseMessage> activatePriorityHour([FromBody] ActivatePriorityHourRequest model)
+        {
+
+            using (CangooEntities context = new CangooEntities())
+            {
+                if (model != null && model.captainID != string.Empty && model.duration > 0)
+                {
+                    var captain = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.captainID)).FirstOrDefault();
+                    if (captain != null)
+                    {
+                        var settings = context.ApplicationSettings.Where(a => a.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())).FirstOrDefault();
+
+                        captain.IsPriorityHoursActive = true;
+                        captain.LastPriorityHourStartTime = DateTime.UtcNow;
+                        captain.LastPriorityHourEndTime = DateTime.UtcNow.AddHours(model.duration);
+                        captain.EarningPoints -= model.duration * (settings.AwardpointsDeduction != null ? (int)settings.AwardpointsDeduction : 100);
+                        context.SaveChanges();
+
+                        var priorityHourRemainingTime = ((int)(((DateTime)captain.LastPriorityHourEndTime).
+                                                        Subtract((DateTime)captain.LastPriorityHourStartTime).TotalMinutes)).ToString();
+                        
+                        await FirebaseService.SetPriorityHourStatus(true, priorityHourRemainingTime, model.captainID, DateTime.Parse(captain.LastPriorityHourEndTime.ToString()).ToString(Formats.DateFormat), captain.EarningPoints.ToString());
+
+                        response.error = false;
+                        response.message = ResponseKeys.msgSuccess;
+                        dic = new Dictionary<dynamic, dynamic>
+                                    {
+                                        { "priorityHour", model }
+                                    };
+                        response.data = dic;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                    else
+                    {
+                        response.message = ResponseKeys.captainNotFound;
+                        response.error = true;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                }
+                else
+                {
+                    response.message = ResponseKeys.invalidParameters;
+                    response.error = true;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+            }
+        }
+
+        [HttpGet]
+        [Route("getCaptainEarnedPoints")]
+        public HttpResponseMessage getCaptainEarnedPoints(string captainID)
+        {
+            if (!string.IsNullOrEmpty(captainID))
+            {
+                using (CangooEntities context = new CangooEntities())
+                {
+                    var captain = context.Captains.Where(c => c.CaptainID.ToString().Equals(captainID)).FirstOrDefault();
+                    if (captain != null)
+                    {
+                        response.error = false;
+                        response.message = ResponseKeys.msgSuccess;
+                        dic = new Dictionary<dynamic, dynamic>
+                                    {
+                                        { "earnedPoints", captain.EarningPoints }
+                                    };
+                        response.data = dic;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                    else
+                    {
+                        response.error = true;
+                        response.message = ResponseKeys.captainNotFound;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                }
+            }
+            else
+            {
+                response.message = ResponseKeys.invalidParameters;
+                response.error = true;
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+        }
+
+        #endregion
+
+        #region Trip History/Upcoming
+
+        [HttpGet]
+        [Route("getAllUnAcceptedLaterBooking")]
+        public async Task<HttpResponseMessage> getAllUnAcceptedLaterBooking(int offset, int limit, int vehicleSeatingCapacity)
+        {
+            if (offset > 0 && limit > 0 && vehicleSeatingCapacity > 0)
+            {
+                using (CangooEntities context = new CangooEntities())
+                {
+                    //UserController uc = new UserController();
+                    var lstLaterBooking = context.spGetAllUnAcceptedLateBooking(ResellerID, ApplicationID, DateTime.UtcNow, (int)TripStatuses.RequestSent, vehicleSeatingCapacity, offset, limit).ToList(); //date time utc
+                    if (lstLaterBooking.Count > 0)
+                    {
+                        List<ScheduleBooking> lstSB = new List<ScheduleBooking>();
+                        foreach (var item in lstLaterBooking)
+                        {
+                            //dic = new Dictionary<dynamic, dynamic>() {
+                            //        { "discountType", "normal"},
+                            //        { "discountAmount", "0.00" }
+                            //    };
+
+                           var result = await FareManagerService.IsSpecialPromotionApplicable(item.pickupLocationLatitude, item.pickuplocationlongitude, item.DropOffLocationLatitude,
+                                item.DropOffLocationLongitude, ApplicationID, true, item.pickUpBookingDateTime);
+                           
+                            dic = new Dictionary<dynamic, dynamic>() {
+                                    { "discountType", result.DiscountType },
+                                    { "discountAmount", result.DiscountAmount }
+                                };
+
+                            var lstTripFacilities = await FacilitiesService.GetFacilitiesDetailByIds(item.facilities);
+                            //if (item.NoOfPerson <= vehicleSeatingCapacity)
+                            //{
+                            ScheduleBooking sb = new ScheduleBooking
+                            {
+                                tripID = item.TripID.ToString(),
+                                pickUplatitude = item.pickupLocationLatitude,
+                                pickUplongitude = item.pickuplocationlongitude,
+                                pickUpLocation = item.PickUpLocation,
+                                dropOfflatitude = item.DropOffLocationLatitude,
+                                dropOfflongitude = item.DropOffLocationLongitude,
+                                dropOffLocation = item.DropOffLocation,
+                                isLaterBooking = Convert.ToBoolean(item.isLaterBooking),
+                                passengerID = item.UserID.ToString(),
+                                passengerName = item.passengName,
+                                rating = item.Rating.ToString(),
+                                tripPaymentMode = item.TripPaymentMode,
+                                pickUpDateTime = Convert.ToDateTime(item.pickUpBookingDateTime).ToString(Formats.DateFormat),
+                                isFav = item.favorite != null ? (bool)item.favorite : false,
+                                seatingCapacity = (int)item.NoOfPerson,
+                                estimatedDistance = item.DistanceTraveled.ToString(),
+                                facilities = lstTripFacilities,
+                                discountType = dic["discountType"],
+                                discountAmount = dic["discountAmount"]
+                            };
+                            lstSB.Add(sb);
+                            //}
+                        }
+
+                        dic = new Dictionary<dynamic, dynamic>
+                            {
+                                { "pendingLaterBooking", lstSB },
+                                { "totalRecords", lstLaterBooking.FirstOrDefault().totalRecord }
+                            };
+
+                        response.error = false;
+                        response.message = ResponseKeys.msgSuccess;
+                        response.data = dic;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                    else
+                    {
+                        dic = new Dictionary<dynamic, dynamic>
+                            {
+                                { "pendingLaterBooking", new List<ScheduleBooking>() },
+                                { "totalRecords", 0 }
+                            };
+
+                        response.error = false;
+                        response.message = ResponseKeys.msgSuccess;
+                        response.data = dic;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                }
+            }
+            else
+            {
+                response.error = true;
+                response.message = ResponseKeys.invalidParameters;
+                return Request.CreateResponse(HttpStatusCode.BadRequest, response);
+            }
+        }
+
+        [HttpPost]      //Get accepted upcoming later bookings
+        [Route("getDriverLaterBooking")]
+        public async Task<HttpResponseMessage> getDriverLaterBooking([FromBody] DriverGetUpComingBookingsRequest model)
+        {
+
+            using (CangooEntities context = new CangooEntities())
+            {
+                if (model != null && model.userID != string.Empty && model.offset > 0 && model.limit > 0)
+                {
+                    //UserController uc = new UserController();
+
+                    var lstScheduleRides = context.spCaptainLaterTrips(DateTime.UtcNow, model.userID, (int)TripStatuses.LaterBookingAccepted, model.offset, model.limit).ToList();
+                    if (lstScheduleRides.Count > 0)
+                    {
+                        List<ScheduleBooking> lstSB = new List<ScheduleBooking>();
+                        foreach (var item in lstScheduleRides)
+                        {
+                            var result = await FareManagerService.IsSpecialPromotionApplicable(item.pickupLocationLatitude, item.pickuplocationlongitude, item.DropOffLocationLatitude,
+                                item.DropOffLocationLongitude, ApplicationID, true, item.pickUpBookingDateTime);
+
+                            dic = new Dictionary<dynamic, dynamic>() {
+                                    { "discountType", result.DiscountType },
+                                    { "discountAmount", result.DiscountAmount }
+                                };
+
+                            //dic = new Dictionary<dynamic, dynamic>() {
+                            //        { "discountType", "normal"},
+                            //        { "discountAmount", "0.00" }
+                            //    };
+
+
+                            //Common.GetFacilities(ResellerID, ApplicationID, context, item.facilities, out List<Facilities> lstTripFacilities);
+                            var lstTripFacilities = await FacilitiesService.GetFacilitiesDetailByIds(item.facilities);
+                            ScheduleBooking sb = new ScheduleBooking
+                            {
+                                tripID = item.TripID.ToString(),
+                                pickUplatitude = item.pickupLocationLatitude,
+                                pickUplongitude = item.pickuplocationlongitude,
+                                pickUpLocation = item.PickUpLocation,
+                                dropOfflatitude = item.DropOffLocationLatitude,
+                                dropOfflongitude = item.DropOffLocationLongitude,
+                                dropOffLocation = item.DropOffLocation,
+                                isLaterBooking = Convert.ToBoolean(item.isLaterBooking),
+                                passengerID = item.UserID.ToString(),
+                                passengerName = item.passengName,
+                                rating = item.Rating.ToString(),
+                                tripPaymentMode = item.TripPaymentMode,
+                                isFav = item.favorite != null ? (bool)item.favorite : false,
+                                pickUpDateTime = Convert.ToDateTime(item.pickUpBookingDateTime).ToString(Formats.DateFormat),
+                                seatingCapacity = (int)item.NoOfPerson,
+                                estimatedDistance = item.DistanceTraveled.ToString(),
+                                facilities = lstTripFacilities,
+                                isWeb = item.isWeb,
+                                discountType = dic["discountType"],
+                                discountAmount = dic["discountAmount"],
+                                remainingTime = ((DateTime)item.pickUpBookingDateTime - DateTime.UtcNow).TotalSeconds
+                            };
+                            lstSB.Add(sb);
+                        }
+
+                        dic = new Dictionary<dynamic, dynamic>
+                            {
+                                { "laterBooking", lstSB },
+                                { "totalRecords", lstScheduleRides.FirstOrDefault().totalRecord }
+                            };
+
+                        response.error = false;
+                        response.message = ResponseKeys.msgSuccess;
+                        response.data = dic;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                    else
+                    {
+                        dic = new Dictionary<dynamic, dynamic>
+                            {
+                                { "laterBooking", new List<ScheduleBooking>() },
+                                { "totalRecords", 0 }
+                            };
+
+                        response.error = false;
+                        response.message = ResponseKeys.msgSuccess;
+                        response.data = dic;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.invalidParameters;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+            }
+        }
+
+        [HttpGet]
+        [Route("getDriverBookingHistory")]
+        public async Task<HttpResponseMessage> getDriverBookingHistory(string captainID, string pageNo, string pageSize, string dateTo, string dateFrom)
+        {
+            if (!string.IsNullOrEmpty(captainID) && !string.IsNullOrEmpty(pageSize) && !string.IsNullOrEmpty(pageNo) &&
+                !string.IsNullOrEmpty(dateFrom) && !string.IsNullOrEmpty(dateTo))
+            {
+                using (CangooEntities context = new CangooEntities())
+                {
+
+                    var result = context.spCaptainTripHistory(captainID, int.Parse(pageNo), int.Parse(pageSize),
+                        Convert.ToDateTime(dateFrom), Convert.ToDateTime(dateTo)).ToList();
+                    if (result.Count > 0)
+                    {
+                        List<DriverTrips> lstTrips = new List<DriverTrips>();
+
+                        foreach (var temp in result)
+                        {
+                            //Common.GetFacilities(ResellerID, ApplicationID, context, item.facilities, out List<Facilities> lstTripFacilities);
+                            var lstTripFacilities = await FacilitiesService.GetFacilitiesDetailByIds(temp.facilities);
+                            DriverTrips trip = new DriverTrips()
+                            {
+                                tripID = temp.tripID.ToString(),
+                                pickupLocationLatitude = temp.PickupLocationLatitude,
+                                pickupLocationLongitude = temp.PickupLocationLongitude,
+                                pickupLocation = temp.PickUpLocation,
+                                dropOffLocationLatitude = temp.DropOffLocationLatitude,
+                                dropOffLocationLongitude = temp.DropOffLocationLongitude,
+                                dropOffLocation = temp.DropOffLocation,
+                                bookingDateTime = Convert.ToDateTime(temp.BookingDateTime).ToString(Formats.DateFormat),
+                                pickUpBookingDateTime = Convert.ToDateTime(temp.PickUpBookingDateTime).ToString(Formats.DateFormat),
+                                tripArrivalDatetime = Convert.ToDateTime(temp.ArrivalDateTime).ToString(Formats.DateFormat),
+                                tripStartDatetime = Convert.ToDateTime(temp.TripStartDatetime).ToString(Formats.DateFormat),
+                                tripEndDatetime = Convert.ToDateTime(temp.TripEndDatetime).ToString(Formats.DateFormat),
+                                tripStatus = temp.Status,
+                                facilities = lstTripFacilities,
+                                tip = temp.Tip.ToString(),
+                                fare = temp.Fare.ToString(),
+                                cashPayment = temp.TripCashPayment.ToString(),
+                                mobilePayment = temp.TripMobilePayment.ToString(),
+                                bookingType = temp.BookingType,
+                                bookingMode = temp.BookingMode,
+                                paymentMode = temp.PaymentMode,
+                                passengerName = temp.PassengerName,
+                                make = temp.make,
+                                model = temp.Model,
+                                plateNumber = temp.PlateNumber,
+                                distanceTraveled = temp.DistanceTraveled.ToString(),
+                                vehicleRating = temp.VehicleRating.ToString(),
+                                driverEarnedPoints = temp.DriverEarnedPoints.ToString(),
+                                driverRating = temp.DriverRating.ToString()
+                            };
+                            lstTrips.Add(trip);
+                        }
+
+                        DriverTripsHistory history = new DriverTripsHistory()
+                        {
+                            avgDriverRating = result.FirstOrDefault().avgDriverRating.ToString(),
+                            avgVehicleRating = result.FirstOrDefault().avgVehicleRating.ToString(),
+                            totalTrips = result.FirstOrDefault().totalTrips.ToString(),
+                            totalFare = (result.FirstOrDefault().totalTip + result.FirstOrDefault().totalFare).ToString(),
+                            totalTip = result.FirstOrDefault().totalTip.ToString(),
+                            totalEarnedPoints = result.FirstOrDefault().totalEarnedPoints.ToString(),
+                            totalCashEarning = result.FirstOrDefault().totalCashEarning.ToString(),
+                            totalMobilePayEarning = result.FirstOrDefault().totalMobilePayEarning.ToString(),
+                            trips = lstTrips
+                        };
+                        response.data = history;
+                    }
+                    else
+                    {
+                        response.data = new DriverTripsHistory()
+                        {
+                            avgDriverRating = "0",
+                            avgVehicleRating = "0",
+                            totalEarnedPoints = "0",
+                            totalFare = "0",
+                            totalTip = "0",
+                            totalTrips = "0",
+                            trips = new List<DriverTrips>()
+                        };
+                    }
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+            }
+            else
+            {
+                response.error = true;
+                response.message = ResponseKeys.invalidParameters;
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+        }
+
+        #endregion
+
+        #region profile / settings
+
+        [HttpGet]
+        [Route("captainProfile")]
+        public async Task<HttpResponseMessage> captainProfile(string captainID, string vehicleID)
+        {
+            if (!string.IsNullOrEmpty(captainID))
+            {
+
+                using (CangooEntities context = new CangooEntities())
+                {
+                    var cap = context.spCaptainProfile(captainID, vehicleID, new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1)).FirstOrDefault();
+
+                    if (cap != null)
+                    {
+                        //Common.GetFacilities(ResellerID, ApplicationID, context, cap.Facilities, out List<Facilities> lstCaptainFacilities);
+                        //Common.GetFacilities(ResellerID, ApplicationID, context, cap.VehicleFacilities, out List<Facilities> lstVehicleFacilities);
+
+                        var lstCaptainFacilities = await FacilitiesService.GetFacilitiesDetailByIds(cap.Facilities);
+                        var lstVehicleFacilities = await FacilitiesService.GetFacilitiesDetailByIds(cap.VehicleFacilities);
+
+                        var profile = new CaptainProfile()
+                        {
+                            name = cap.Name,
+                            email = cap.Email,
+                            phone = cap.PhoneNumber,
+                            shareCode = cap.ShareCode,
+                            captainFacilitiesList = lstCaptainFacilities,
+                            make = cap.Make,
+                            model = cap.Model,
+                            number = cap.PlateNumber,
+                            seatingCapacity = cap.SeatingCapacity.ToString(),
+                            vehicleFacilitiesList = lstVehicleFacilities
+                        };
+                        response.data = profile;
+                        response.error = false;
+                        response.message = ResponseKeys.msgSuccess;
+
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                    else
+                    {
+                        response.error = true;
+                        response.message = ResponseKeys.captainNotFound;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                }
+            }
+            else
+            {
+                response.error = true;
+                response.message = ResponseKeys.invalidParameters;
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+        }
+
+        [HttpGet]
+        [Route("captainStats")]
+        public HttpResponseMessage captainStats(string captainID, string vehicleID)
+        {
+            if (!string.IsNullOrEmpty(captainID) && !string.IsNullOrEmpty(vehicleID))
+            {
+                using (CangooEntities context = new CangooEntities())
+                {
+                    var cap = context.spCaptainProfile(captainID, vehicleID, new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1)).FirstOrDefault();
+
+                    if (cap != null)
+                    {
+                        var stats = new CaptainStats()
+                        {
+                            captainRating = string.Format("{0:0.00}", cap.Rating.ToString()),
+                            vehicleRating = string.Format("{0:0.00}", cap.VehicleRating.ToString()),
+                            cashRides = cap.CashTrips.ToString(),
+                            mobilePayRides = cap.MobilePayTrips.ToString(),
+                            cashEarning = string.Format("{0:0.00}", cap.CashEarning.ToString()),
+                            mobilePayEarning = string.Format("{0:0.00}", cap.MobilePayEarning.ToString()),
+                            favPassengers = cap.NumberOfFavoriteUser.ToString(),
+                            memberSince = DateTime.Parse(cap.MemberSince.ToString()).ToString(Formats.DateFormat),
+                            avgCashEarning = string.Format("{0:0.00}", cap.AverageCashEarning.ToString()),
+                            avgMobilePayEarning = string.Format("{0:0.00}", cap.AverageMobilePayEarning.ToString()),
+                            currentMonthAcceptanceRate = string.Format("{0:0.00}", cap.currentMonthAcceptanceRate),
+                            currentMonthOnlineHours = string.Format("{0:0.00}", cap.AverageMobilePayEarning)
+                        };
+
+                        response.data = stats;
+                        response.error = false;
+                        response.message = ResponseKeys.msgSuccess;
+
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                    else
+                    {
+                        response.error = true;
+                        response.message = ResponseKeys.captainNotFound;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                }
+            }
+            else
+            {
+                response.error = true;
+                response.message = ResponseKeys.invalidParameters;
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+        }
+
+        [HttpGet]
+        [Route("getCaptainSettings")]
+        public HttpResponseMessage getCaptainSettings(string captainID)
+        {
+            if (!string.IsNullOrEmpty(captainID))
+            {
+                using (CangooEntities context = new CangooEntities())
+                {
+                    var cap = context.Captains.Where(c => c.CaptainID.ToString().Equals(captainID)).FirstOrDefault();
+
+                    if (cap != null)
+                    {
+                        var settings = new CaptainSettings()
+                        {
+                            laterBookingNotificationTone = string.IsNullOrEmpty(cap.LaterBookingNotificationTone) ? "6.mp3" : cap.LaterBookingNotificationTone,
+                            normalBookingNotificationTone = string.IsNullOrEmpty(cap.NormalBookingNotificationTone) ? "6.mp3" : cap.NormalBookingNotificationTone,
+                            requestRadius = cap.RideRadius != null ? cap.RideRadius.ToString() : "N/A",
+                            showOtherVehicles = cap.ShowOtherVehicles.ToString().ToLower(),
+                            captainID = captainID
+                        };
+
+                        response.data = settings;
+                        response.error = false;
+                        response.message = ResponseKeys.msgSuccess;
+
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                    else
+                    {
+                        response.error = true;
+                        response.message = ResponseKeys.captainNotFound;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                }
+            }
+            else
+            {
+                response.error = true;
+                response.message = ResponseKeys.invalidParameters;
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+        }
+
+        [HttpPost]
+        [Route("saveCaptainSettings")]
+        public HttpResponseMessage saveCaptainSettings([FromBody] SaveCaptainSettingsRequest model)
+        {
+            if (!string.IsNullOrEmpty(model.captainID))
+            {
+                using (CangooEntities context = new CangooEntities())
+                {
+                    var cap = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.captainID)).FirstOrDefault();
+
+                    if (cap != null)
+                    {
+                        if (!string.IsNullOrEmpty(model.laterBookingNotificationTone))
+                            cap.LaterBookingNotificationTone = model.laterBookingNotificationTone;
+                        if (!string.IsNullOrEmpty(model.normalBookingNotificationTone))
+                            cap.NormalBookingNotificationTone = model.normalBookingNotificationTone;
+                        if (!string.IsNullOrEmpty(model.requestRadius))
+                            cap.RideRadius = double.Parse(model.requestRadius);
+                        if (!string.IsNullOrEmpty(model.showOtherVehicles))
+                            cap.ShowOtherVehicles = bool.Parse(model.showOtherVehicles.ToLower());
+
+                        context.SaveChanges();
+
+                        response.error = false;
+                        response.message = ResponseKeys.msgSuccess;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                    else
+                    {
+                        response.error = true;
+                        response.message = ResponseKeys.captainNotFound;
+                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                    }
+                }
+            }
+            else
+            {
+                response.error = true;
+                response.message = ResponseKeys.invalidParameters;
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+        }
+
+        #endregion
+
+        #region Misc.
+
+        [HttpGet]
+        [Route("getContactDetails")]
+        public HttpResponseMessage getContactDetails()
+        {
+
+            using (CangooEntities context = new CangooEntities())
+            {
+                var contact = context.ContactDetails.Where(c => c.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())).FirstOrDefault();
+                if (contact != null)
+                {
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    dic = new Dictionary<dynamic, dynamic>
+                        {
+                            { "businessName", contact.BusinessName },
+                            { "openingTime", contact.OpeningTime },
+                            { "closingTime", contact.ClosingTime },
+                            { "contactPersonName", contact.ContactPersonName },
+                            { "Email", contact.Email },
+                            { "telephone", contact.Telephone },
+                            { "state", contact.State },
+                            { "city", contact.City },
+                            { "street", contact.Street },
+                            { "zipCode", contact.ZipCode }
+                        };
+                    response.data = dic;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.contactDetailsNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+            }
+        }
+
+        [HttpGet]
+        [Route("getAgreementTypes")]
+        public HttpResponseMessage getAgreementTypes()
+        {
+
+            using (CangooEntities context = new CangooEntities())
+            {
+                var agreement = context.AgreementTypes.Where(at => at.ApplicationUserTypeID == (int)SystemRoles.Captain
+                && at.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())
+                ).ToList();
+
+                if (agreement != null)
+                {
+                    List<AgreementTypeModel> lst = new List<AgreementTypeModel>();
+
+                    foreach (var item in agreement)
+                    {
+                        lst.Add(new AgreementTypeModel
+                        {
+                            TypeId = item.ID,
+                            Name = item.TypeName
+                        });
+                    }
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    response.data = lst;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.agreementTypesNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+            }
+        }
+
+        [HttpGet]
+        [Route("getAgreements")]
+        public HttpResponseMessage getAgreements(string agreementTypeId)
+        {
+            using (CangooEntities context = new CangooEntities())
+            {
+                int id = int.Parse(agreementTypeId);
+
+                var agreement = context.Agreements.Where(a => a.AgreementTypeID == id
+                && a.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())
+                ).ToList();
+                if (agreement != null)
+                {
+                    List<AgreementModel> lst = new List<AgreementModel>();
+
+                    foreach (var item in agreement)
+                    {
+                        lst.Add(new AgreementModel
+                        {
+                            AgreementId = item.AgreementID,
+                            Title = item.Name,
+                            Description = item.Detail
+                        });
+                    }
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    response.data = lst;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.agreementsNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+            }
+        }
+
+        [HttpGet]
+        [Route("getFAQs")]
+        public HttpResponseMessage getFAQs()
+        {
+
+            using (CangooEntities context = new CangooEntities())
+            {
+                var faqs = context.FAQs.Where(f => f.ApplicationUserTypeID == (int)SystemRoles.Captain
+                && f.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())
+                ).ToList();
+
+                if (faqs != null)
+                {
+                    List<FAQModel> lst = new List<FAQModel>();
+
+                    foreach (var item in faqs)
+                    {
+                        lst.Add(new FAQModel
+                        {
+                            FaqId = item.ID,
+                            Question = item.Question,
+                            Answer = item.Answer
+                        });
+                    }
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    response.data = lst;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.faqNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+            }
+        }
+
+        [HttpGet]
+        [Route("getNewsFeed")]
+        public HttpResponseMessage getNewsFeed()
+        {
+            using (CangooEntities context = new CangooEntities())
+            {
+                var feed = context.NewsFeeds.Where(nf => nf.ApplicationUserTypeID == (int)SystemRoles.Captain
+                && nf.ExpiryDate > DateTime.UtcNow
+                && nf.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())).ToList().OrderByDescending(nf => nf.CreationDate);
+                if (feed != null)
+                {
+                    List<NewsFeedModel> lst = new List<NewsFeedModel>();
+
+                    foreach (var item in feed)
+                    {
+                        lst.Add(new NewsFeedModel
+                        {
+                            FeedId = item.FeedID,
+                            ShortDescrption = item.ShortDescription,
+                            Detail = item.Detail
+                        });
+                    }
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    response.data = lst;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.feedNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+            }
+        }
+
+        [HttpGet]
+        [Route("getCurrentUTCDateTime")]
+        public HttpResponseMessage getCurrentUTCDateTime()
+        {
+            response.error = false;
+            response.data = new Dictionary<dynamic, dynamic>
+                            {
+                                {"currentDateTime", DateTime.UtcNow.ToString(Formats.DateFormat) }
+                            };
+            response.message = ResponseKeys.msgSuccess;
+            return Request.CreateResponse(HttpStatusCode.OK, response);
+        }
+
+        #endregion
+
+        #region Deprecated
 
         //[HttpPost]
         //[Route("mobilePaymentTimeout")]
@@ -1484,918 +2369,6 @@ namespace API.Controllers
         //        return Request.CreateResponse(HttpStatusCode.OK, response);
         //    }
         //}
-
-        //[HttpPost]
-        //[Route("passengerRating")]
-        //public HttpResponseMessage passengerRating([FromBody] RequestModel model)
-        //{
-        //    if (model != null && model.customerRating > 0 && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID))
-        //    {
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
-        //            var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
-        //            if (tp != null)
-        //            {
-        //                tp.UserRating = Convert.ToInt32(model.customerRating);
-        //                tp.DriverSubmittedFeedback = model.description;
-
-        //                var user = context.UserProfiles.Where(u => u.UserID == tp.UserID.ToString()).FirstOrDefault();
-
-        //                //Verify if ride was booked by business portal
-        //                if (user != null)
-        //                {
-        //                    int userTrips = (int)(user.NoOfTrips == null ? 0 : user.NoOfTrips);
-        //                    user.Rating = Math.Round((double)((((user.Rating == null ? 0 : user.Rating) * (userTrips - 1)) + tp.UserRating) / userTrips), 1, MidpointRounding.ToEven);
-        //                }
-
-        //                context.SaveChanges();
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                response.error = true;
-        //                response.message = ResponseKeys.tripNotFound;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.error = true;
-        //        response.message = ResponseKeys.invalidParameters;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
-
-        //[HttpPost]
-        //[Route("passengerFavUnFav")]
-        //public HttpResponseMessage passengerFavUnFav([FromBody] RequestModel model)
-        //{
-        //    if (model != null && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID))
-        //    {
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
-        //            var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
-        //            if (tp != null)
-        //            {
-        //                if (Request.Headers.Contains("ApplicationID"))
-        //                {
-        //                    ApplicationID = Request.Headers.GetValues("ApplicationID").First();
-        //                }
-        //                var capt = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.driverID)).FirstOrDefault();
-        //                var usr = context.UserFavoriteCaptains.Where(f => f.UserID == tp.UserID.ToString() && f.CaptainID.ToString() == model.driverID).FirstOrDefault();
-        //                if (usr == null)
-        //                {
-        //                    UserFavoriteCaptain uf = new UserFavoriteCaptain
-        //                    {
-        //                        ID = Guid.NewGuid(),
-        //                        UserID = tp.UserID.ToString(),
-        //                        CaptainID = tp.CaptainID,
-        //                        IsFavByPassenger = false,
-        //                        IsFavByCaptain = true,
-        //                        ApplicationID = Guid.Parse(ApplicationID)
-        //                    };
-
-        //                    capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == null ? 1 : (int)capt.NumberOfFavoriteUser + 1;
-        //                    context.UserFavoriteCaptains.Add(uf);
-        //                }
-        //                else
-        //                {
-        //                    if ((bool)usr.IsFavByCaptain && (bool)usr.IsFavByPassenger)
-        //                    {
-        //                        usr.IsFavByCaptain = false;
-        //                        capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == 1 ? 0 : (int)capt.NumberOfFavoriteUser - 1;
-        //                    }
-        //                    else if ((bool)usr.IsFavByCaptain)
-        //                    {
-        //                        context.UserFavoriteCaptains.Remove(usr);
-        //                        capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == 1 ? 0 : (int)capt.NumberOfFavoriteUser - 1;
-        //                    }
-        //                    else
-        //                    {
-        //                        usr.IsFavByCaptain = true;
-        //                        capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == null ? 1 : (int)capt.NumberOfFavoriteUser + 1;
-        //                    }
-        //                }
-        //                context.SaveChanges();
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                response.error = true;
-        //                response.message = ResponseKeys.tripNotFound;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.error = true;
-        //        response.message = ResponseKeys.invalidParameters;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
-
-        #endregion
-
-        //#region Priority Hour
-
-        //[HttpPost]
-        //[Route("activatePriorityHour")]
-        //public HttpResponseMessage activatePriorityHour([FromBody] PriorityHour model)
-        //{
-
-        //    using (CangooEntities context = new CangooEntities())
-        //    {
-        //        if (model != null && model.captainID != string.Empty && model.duration > 0)
-        //        {
-        //            var captain = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.captainID)).FirstOrDefault();
-        //            if (captain != null)
-        //            {
-        //                var settings = context.ApplicationSettings.Where(a => a.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())).FirstOrDefault();
-
-        //                captain.IsPriorityHoursActive = true;
-        //                captain.LastPriorityHourStartTime = Common.getUtcDateTime();
-        //                captain.LastPriorityHourEndTime = Common.getUtcDateTime().AddHours(model.duration);
-        //                captain.EarningPoints -= model.duration * (settings.AwardpointsDeduction != null ? (int)settings.AwardpointsDeduction : 100);
-        //                context.SaveChanges();
-
-        //                var priorityHourRemainingTime = ((int)(((DateTime)captain.LastPriorityHourEndTime).
-        //                                                Subtract((DateTime)captain.LastPriorityHourStartTime).TotalMinutes)).ToString();
-        //                FireBaseController fb = new FireBaseController();
-        //                fb.setPriorityHourStatus(true, priorityHourRemainingTime, model.captainID, DateTime.Parse(captain.LastPriorityHourEndTime.ToString()).ToString(Common.dateFormat), captain.EarningPoints.ToString());
-
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-        //                dic = new Dictionary<dynamic, dynamic>
-        //                            {
-        //                                { "priorityHour", model }
-        //                            };
-        //                response.data = dic;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                response.message = ResponseKeys.captainNotFound;
-        //                response.error = true;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //        else
-        //        {
-        //            response.message = ResponseKeys.invalidParameters;
-        //            response.error = true;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //    }
-        //}
-
-        //[HttpGet]
-        //[Route("getCaptainEarnedPoints")]
-        //public HttpResponseMessage getCaptainEarnedPoints(string captainID)
-        //{
-        //    if (!string.IsNullOrEmpty(captainID))
-        //    {
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
-        //            var captain = context.Captains.Where(c => c.CaptainID.ToString().Equals(captainID)).FirstOrDefault();
-        //            if (captain != null)
-        //            {
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-        //                dic = new Dictionary<dynamic, dynamic>
-        //                            {
-        //                                { "earnedPoints", captain.EarningPoints }
-        //                            };
-        //                response.data = dic;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                response.error = true;
-        //                response.message = ResponseKeys.captainNotFound;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.message = ResponseKeys.invalidParameters;
-        //        response.error = true;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
-
-        //#endregion
-
-        //#region Trip History/Upcoming
-
-        //[HttpGet]
-        //[Route("getAllUnAcceptedLaterBooking")]
-        //public HttpResponseMessage getAllUnAcceptedLaterBooking(int offset, int limit, int vehicleSeatingCapacity)
-        //{
-        //    if (offset > 0 && limit > 0 && vehicleSeatingCapacity > 0)
-        //    {
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
-        //            //UserController uc = new UserController();
-        //            var lstLaterBooking = context.spGetAllUnAcceptedLateBooking(ResellerID, ApplicationID, Common.getUtcDateTime(), (int)App_Start.TripStatus.RequestSent, vehicleSeatingCapacity, offset, limit).ToList(); //date time utc
-        //            if (lstLaterBooking.Count > 0)
-        //            {
-        //                List<ScheduleBooking> lstSB = new List<ScheduleBooking>();
-        //                foreach (var item in lstLaterBooking)
-        //                {
-        //                    dic = new Dictionary<dynamic, dynamic>() {
-        //                            { "discountType", "normal"},
-        //                            { "discountAmount", "0.00" }
-        //                        };
-
-        //                    Common.IsSpecialPromotionApplicable(item.pickupLocationLatitude, item.pickuplocationlongitude, item.DropOffLocationLatitude,
-        //                        item.DropOffLocationLongitude, ApplicationID, context, ref dic, true, item.pickUpBookingDateTime);
-
-
-        //                    Common.GetFacilities(ResellerID, ApplicationID, context, item.facilities, out List<Facilities> lstTripFacilities);
-        //                    //if (item.NoOfPerson <= vehicleSeatingCapacity)
-        //                    //{
-        //                    ScheduleBooking sb = new ScheduleBooking
-        //                    {
-        //                        tripID = item.TripID.ToString(),
-        //                        pickUplatitude = item.pickupLocationLatitude,
-        //                        pickUplongitude = item.pickuplocationlongitude,
-        //                        pickUpLocation = item.PickUpLocation,
-        //                        dropOfflatitude = item.DropOffLocationLatitude,
-        //                        dropOfflongitude = item.DropOffLocationLongitude,
-        //                        dropOffLocation = item.DropOffLocation,
-        //                        isLaterBooking = Convert.ToBoolean(item.isLaterBooking),
-        //                        passengerID = item.UserID.ToString(),
-        //                        passengerName = item.passengName,
-        //                        rating = item.Rating.ToString(),
-        //                        tripPaymentMode = item.TripPaymentMode,
-        //                        pickUpDateTime = Convert.ToDateTime(item.pickUpBookingDateTime).ToString(Common.dateFormat),
-        //                        isFav = item.favorite != null ? (bool)item.favorite : false,
-        //                        seatingCapacity = (int)item.NoOfPerson,
-        //                        estimatedDistance = item.DistanceTraveled.ToString(),
-        //                        facilities = lstTripFacilities,
-        //                        discountType = dic["discountType"],
-        //                        discountAmount = dic["discountAmount"]
-        //                    };
-        //                    lstSB.Add(sb);
-        //                    //}
-        //                }
-
-        //                dic = new Dictionary<dynamic, dynamic>
-        //                    {
-        //                        { "pendingLaterBooking", lstSB },
-        //                        { "totalRecords", lstLaterBooking.FirstOrDefault().totalRecord }
-        //                    };
-
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-        //                response.data = dic;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                dic = new Dictionary<dynamic, dynamic>
-        //                    {
-        //                        { "pendingLaterBooking", new List<ScheduleBooking>() },
-        //                        { "totalRecords", 0 }
-        //                    };
-
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-        //                response.data = dic;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.error = true;
-        //        response.message = ResponseKeys.invalidParameters;
-        //        return Request.CreateResponse(HttpStatusCode.BadRequest, response);
-        //    }
-        //}
-
-        //[HttpPost]      //Get accepted upcoming later bookings
-        //[Route("getDriverLaterBooking")]
-        //public HttpResponseMessage getDriverLaterBooking([FromBody] DriverModel model)
-        //{
-
-        //    using (CangooEntities context = new CangooEntities())
-        //    {
-        //        if (model != null && model.userID != string.Empty && model.offset > 0 && model.limit > 0)
-        //        {
-        //            //UserController uc = new UserController();
-
-        //            var lstScheduleRides = context.spCaptainLaterTrips(Common.getUtcDateTime(), model.userID, (int)App_Start.TripStatus.LaterBookingAccepted, model.offset, model.limit).ToList();
-        //            if (lstScheduleRides.Count > 0)
-        //            {
-        //                List<ScheduleBooking> lstSB = new List<ScheduleBooking>();
-        //                foreach (var item in lstScheduleRides)
-        //                {
-        //                    dic = new Dictionary<dynamic, dynamic>() {
-        //                            { "discountType", "normal"},
-        //                            { "discountAmount", "0.00" }
-        //                        };
-
-        //                    Common.IsSpecialPromotionApplicable(item.pickupLocationLatitude, item.pickuplocationlongitude, item.DropOffLocationLatitude,
-        //                        item.DropOffLocationLongitude, ApplicationID, context, ref dic, true, item.pickUpBookingDateTime);
-
-        //                    Common.GetFacilities(ResellerID, ApplicationID, context, item.facilities, out List<Facilities> lstTripFacilities);
-        //                    ScheduleBooking sb = new ScheduleBooking
-        //                    {
-        //                        tripID = item.TripID.ToString(),
-        //                        pickUplatitude = item.pickupLocationLatitude,
-        //                        pickUplongitude = item.pickuplocationlongitude,
-        //                        pickUpLocation = item.PickUpLocation,
-        //                        dropOfflatitude = item.DropOffLocationLatitude,
-        //                        dropOfflongitude = item.DropOffLocationLongitude,
-        //                        dropOffLocation = item.DropOffLocation,
-        //                        isLaterBooking = Convert.ToBoolean(item.isLaterBooking),
-        //                        passengerID = item.UserID.ToString(),
-        //                        passengerName = item.passengName,
-        //                        rating = item.Rating.ToString(),
-        //                        tripPaymentMode = item.TripPaymentMode,
-        //                        isFav = item.favorite != null ? (bool)item.favorite : false,
-        //                        pickUpDateTime = Convert.ToDateTime(item.pickUpBookingDateTime).ToString(Common.dateFormat),
-        //                        seatingCapacity = (int)item.NoOfPerson,
-        //                        estimatedDistance = item.DistanceTraveled.ToString(),
-        //                        facilities = lstTripFacilities,
-        //                        isWeb = item.isWeb,
-        //                        discountType = dic["discountType"],
-        //                        discountAmount = dic["discountAmount"],
-        //                        remainingTime = ((DateTime)item.pickUpBookingDateTime - DateTime.UtcNow).TotalSeconds
-        //                    };
-        //                    lstSB.Add(sb);
-        //                }
-
-        //                dic = new Dictionary<dynamic, dynamic>
-        //                    {
-        //                        { "laterBooking", lstSB },
-        //                        { "totalRecords", lstScheduleRides.FirstOrDefault().totalRecord }
-        //                    };
-
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-        //                response.data = dic;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                dic = new Dictionary<dynamic, dynamic>
-        //                    {
-        //                        { "laterBooking", new List<ScheduleBooking>() },
-        //                        { "totalRecords", 0 }
-        //                    };
-
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-        //                response.data = dic;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //        else
-        //        {
-        //            response.error = true;
-        //            response.message = ResponseKeys.invalidParameters;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //    }
-        //}
-
-        //[HttpGet]
-        //[Route("getDriverBookingHistory")]
-        //public HttpResponseMessage getDriverBookingHistory(string captainID, string pageNo, string pageSize, string dateTo, string dateFrom)
-        //{
-        //    if (!string.IsNullOrEmpty(captainID) && !string.IsNullOrEmpty(pageSize) && !string.IsNullOrEmpty(pageNo) &&
-        //        !string.IsNullOrEmpty(dateFrom) && !string.IsNullOrEmpty(dateTo))
-        //    {
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
-
-        //            var result = context.spCaptainTripHistory(captainID, int.Parse(pageNo), int.Parse(pageSize),
-        //                Convert.ToDateTime(dateFrom), Convert.ToDateTime(dateTo)).ToList();
-        //            if (result.Count > 0)
-        //            {
-        //                List<DriverTrips> lstTrips = new List<DriverTrips>();
-
-        //                foreach (var temp in result)
-        //                {
-        //                    Common.GetFacilities(ResellerID, ApplicationID, context, temp.facilities, out List<Facilities> lstTripFacilities);
-        //                    DriverTrips trip = new DriverTrips()
-        //                    {
-        //                        tripID = temp.tripID.ToString(),
-        //                        pickupLocationLatitude = temp.PickupLocationLatitude,
-        //                        pickupLocationLongitude = temp.PickupLocationLongitude,
-        //                        pickupLocation = temp.PickUpLocation,
-        //                        dropOffLocationLatitude = temp.DropOffLocationLatitude,
-        //                        dropOffLocationLongitude = temp.DropOffLocationLongitude,
-        //                        dropOffLocation = temp.DropOffLocation,
-        //                        bookingDateTime = Convert.ToDateTime(temp.BookingDateTime).ToString(Common.dateFormat),
-        //                        pickUpBookingDateTime = Convert.ToDateTime(temp.PickUpBookingDateTime).ToString(Common.dateFormat),
-        //                        tripArrivalDatetime = Convert.ToDateTime(temp.ArrivalDateTime).ToString(Common.dateFormat),
-        //                        tripStartDatetime = Convert.ToDateTime(temp.TripStartDatetime).ToString(Common.dateFormat),
-        //                        tripEndDatetime = Convert.ToDateTime(temp.TripEndDatetime).ToString(Common.dateFormat),
-        //                        tripStatus = temp.Status,
-        //                        facilities = lstTripFacilities,
-        //                        tip = temp.Tip.ToString(),
-        //                        fare = temp.Fare.ToString(),
-        //                        cashPayment = temp.TripCashPayment.ToString(),
-        //                        mobilePayment = temp.TripMobilePayment.ToString(),
-        //                        bookingType = temp.BookingType,
-        //                        bookingMode = temp.BookingMode,
-        //                        paymentMode = temp.PaymentMode,
-        //                        passengerName = temp.PassengerName,
-        //                        make = temp.make,
-        //                        model = temp.Model,
-        //                        plateNumber = temp.PlateNumber,
-        //                        distanceTraveled = temp.DistanceTraveled.ToString(),
-        //                        vehicleRating = temp.VehicleRating.ToString(),
-        //                        driverEarnedPoints = temp.DriverEarnedPoints.ToString(),
-        //                        driverRating = temp.DriverRating.ToString()
-        //                    };
-        //                    lstTrips.Add(trip);
-        //                }
-
-        //                DriverTripsHistory history = new DriverTripsHistory()
-        //                {
-        //                    avgDriverRating = result.FirstOrDefault().avgDriverRating.ToString(),
-        //                    avgVehicleRating = result.FirstOrDefault().avgVehicleRating.ToString(),
-        //                    totalTrips = result.FirstOrDefault().totalTrips.ToString(),
-        //                    totalFare = (result.FirstOrDefault().totalTip + result.FirstOrDefault().totalFare).ToString(),
-        //                    totalTip = result.FirstOrDefault().totalTip.ToString(),
-        //                    totalEarnedPoints = result.FirstOrDefault().totalEarnedPoints.ToString(),
-        //                    totalCashEarning = result.FirstOrDefault().totalCashEarning.ToString(),
-        //                    totalMobilePayEarning = result.FirstOrDefault().totalMobilePayEarning.ToString(),
-        //                    trips = lstTrips
-        //                };
-        //                response.data = history;
-        //            }
-        //            else
-        //            {
-        //                response.data = new DriverTripsHistory()
-        //                {
-        //                    avgDriverRating = "0",
-        //                    avgVehicleRating = "0",
-        //                    totalEarnedPoints = "0",
-        //                    totalFare = "0",
-        //                    totalTip = "0",
-        //                    totalTrips = "0",
-        //                    trips = new List<DriverTrips>()
-        //                };
-        //            }
-        //            response.error = false;
-        //            response.message = ResponseKeys.msgSuccess;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.error = true;
-        //        response.message = ResponseKeys.invalidParameters;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
-
-        //#endregion
-
-        //#region profile / settings
-
-        //[HttpGet]
-        //[Route("captainProfile")]
-        //public HttpResponseMessage captainProfile(string captainID, string vehicleID)
-        //{
-        //    if (!string.IsNullOrEmpty(captainID))
-        //    {
-        //        //TBD: Inherit this controller from another and set following proerties in that controller to remove redundancy
-        //        if (Request.Headers.Contains("ResellerID"))
-        //        {
-        //            ResellerID = Request.Headers.GetValues("ResellerID").First();
-        //        }
-
-        //        if (Request.Headers.Contains("ApplicationID"))
-        //        {
-        //            ApplicationID = Request.Headers.GetValues("ApplicationID").First();
-        //        }
-
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
-        //            var cap = context.spCaptainProfile(captainID, vehicleID, new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1)).FirstOrDefault();
-
-        //            if (cap != null)
-        //            {
-        //                Common.GetFacilities(ResellerID, ApplicationID, context, cap.Facilities, out List<Facilities> lstCaptainFacilities);
-        //                Common.GetFacilities(ResellerID, ApplicationID, context, cap.VehicleFacilities, out List<Facilities> lstVehicleFacilities);
-
-        //                var profile = new CaptainProfile()
-        //                {
-        //                    name = cap.Name,
-        //                    email = cap.Email,
-        //                    phone = cap.PhoneNumber,
-        //                    shareCode = cap.ShareCode,
-        //                    captainFacilitiesList = lstCaptainFacilities,
-        //                    make = cap.Make,
-        //                    model = cap.Model,
-        //                    number = cap.PlateNumber,
-        //                    seatingCapacity = cap.SeatingCapacity.ToString(),
-        //                    vehicleFacilitiesList = lstVehicleFacilities
-        //                    //make = "",
-        //                    //model = "",
-        //                    //number = "",
-        //                    //seatingCapacity = "",
-        //                    //vehicleFacilitiesList = new List<Facilities>()
-        //                };
-
-        //                //if (!string.IsNullOrEmpty(vehicleID))
-        //                //{
-        //                //	var veh = context.spVehicleProfile(vehicleID).FirstOrDefault();
-
-        //                //	if (veh != null)
-        //                //	{
-        //                //		GetFacilities(ResellerID, ApplicationID, context, veh.Facilities, out List<Facilities> lstVehicleFacilities);
-
-        //                //		profile.make = veh.Make;
-        //                //		profile.model = veh.Model;
-        //                //		profile.number = veh.PlateNumber;
-        //                //		profile.seatingCapacity = veh.SeatingCapacity.ToString();
-        //                //		profile.vehicleFacilitiesList = lstVehicleFacilities;
-        //                //	}
-        //                //	else
-        //                //	{
-        //                //		response.error = true;
-        //                //		response.message = ResponseKeys.vehicleNotFound;
-        //                //		return Request.CreateResponse(HttpStatusCode.OK, response);
-        //                //	}
-        //                //}
-        //                response.data = profile;
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                response.error = true;
-        //                response.message = ResponseKeys.captainNotFound;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.error = true;
-        //        response.message = ResponseKeys.invalidParameters;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
-
-        //[HttpGet]
-        //[Route("captainStats")]
-        //public HttpResponseMessage captainStats(string captainID, string vehicleID)
-        //{
-        //    if (!string.IsNullOrEmpty(captainID) && !string.IsNullOrEmpty(vehicleID))
-        //    {
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
-        //            var cap = context.spCaptainProfile(captainID, vehicleID, new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1)).FirstOrDefault();
-
-        //            if (cap != null)
-        //            {
-        //                var stats = new CaptainStats()
-        //                {
-        //                    captainRating = string.Format("{0:0.00}", cap.Rating.ToString()),
-        //                    vehicleRating = string.Format("{0:0.00}", cap.VehicleRating.ToString()),
-        //                    cashRides = cap.CashTrips.ToString(),
-        //                    mobilePayRides = cap.MobilePayTrips.ToString(),
-        //                    cashEarning = string.Format("{0:0.00}", cap.CashEarning.ToString()),
-        //                    mobilePayEarning = string.Format("{0:0.00}", cap.MobilePayEarning.ToString()),
-        //                    favPassengers = cap.NumberOfFavoriteUser.ToString(),
-        //                    memberSince = DateTime.Parse(cap.MemberSince.ToString()).ToString(Common.dateFormat),
-        //                    avgCashEarning = string.Format("{0:0.00}", cap.AverageCashEarning.ToString()),
-        //                    avgMobilePayEarning = string.Format("{0:0.00}", cap.AverageMobilePayEarning.ToString()),
-        //                    currentMonthAcceptanceRate = string.Format("{0:0.00}", cap.currentMonthAcceptanceRate),
-        //                    currentMonthOnlineHours = string.Format("{0:0.00}", cap.AverageMobilePayEarning)
-        //                };
-
-        //                response.data = stats;
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                response.error = true;
-        //                response.message = ResponseKeys.captainNotFound;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.error = true;
-        //        response.message = ResponseKeys.invalidParameters;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
-
-        //[HttpGet]
-        //[Route("getCaptainSettings")]
-        //public HttpResponseMessage getCaptainSettings(string captainID)
-        //{
-        //    if (!string.IsNullOrEmpty(captainID))
-        //    {
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
-        //            var cap = context.Captains.Where(c => c.CaptainID.ToString().Equals(captainID)).FirstOrDefault();
-
-        //            if (cap != null)
-        //            {
-        //                var settings = new CaptainSettings()
-        //                {
-        //                    laterBookingNotificationTone = string.IsNullOrEmpty(cap.LaterBookingNotificationTone) ? "6.mp3" : cap.LaterBookingNotificationTone,
-        //                    normalBookingNotificationTone = string.IsNullOrEmpty(cap.NormalBookingNotificationTone) ? "6.mp3" : cap.NormalBookingNotificationTone,
-        //                    requestRadius = cap.RideRadius != null ? cap.RideRadius.ToString() : "N/A",
-        //                    showOtherVehicles = cap.ShowOtherVehicles.ToString().ToLower(),
-        //                    captainID = captainID
-        //                };
-
-        //                response.data = settings;
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                response.error = true;
-        //                response.message = ResponseKeys.captainNotFound;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.error = true;
-        //        response.message = ResponseKeys.invalidParameters;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
-
-        //[HttpPost]
-        //[Route("saveCaptainSettings")]
-        //public HttpResponseMessage saveCaptainSettings([FromBody] CaptainSettings model)
-        //{
-        //    if (!string.IsNullOrEmpty(model.captainID))
-        //    {
-        //        using (CangooEntities context = new CangooEntities())
-        //        {
-        //            var cap = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.captainID)).FirstOrDefault();
-
-        //            if (cap != null)
-        //            {
-        //                if (!string.IsNullOrEmpty(model.laterBookingNotificationTone))
-        //                    cap.LaterBookingNotificationTone = model.laterBookingNotificationTone;
-        //                if (!string.IsNullOrEmpty(model.normalBookingNotificationTone))
-        //                    cap.NormalBookingNotificationTone = model.normalBookingNotificationTone;
-        //                if (!string.IsNullOrEmpty(model.requestRadius))
-        //                    cap.RideRadius = double.Parse(model.requestRadius);
-        //                if (!string.IsNullOrEmpty(model.showOtherVehicles))
-        //                    cap.ShowOtherVehicles = bool.Parse(model.showOtherVehicles.ToLower());
-
-        //                context.SaveChanges();
-
-        //                response.error = false;
-        //                response.message = ResponseKeys.msgSuccess;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //            else
-        //            {
-        //                response.error = true;
-        //                response.message = ResponseKeys.captainNotFound;
-        //                return Request.CreateResponse(HttpStatusCode.OK, response);
-        //            }
-        //        }
-        //    }
-        //    else
-        //    {
-        //        response.error = true;
-        //        response.message = ResponseKeys.invalidParameters;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
-
-        //#endregion
-
-        //#region Misc.
-
-        //[HttpGet]
-        //[Route("getContactDetails")]
-        //public HttpResponseMessage getContactDetails()
-        //{
-
-        //    using (CangooEntities context = new CangooEntities())
-        //    {
-        //        var contact = context.ContactDetails.Where(c => c.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())).FirstOrDefault();
-        //        if (contact != null)
-        //        {
-        //            response.error = false;
-        //            response.message = ResponseKeys.msgSuccess;
-        //            dic = new Dictionary<dynamic, dynamic>
-        //                {
-        //                    { "businessName", contact.BusinessName },
-        //                    { "openingTime", contact.OpeningTime },
-        //                    { "closingTime", contact.ClosingTime },
-        //                    { "contactPersonName", contact.ContactPersonName },
-        //                    { "Email", contact.Email },
-        //                    { "telephone", contact.Telephone },
-        //                    { "state", contact.State },
-        //                    { "city", contact.City },
-        //                    { "street", contact.Street },
-        //                    { "zipCode", contact.ZipCode }
-        //                };
-        //            response.data = dic;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //        else
-        //        {
-        //            response.error = true;
-        //            response.message = ResponseKeys.contactDetailsNotFound;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //    }
-        //}
-
-        //[HttpGet]
-        //[Route("getAgreementTypes")]
-        //public HttpResponseMessage getAgreementTypes()
-        //{
-
-        //    using (CangooEntities context = new CangooEntities())
-        //    {
-        //        var agreement = context.AgreementTypes.Where(at => at.ApplicationUserTypeID == (int)ApplicationUserTypes.Captain
-        //        && at.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())
-        //        ).ToList();
-
-        //        if (agreement != null)
-        //        {
-        //            List<AgreementTypeModel> lst = new List<AgreementTypeModel>();
-
-        //            foreach (var item in agreement)
-        //            {
-        //                lst.Add(new AgreementTypeModel
-        //                {
-        //                    TypeId = item.ID,
-        //                    Name = item.TypeName
-        //                });
-        //            }
-        //            response.error = false;
-        //            response.message = ResponseKeys.msgSuccess;
-        //            response.data = lst;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //        else
-        //        {
-        //            response.error = true;
-        //            response.message = ResponseKeys.agreementTypesNotFound;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //    }
-        //}
-
-        //[HttpGet]
-        //[Route("getAgreements")]
-        //public HttpResponseMessage getAgreements(string agreementTypeId)
-        //{
-        //    using (CangooEntities context = new CangooEntities())
-        //    {
-        //        int id = int.Parse(agreementTypeId);
-
-        //        var agreement = context.Agreements.Where(a => a.AgreementTypeID == id
-        //        && a.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())
-        //        ).ToList();
-        //        if (agreement != null)
-        //        {
-        //            List<AgreementModel> lst = new List<AgreementModel>();
-
-        //            foreach (var item in agreement)
-        //            {
-        //                lst.Add(new AgreementModel
-        //                {
-        //                    AgreementId = item.AgreementID,
-        //                    Title = item.Name,
-        //                    Description = item.Detail
-        //                });
-        //            }
-        //            response.error = false;
-        //            response.message = ResponseKeys.msgSuccess;
-        //            response.data = lst;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //        else
-        //        {
-        //            response.error = true;
-        //            response.message = ResponseKeys.agreementsNotFound;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //    }
-        //}
-
-        //[HttpGet]
-        //[Route("getFAQs")]
-        //public HttpResponseMessage getFAQs()
-        //{
-
-        //    using (CangooEntities context = new CangooEntities())
-        //    {
-        //        var faqs = context.FAQs.Where(f => f.ApplicationUserTypeID == (int)ApplicationUserTypes.Captain
-        //        && f.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())
-        //        ).ToList();
-
-        //        if (faqs != null)
-        //        {
-        //            List<FAQModel> lst = new List<FAQModel>();
-
-        //            foreach (var item in faqs)
-        //            {
-        //                lst.Add(new FAQModel
-        //                {
-        //                    FaqId = item.ID,
-        //                    Question = item.Question,
-        //                    Answer = item.Answer
-        //                });
-        //            }
-        //            response.error = false;
-        //            response.message = ResponseKeys.msgSuccess;
-        //            response.data = lst;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //        else
-        //        {
-        //            response.error = true;
-        //            response.message = ResponseKeys.faqNotFound;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //    }
-        //}
-
-        //[HttpGet]
-        //[Route("getNewsFeed")]
-        //public HttpResponseMessage getNewsFeed()
-        //{
-        //    using (CangooEntities context = new CangooEntities())
-        //    {
-        //        var feed = context.NewsFeeds.Where(nf => nf.ApplicationUserTypeID == (int)ApplicationUserTypes.Captain
-        //        && nf.ExpiryDate > DateTime.UtcNow
-        //        && nf.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())).ToList().OrderByDescending(nf => nf.CreationDate);
-        //        if (feed != null)
-        //        {
-        //            List<NewsFeedModel> lst = new List<NewsFeedModel>();
-
-        //            foreach (var item in feed)
-        //            {
-        //                lst.Add(new NewsFeedModel
-        //                {
-        //                    FeedId = item.FeedID,
-        //                    ShortDescrption = item.ShortDescription,
-        //                    Detail = item.Detail
-        //                });
-        //            }
-        //            response.error = false;
-        //            response.message = ResponseKeys.msgSuccess;
-        //            response.data = lst;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //        else
-        //        {
-        //            response.error = true;
-        //            response.message = ResponseKeys.feedNotFound;
-        //            return Request.CreateResponse(HttpStatusCode.OK, response);
-        //        }
-        //    }
-        //}
-
-        //[HttpGet]
-        //[Route("getCurrentUTCDateTime")]
-        //public HttpResponseMessage getCurrentUTCDateTime()
-        //{
-        //    response.error = false;
-        //    response.data = new Dictionary<dynamic, dynamic>
-        //                    {
-        //                        {"currentDateTime", Common.getUtcDateTime().ToString(Common.dateFormat) }
-        //                    };
-        //    response.message = ResponseKeys.msgSuccess;
-        //    return Request.CreateResponse(HttpStatusCode.OK, response);
-        //}
-
-        //#endregion
-
-        #region Deprecated
 
         //[HttpPost]
         //public HttpResponseMessage searchUserByPhone([FromBody] RequestModel model)
@@ -2827,98 +2800,93 @@ namespace API.Controllers
             }
         }
 
-        //public void ApplyPromoAdjustWalletUpdateVoucherAmount(string voucherUsedAmount, string walletUsedAmount, string promoDiscountAmount, Trip trip, CangooEntities context)
-        //{
-        //    //If voucher is applied - Wallet and PromoDiscount can't be applied
+        private void ApplyPromoAdjustWalletUpdateVoucherAmount(string voucherUsedAmount, string walletUsedAmount, string promoDiscountAmount, Trip trip, CangooEntities context)
+        {
+            //If voucher is applied - Wallet and PromoDiscount can't be applied
 
-        //    if (Convert.ToDecimal(voucherUsedAmount) == 0)
-        //    {
-        //        Common.RefundFullVoucherAmount(trip, context);
-        //    }
+            if (Convert.ToDecimal(voucherUsedAmount) == 0)
+            {
+                VoucherService.RefundFullVoucherAmount(trip, context);
+            }
 
-        //    if (Convert.ToDecimal(voucherUsedAmount) > 0)
-        //    {
-        //        trip.PromoDiscount = 0;
-        //        trip.WalletAmountUsed = 0;
+            if (Convert.ToDecimal(voucherUsedAmount) > 0)
+            {
+                trip.PromoDiscount = 0;
+                trip.WalletAmountUsed = 0;
 
-        //        var voucher = context.CompanyVouchers.Where(cv => cv.VoucherID == trip.VoucherID && cv.isUsed == false).FirstOrDefault();
-        //        if (voucher != null)
-        //        {
-        //            //Add extra voucher amount back to company balance.
-        //            if (voucher.Amount > Convert.ToDecimal(voucherUsedAmount))
-        //            {
-        //                var company = context.Companies.Where(c => c.CompanyID == voucher.CompanyID).FirstOrDefault();
-        //                company.CompanyBalance += (voucher.Amount - Convert.ToDecimal(voucherUsedAmount));
-        //                voucher.Amount = Convert.ToDecimal(voucherUsedAmount);
-        //            }
-        //            voucher.isUsed = true;
-        //        }
-        //    }
-        //    else
-        //    {
-        //        trip.VoucherID = null;
+                var voucher = context.CompanyVouchers.Where(cv => cv.VoucherID == trip.VoucherID && cv.isUsed == false).FirstOrDefault();
+                if (voucher != null)
+                {
+                    //Add extra voucher amount back to company balance.
+                    if (voucher.Amount > Convert.ToDecimal(voucherUsedAmount))
+                    {
+                        var company = context.Companies.Where(c => c.CompanyID == voucher.CompanyID).FirstOrDefault();
+                        company.CompanyBalance += (voucher.Amount - Convert.ToDecimal(voucherUsedAmount));
+                        voucher.Amount = Convert.ToDecimal(voucherUsedAmount);
+                    }
+                    voucher.isUsed = true;
+                }
+            }
+            else
+            {
+                trip.VoucherID = null;
 
-        //        trip.PromoDiscount = Convert.ToDecimal(promoDiscountAmount);
+                trip.PromoDiscount = Convert.ToDecimal(promoDiscountAmount);
 
-        //        if (Convert.ToDecimal(promoDiscountAmount) > 0)
-        //        {
-        //            var userPromo = context.UserPromos.Where(up => up.PromoID.ToString().Equals(trip.PromoCodeID.ToString())
-        //            && up.UserID.ToString().ToLower().Equals(trip.UserID.ToString().ToLower())
-        //            && up.isActive == true).FirstOrDefault();
-        //            if (userPromo != null)
-        //            {
-        //                userPromo.NoOfUsage += 1;
-        //            }
-        //        }
-        //    }
+                if (Convert.ToDecimal(promoDiscountAmount) > 0)
+                {
+                    var userPromo = context.UserPromos.Where(up => up.PromoID.ToString().Equals(trip.PromoCodeID.ToString())
+                    && up.UserID.ToString().ToLower().Equals(trip.UserID.ToString().ToLower())
+                    && up.isActive == true).FirstOrDefault();
+                    if (userPromo != null)
+                    {
+                        userPromo.NoOfUsage += 1;
+                    }
+                }
+            }
 
-        //    trip.WalletAmountUsed = Convert.ToDecimal(walletUsedAmount);
+            trip.WalletAmountUsed = Convert.ToDecimal(walletUsedAmount);
 
-        //    if (Convert.ToDecimal(walletUsedAmount) > 0)
-        //    {
-        //        var user = context.UserProfiles.Where(up => up.UserID.Equals(trip.UserID.ToString())).FirstOrDefault();
-        //        if (user != null)
-        //        {
-        //            user.WalletBalance -= Convert.ToDecimal(walletUsedAmount);
-        //        }
-        //    }
+            if (Convert.ToDecimal(walletUsedAmount) > 0)
+            {
+                var user = context.UserProfiles.Where(up => up.UserID.Equals(trip.UserID.ToString())).FirstOrDefault();
+                if (user != null)
+                {
+                    user.WalletBalance -= Convert.ToDecimal(walletUsedAmount);
+                }
+            }
 
-        //    //TBD: Check if any of the amounts is > 0, only then save db changes
+            //TBD: Check if any of the amounts is > 0, only then save db changes
 
-        //    context.SaveChanges();
-        //}
+            context.SaveChanges();
+        }
 
-        //public bool CheckIfAlreadyPaid(string totalFare, string tripID, string driverID, ref Dictionary<dynamic, dynamic> dic, bool isWalkIn)
-        //{
-        //    using (CangooEntities context = new CangooEntities())
-        //    {
-        //        var trip = context.Trips.Where(t => t.TripID.ToString().Equals(tripID)).FirstOrDefault();
-        //        if (trip == null)
-        //            return false;
+        private async Task<bool> CheckIfAlreadyPaid(string totalFare, string tripID, string driverID, Dictionary<dynamic, dynamic> dic, bool isWalkIn)
+        {
+            using (CangooEntities context = new CangooEntities())
+            {
+                var trip = context.Trips.Where(t => t.TripID.ToString().Equals(tripID)).FirstOrDefault();
+                if (trip == null)
+                    return false;
 
-        //        if (trip.TripStatusID == (int)TripStatuses.Completed)
-        //        {
-        //            if (!isWalkIn)
-        //            {
-        //                FireBaseController fb = new FireBaseController();
-        //                fb.fareAlreadyPaidFreeUserAndDriver(tripID, trip.UserID.ToString(), driverID);
+                if (trip.TripStatusID == (int)TripStatuses.Completed)
+                {
+                    if (!isWalkIn)
+                    {
+                        await FirebaseService.fareAlreadyPaidFreeUserAndDriver(tripID, trip.UserID.ToString(), driverID);
+                        dic.Add("tripID", trip.TripID.ToString());
+                        dic.Add("tip", trip.Tip == null ? "0.00" : trip.Tip.ToString());
+                        dic.Add("amount", string.Format("{0:0.00}", Convert.ToDouble(totalFare)));
+                    }
 
-        //                dic = new Dictionary<dynamic, dynamic>
-        //                    {
-        //                        { "tripID", trip.TripID.ToString() },
-        //                        { "tip", trip.Tip == null ? "0.00" : trip.Tip.ToString() },
-        //                        { "amount", string.Format("{0:0.00}", Convert.ToDouble(totalFare)) }
-        //                    };
-        //            }
-
-        //            return true;
-        //        }
-        //        else
-        //        {
-        //            return false;
-        //        }
-        //    }
-        //}
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+        }
 
         private void CheckWalletBalance(string userID, CangooEntities context, ref Dictionary<dynamic, dynamic> dic)
         {
@@ -3014,21 +2982,21 @@ namespace API.Controllers
             }
         }
 
-        //private void SendInvoice(InvoiceModel model)
-        //{
-        //    var headerLink = this.Url.Link("Default", new { Controller = "Invoice", Action = "Header" });
-        //    var footerLink = this.Url.Link("Default", new { Controller = "Invoice", Action = "Footer" });
+        private async Task SendInvoice(InvoiceModel model)
+        {
+            var headerLink = this.Url.Link("Default", new { Controller = "Invoice", Action = "Header" });
+            var footerLink = this.Url.Link("Default", new { Controller = "Invoice", Action = "Footer" });
 
-        //    System.Web.Routing.RouteData route = new System.Web.Routing.RouteData();
-        //    route.Values.Add("action", "SendInvoice");
-        //    route.Values.Add("controller", "Invoice");
+            System.Web.Routing.RouteData route = new System.Web.Routing.RouteData();
+            route.Values.Add("action", "SendInvoice");
+            route.Values.Add("controller", "Invoice");
 
-        //    InvoiceController controllerObj = new InvoiceController();
-        //    System.Web.Mvc.ControllerContext newContext = new System.Web.Mvc.ControllerContext(new HttpContextWrapper(System.Web.HttpContext.Current), route, controllerObj);
-        //    controllerObj.ControllerContext = newContext;
+            InvoiceController controllerObj = new InvoiceController();
+            System.Web.Mvc.ControllerContext newContext = new System.Web.Mvc.ControllerContext(new HttpContextWrapper(System.Web.HttpContext.Current), route, controllerObj);
+            controllerObj.ControllerContext = newContext;
 
-        //    controllerObj.SendInvoice(model, headerLink, footerLink);
-        //}
+            await controllerObj.SendInvoice(model, headerLink, footerLink);
+        }
 
         #endregion
     }
