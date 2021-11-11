@@ -879,11 +879,22 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("add-promo-code")]
-        public async Task<HttpResponseMessage> AddPromoCode([FromBody] string model)
+        public async Task<HttpResponseMessage> AddPromoCode(AddPromoCode model)
         {
-            await PromoCodeService.AddUserPromoCode();
-            return Request.CreateResponse(HttpStatusCode.OK);
-            
+            var result = await PromoCodeService.AddUserPromoCode(model);
+            if (result > 0)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.Forbidden, new ResponseWrapper { Message = ResponseKeys.failedToAdd });
+            }
+
         }
 
         [HttpGet]

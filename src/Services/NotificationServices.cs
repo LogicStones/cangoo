@@ -21,8 +21,37 @@ namespace Services
                                                                         "WHERE ReceiverID = @receiverId and IsActive= @active",
                                                                         new SqlParameter("@receiverId",ReceiverId),
                                                                         new SqlParameter("@active",true));
-                return await query.ToListAsync();
+                var result = await query.ToListAsync();
+                var lstNotificationDetails = new List<NotificationDetails>();
+                if (result != null)
+                {
+                    foreach (var item in result)
+                    {
+                        if (DateTime.Compare(DateTime.Parse((Convert.ToDateTime(item.ExpiryDate).ToString())), DateTime.Parse(getUtcDateTime().ToString())) > 0)
+                        {
+                            lstNotificationDetails.Add(new NotificationDetails
+                            {
+                                PopupID = item.PopupID,
+                                ReceiverID = item.ReceiverID,
+                                Title = item.Title,
+                                RidirectURL = item.RidirectURL,
+                                StartDate = item.StartDate,
+                                ExpiryDate = item.ExpiryDate,
+                                Text = item.Text,
+                                LinkButtonText = item.LinkButtonText,
+                                Image = item.Image,
+                                ButtonText = item.ButtonText
+                            });
+                        }
+                    }
+                }
+                return lstNotificationDetails;
             }
+        }
+
+        public static DateTime getUtcDateTime()
+        {
+            return DateTime.UtcNow;
         }
     }
 }

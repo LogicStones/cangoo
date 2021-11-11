@@ -1,4 +1,5 @@
-﻿using DatabaseModel;
+﻿using Constants;
+using DatabaseModel;
 using DTOs.API;
 using System;
 using System.Collections.Generic;
@@ -18,14 +19,38 @@ namespace Services
                 var query = dbContext.Database.SqlQuery<PromoCodeDetails>("exec spGetUserPromos @passengerId,@active", 
                                                                                                         new SqlParameter("@passengerId", passengerId),
                                                                                                         new SqlParameter("@active",true));
-                return await query.ToListAsync();
+                var result = await query.ToListAsync();
+                var lstPromoCodeDetails = new List<PromoCodeDetails>();
+                if (result != null)
+                {
+                    foreach(var item in result)
+                    {
+                        if (DateTime.Compare(DateTime.Parse((Convert.ToDateTime(item.ExpiryDate).ToString())), DateTime.Parse(getUtcDateTime().ToString())) > 0)
+                        {
+                            lstPromoCodeDetails.Add(new PromoCodeDetails
+                            {
+                                ID = item.ID,
+                                PromoCode = item.PromoCode,
+                                NoOfUsage = item.NoOfUsage,
+                                PromoID = item.PromoID,
+                                StartDate = item.StartDate,
+                                ExpiryDate = item.ExpiryDate,
+                                Amount = item.Amount,
+                                PromotionName = item.PromotionName,
+                                Repetition = item.Repetition
+                            });
+                        }
+                    }
+                }
+                return lstPromoCodeDetails;
             }
         }
 
-        public static async Task AddUserPromoCode()
+        public static async Task<int> AddUserPromoCode(AddPromoCode model)
         {
             using(CangooEntities dbcontext=new CangooEntities())
             {
+                return 1;
                 //if (!string.IsNullOrEmpty(model.passengerID) && !string.IsNullOrEmpty(model.promoCode))
                 //{
                 //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
@@ -135,6 +160,11 @@ namespace Services
                 //    return Request.CreateResponse(HttpStatusCode.OK, response);
                 //}
             }
+        }
+
+        public static DateTime getUtcDateTime()
+        {
+            return DateTime.UtcNow;
         }
     }
 }
