@@ -16,7 +16,7 @@ namespace DTOs.API
         public string StartDate { get; set; } = "";
         public string ExpiryDate { get; set; } = "";
         public string Amount { get; set; } = "";
-        public string PromotionName { get; set; } = "";
+        public string PaymentType { get; set; } = "";
         public string Repetition { get; set; } = "";
 
     }

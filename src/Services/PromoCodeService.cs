@@ -36,7 +36,7 @@ namespace Services
                                 StartDate = item.StartDate,
                                 ExpiryDate = item.ExpiryDate,
                                 Amount = item.Amount,
-                                PromotionName = item.PromotionName,
+                                PaymentType = item.PaymentType,
                                 Repetition = item.Repetition
                             });
                         }
