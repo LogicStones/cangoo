@@ -1479,9 +1479,15 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("read-notification")]
-        public async Task<HttpResponseMessage> ReadNotification(string model)
+        public async Task<HttpResponseMessage> ReadNotification([FromUri] GetReadNotification model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var FullNotifications = await NotificationServices.GetFullReadNotification(model.FeedId);
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = FullNotifications
+            });
         }
 
         #endregion  

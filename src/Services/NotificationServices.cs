@@ -15,12 +15,9 @@ namespace Services
         {
             using (CangooEntities dbcontext=new CangooEntities())
             {
-                var query = dbcontext.Database.SqlQuery<NotificationDetails>("SELECT CAST(PopupID as varchar(36))PopupID,CAST(ReceiverID as varchar(36))ReceiverID," +
-                                                                        "Title,RidirectURL,Text,LinkButtonText,CAST(StartDate as varchar(36))StartDate,Image," +
-                                                                        "CAST(ExpiryDate as varchar(36))ExpiryDate,ButtonText from Notifications " +
-                                                                        "WHERE ReceiverID = @receiverId and IsActive= @active",
-                                                                        new SqlParameter("@receiverId",ReceiverId),
-                                                                        new SqlParameter("@active",true));
+                var query = dbcontext.Database.SqlQuery<NotificationDetails>("SELECT CAST(FeedID as varchar(36))FeedID,Title,ShortDescription,CAST(CreationDate as varchar(36))CreationDate," +
+                                                                                "CAST(ExpiryDate as varchar(36))ExpiryDate FROM Notifications WHERE ApplicationUserTypeID = @usertype",
+                                                                        new SqlParameter("@usertype",int.Parse(ReceiverId)));
                 var result = await query.ToListAsync();
                 var lstNotificationDetails = new List<NotificationDetails>();
                 if (result != null)
@@ -31,21 +28,28 @@ namespace Services
                         {
                             lstNotificationDetails.Add(new NotificationDetails
                             {
-                                PopupID = item.PopupID,
-                                ReceiverID = item.ReceiverID,
+                                FeedId = item.FeedId,
                                 Title = item.Title,
-                                RidirectURL = item.RidirectURL,
-                                StartDate = item.StartDate,
+                                ShortDescription = item.ShortDescription,
+                                CreationDate = item.CreationDate,
                                 ExpiryDate = item.ExpiryDate,
-                                Text = item.Text,
-                                LinkButtonText = item.LinkButtonText,
-                                Image = item.Image,
-                                ButtonText = item.ButtonText
                             });
                         }
                     }
                 }
                 return lstNotificationDetails;
+            }
+        }
+
+
+        public static async Task<List<GetReadNotificationResponse>> GetFullReadNotification(string FeedId)
+        {
+            using(CangooEntities dbcontext=new CangooEntities())
+            {
+                var query = dbcontext.Database.SqlQuery<GetReadNotificationResponse>("SELECT CAST(FeedID as varchar(36))FeedID,Title,Detail,CAST(CreationDate as varchar(36))CreationDate," +
+                                                                            "CAST(ExpiryDate as varchar(36))ExpiryDate FROM Notifications WHERE FeedID = @feedid",
+                                                                        new SqlParameter("@feedid", FeedId));
+                return await query.ToListAsync();
             }
         }
 

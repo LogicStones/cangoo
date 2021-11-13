@@ -9,21 +9,31 @@ namespace DTOs.API
 {
     public class NotificationDetails
     {
-        public string PopupID { get; set; } = "";
-        public string ReceiverID { get; set; } = "";
+        public string FeedId { get; set; } = "";
         public string Title { get; set; } = "";
-        public string RidirectURL { get; set; } = "";
-        public string Text { get; set; } = "";
-        public string LinkButtonText { get; set; } = "";
-        public string StartDate { get; set; } = "";
-        public string Image { get; set; } = "";
+        public string ShortDescription { get; set; } = "";
+        public string CreationDate { get; set; } = "";
         public string ExpiryDate { get; set; } = "";
-        public string ButtonText { get; set; } = "";
+    }
+
+    public class GetReadNotificationResponse
+    {
+        public string FeedId { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string Detail { get; set; } = "";
+        public string ExpiryDate { get; set; } = "";
+        public string CreationDate { get; set; } = "";
     }
 
     public class GetNotificationListModel
     {
         [Required]
         public string ReceiverId { get; set; }
+    }
+
+    public class GetReadNotification
+    {
+        [Required]
+        public string FeedId { get; set; }
     }
 }
