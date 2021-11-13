@@ -63,7 +63,7 @@ namespace API.Controllers
             {
                 var applicationSettings = await ApplicationSettingService.GetApplicationSettings(ConfigurationManager.AppSettings["ApplicationID"].ToString());
 
-                FirebaseDriver driver = JsonConvert.DeserializeObject<FirebaseDriver>(JsonConvert.SerializeObject(od.Value));
+                FirebaseDriver driver = od.Value;// JsonConvert.DeserializeObject<FirebaseDriver>(JsonConvert.SerializeObject(od.Value));
 
                 if (string.IsNullOrEmpty(driver.driverID)) //Dirty data
                 {
@@ -102,7 +102,7 @@ namespace API.Controllers
 
             foreach (var od in onlineDrivers)
             {
-                FirebaseDriver driver = JsonConvert.DeserializeObject<FirebaseDriver>(JsonConvert.SerializeObject(od.Value));
+                FirebaseDriver driver = od.Value;// JsonConvert.DeserializeObject<FirebaseDriver>(JsonConvert.SerializeObject(od.Value));
                 if (string.IsNullOrEmpty(driver.driverID) || driver.location == null) //Dirty data
                 {
                     continue;
@@ -114,15 +114,8 @@ namespace API.Controllers
                     {
                         if (DateTime.Compare(DateTime.Parse(driver.priorityHourEndTime), DateTime.Parse(DateTime.UtcNow.ToString(Formats.DateFormat))) <= 0)
                         {
-                            var captain = await DriverService.GetDriverById(driver.driverID);
-                            captain.IsPriorityHoursActive = false;
-
-                            await DriverService.UpdatePriorityHourLog(
-                                Guid.Parse(driver.driverID),
-                                DateTime.Parse(captain.LastPriorityHourEndTime.ToString()),
-                                DateTime.Parse(captain.LastPriorityHourStartTime.ToString()));
-
-                            await FirebaseService.SetPriorityHourStatus(false, "", driver.driverID, "", captain.EarningPoints.ToString());
+                            await FirebaseService.SetPriorityHourStatus(false, "", driver.driverID, "",
+                                (await DriverService.UpdatePriorityHourLog(Guid.Parse(driver.driverID))).ToString());
                         }
                         else
                         {
