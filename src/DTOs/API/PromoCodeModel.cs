@@ -21,11 +21,33 @@ namespace DTOs.API
 
     }
 
+    public class GetPassengerPromo
+    {
+        [Required]
+        public string PassengerId { get; set; }
+    }
+
     public class AddPromoCode
     {
         [Required]
         public string PromoCode { get; set; }
         [Required]
         public string PassengerId { get; set; }
+    }
+
+    public class AddUserPromoResponse
+    {
+        [Required]
+        public string Amount { get; set; }
+        [Required]
+        public string PromoType { get; set; }
+        [Required]
+        public string PromoCode { get; set; }
+        [Required]
+        public string ExpiryDate { get; set; }
+        [Required]
+        public string AllowedRepition { get; set; }
+        [Required]
+        public string NoOfUsage { get; set; }
     }
 }

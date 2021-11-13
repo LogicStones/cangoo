@@ -69,6 +69,12 @@ namespace DTOs.API
         public string ID { get; set; } = "";
     }
 
+    public class GetRecentLocationList
+    {
+        [Required]
+        public string PassengerId { get; set; }
+    }
+
     public class UpdatePassengerPlaceRequest : PlaceDetails
     {
         [Required]

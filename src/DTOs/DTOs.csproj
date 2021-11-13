@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API\AuthenticationModels.cs" />
+    <Compile Include="API\InviteCodeModel.cs" />
     <Compile Include="Shared\CancelReasonsModels.cs" />
     <Compile Include="API\DriverModel.cs" />
     <Compile Include="API\FareModels.cs" />

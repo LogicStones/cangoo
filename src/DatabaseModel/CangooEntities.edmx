@@ -3832,6 +3832,20 @@
             <Parameter Name="isAtPickupLocation" Mode="In" Type="Boolean" />
             <Parameter Name="rideCancelDateTime" Mode="In" Type="DateTime" />
           </FunctionImport>
+          <FunctionImport Name="spGetCompanyVehicle" ReturnType="Collection(CangooModel.spGetCompanyVehicle_Result)">
+          <Parameter Name="companyID" Mode="In" Type="String" />
+          </FunctionImport>
+          <FunctionImport Name="spGetUserPromos" ReturnType="Collection(CangooModel.spGetUserPromos_Result)">
+            <Parameter Name="passengerId" Mode="In" Type="Guid" />
+            <Parameter Name="active" Mode="In" Type="Boolean" />
+          </FunctionImport>
+          <FunctionImport Name="spVehicleBookedUnBooked" ReturnType="Collection(CangooModel.spVehicleBookedUnBooked_Result)">
+            <Parameter Name="captainID" Mode="In" Type="String" />
+            <Parameter Name="deviceToken" Mode="In" Type="String" />
+            <Parameter Name="vehicleID" Mode="In" Type="String" />
+            <Parameter Name="LogIndateTime" Mode="In" Type="DateTime" />
+            <Parameter Name="status" Mode="In" Type="Boolean" />
+          </FunctionImport>
           <EntitySet Name="Agreements" EntityType="CangooModel.Agreement" />
           <EntitySet Name="AgreementTypes" EntityType="CangooModel.AgreementType" />
           <EntitySet Name="Applications" EntityType="CangooModel.Application" />
@@ -3925,20 +3939,6 @@
             <End Role="AspNetRole" EntitySet="AspNetRoles" />
             <End Role="AspNetUser" EntitySet="AspNetUsers" />
           </AssociationSet>
-          <FunctionImport Name="spGetCompanyVehicle" ReturnType="Collection(CangooModel.spGetCompanyVehicle_Result)">
-          <Parameter Name="companyID" Mode="In" Type="String" />
-          </FunctionImport>
-          <FunctionImport Name="spGetUserPromos" ReturnType="Collection(CangooModel.spGetUserPromos_Result)">
-            <Parameter Name="passengerId" Mode="In" Type="Guid" />
-            <Parameter Name="active" Mode="In" Type="Boolean" />
-          </FunctionImport>
-          <FunctionImport Name="spVehicleBookedUnBooked" ReturnType="Collection(CangooModel.spVehicleBookedUnBooked_Result)">
-            <Parameter Name="captainID" Mode="In" Type="String" />
-            <Parameter Name="deviceToken" Mode="In" Type="String" />
-            <Parameter Name="vehicleID" Mode="In" Type="String" />
-            <Parameter Name="LogIndateTime" Mode="In" Type="DateTime" />
-            <Parameter Name="status" Mode="In" Type="Boolean" />
-          </FunctionImport>
           </EntityContainer>
         <ComplexType Name="FetchAdminAnnualEarningAndProfit_Result">
           <Property Type="String" Name="Month" Nullable="true" MaxLength="30" />
@@ -6056,6 +6056,43 @@
           <Property Type="String" Name="DeviceToken" Nullable="true" />
           <Property Type="Double" Name="EarningPoints" Nullable="true" />
         </ComplexType>
+        <ComplexType Name="spGetCompanyVehicle_Result">
+          <Property Type="Guid" Name="VehicleID" Nullable="false" />
+          <Property Type="String" Name="PlateNumber" Nullable="true" MaxLength="100" />
+          <Property Type="Boolean" Name="isActive" Nullable="true" />
+          <Property Type="Boolean" Name="isOccupied" Nullable="false" />
+          <Property Type="String" Name="Model" Nullable="true" MaxLength="150" />
+          <Property Type="String" Name="Make" Nullable="true" MaxLength="100" />
+          <Property Type="Int32" Name="SeatingCapacity" Nullable="true" />
+          <Property Type="Int32" Name="OccupiedBy" Nullable="true" />
+          <Property Type="Guid" Name="CompanyID" Nullable="true" />
+        </ComplexType>
+        <ComplexType Name="spGetUserPromos_Result">
+          <Property Type="String" Name="ID" Nullable="true" MaxLength="36" />
+          <Property Type="String" Name="PromoID" Nullable="true" MaxLength="36" />
+          <Property Type="String" Name="NoOfUsage" Nullable="true" MaxLength="36" />
+          <Property Type="String" Name="PaymentType" Nullable="false" MaxLength="10" />
+          <Property Type="String" Name="PromoCode" Nullable="true" MaxLength="50" />
+          <Property Type="String" Name="StartDate" Nullable="true" MaxLength="36" />
+          <Property Type="String" Name="ExpiryDate" Nullable="true" MaxLength="36" />
+          <Property Type="String" Name="Amount" Nullable="true" MaxLength="36" />
+          <Property Type="String" Name="Repetition" Nullable="true" MaxLength="36" />
+        </ComplexType>
+        <ComplexType Name="spVehicleBookedUnBooked_Result">
+          <Property Type="Int32" Name="MakeID" Nullable="false" />
+          <Property Type="String" Name="Make" Nullable="true" MaxLength="100" />
+          <Property Type="Int32" Name="ModelID" Nullable="false" />
+          <Property Type="String" Name="Model" Nullable="true" MaxLength="150" />
+          <Property Type="Int32" Name="SeatingCapacity" Nullable="true" />
+          <Property Type="String" Name="Categories" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Category" Nullable="false" MaxLength="1" />
+          <Property Type="Guid" Name="VehicleID" Nullable="false" />
+          <Property Type="String" Name="PlateNumber" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Color" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Facilities" Nullable="false" MaxLength="100" />
+          <Property Type="String" Name="RegistrationYear" Nullable="true" MaxLength="10" />
+          <Property Type="Guid" Name="CompanyID" Nullable="true" />
+        </ComplexType>
         <EntityType Name="Agreement">
           <Key>
             <PropertyRef Name="AgreementID" />
@@ -7443,43 +7480,6 @@
           <End Type="CangooModel.AspNetRole" Role="AspNetRole" Multiplicity="*" />
           <End Type="CangooModel.AspNetUser" Role="AspNetUser" Multiplicity="*" />
         </Association>
-        <ComplexType Name="spGetCompanyVehicle_Result">
-          <Property Type="Guid" Name="VehicleID" Nullable="false" />
-          <Property Type="String" Name="PlateNumber" Nullable="true" MaxLength="100" />
-          <Property Type="Boolean" Name="isActive" Nullable="true" />
-          <Property Type="Boolean" Name="isOccupied" Nullable="false" />
-          <Property Type="String" Name="Model" Nullable="true" MaxLength="150" />
-          <Property Type="String" Name="Make" Nullable="true" MaxLength="100" />
-          <Property Type="Int32" Name="SeatingCapacity" Nullable="true" />
-          <Property Type="Int32" Name="OccupiedBy" Nullable="true" />
-          <Property Type="Guid" Name="CompanyID" Nullable="true" />
-        </ComplexType>
-        <ComplexType Name="spGetUserPromos_Result">
-          <Property Type="String" Name="ID" Nullable="true" MaxLength="36" />
-          <Property Type="String" Name="PromoID" Nullable="true" MaxLength="36" />
-          <Property Type="String" Name="NoOfUsage" Nullable="true" MaxLength="36" />
-          <Property Type="String" Name="PaymentType" Nullable="false" MaxLength="10" />
-          <Property Type="String" Name="PromoCode" Nullable="true" MaxLength="50" />
-          <Property Type="String" Name="StartDate" Nullable="true" MaxLength="36" />
-          <Property Type="String" Name="ExpiryDate" Nullable="true" MaxLength="36" />
-          <Property Type="String" Name="Amount" Nullable="true" MaxLength="36" />
-          <Property Type="String" Name="Repetition" Nullable="true" MaxLength="36" />
-        </ComplexType>
-        <ComplexType Name="spVehicleBookedUnBooked_Result">
-          <Property Type="Int32" Name="MakeID" Nullable="false" />
-          <Property Type="String" Name="Make" Nullable="true" MaxLength="100" />
-          <Property Type="Int32" Name="ModelID" Nullable="false" />
-          <Property Type="String" Name="Model" Nullable="true" MaxLength="150" />
-          <Property Type="Int32" Name="SeatingCapacity" Nullable="true" />
-          <Property Type="String" Name="Categories" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="Category" Nullable="false" MaxLength="1" />
-          <Property Type="Guid" Name="VehicleID" Nullable="false" />
-          <Property Type="String" Name="PlateNumber" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="Color" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="Facilities" Nullable="false" MaxLength="100" />
-          <Property Type="String" Name="RegistrationYear" Nullable="true" MaxLength="10" />
-          <Property Type="Guid" Name="CompanyID" Nullable="true" />
-        </ComplexType>
         </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -10187,6 +10187,55 @@
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="spGetCompanyVehicle" FunctionName="CangooModel.Store.spGetCompanyVehicle">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CangooModel.spGetCompanyVehicle_Result">
+                <ScalarProperty Name="VehicleID" ColumnName="VehicleID" />
+                <ScalarProperty Name="PlateNumber" ColumnName="PlateNumber" />
+                <ScalarProperty Name="isActive" ColumnName="isActive" />
+                <ScalarProperty Name="isOccupied" ColumnName="isOccupied" />
+                <ScalarProperty Name="Model" ColumnName="Model" />
+                <ScalarProperty Name="Make" ColumnName="Make" />
+                <ScalarProperty Name="SeatingCapacity" ColumnName="SeatingCapacity" />
+                <ScalarProperty Name="OccupiedBy" ColumnName="OccupiedBy" />
+                <ScalarProperty Name="CompanyID" ColumnName="CompanyID" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="spGetUserPromos" FunctionName="CangooModel.Store.spGetUserPromos">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CangooModel.spGetUserPromos_Result">
+                <ScalarProperty Name="ID" ColumnName="ID" />
+                <ScalarProperty Name="PromoID" ColumnName="PromoID" />
+                <ScalarProperty Name="NoOfUsage" ColumnName="NoOfUsage" />
+                <ScalarProperty Name="PaymentType" ColumnName="PaymentType" />
+                <ScalarProperty Name="PromoCode" ColumnName="PromoCode" />
+                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
+                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="Repetition" ColumnName="Repetition" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="spVehicleBookedUnBooked" FunctionName="CangooModel.Store.spVehicleBookedUnBooked">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CangooModel.spVehicleBookedUnBooked_Result">
+                <ScalarProperty Name="MakeID" ColumnName="MakeID" />
+                <ScalarProperty Name="Make" ColumnName="Make" />
+                <ScalarProperty Name="ModelID" ColumnName="ModelID" />
+                <ScalarProperty Name="Model" ColumnName="Model" />
+                <ScalarProperty Name="SeatingCapacity" ColumnName="SeatingCapacity" />
+                <ScalarProperty Name="Categories" ColumnName="Categories" />
+                <ScalarProperty Name="Category" ColumnName="Category" />
+                <ScalarProperty Name="VehicleID" ColumnName="VehicleID" />
+                <ScalarProperty Name="PlateNumber" ColumnName="PlateNumber" />
+                <ScalarProperty Name="Color" ColumnName="Color" />
+                <ScalarProperty Name="Facilities" ColumnName="Facilities" />
+                <ScalarProperty Name="RegistrationYear" ColumnName="RegistrationYear" />
+                <ScalarProperty Name="CompanyID" ColumnName="CompanyID" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
           <EntitySetMapping Name="Agreements">
             <EntityTypeMapping TypeName="CangooModel.Agreement">
               <MappingFragment StoreEntitySet="Agreements">
@@ -11623,55 +11672,6 @@
               <ScalarProperty Name="Id" ColumnName="RoleId" />
             </EndProperty>
           </AssociationSetMapping>
-          <FunctionImportMapping FunctionImportName="spGetCompanyVehicle" FunctionName="CangooModel.Store.spGetCompanyVehicle">
-            <ResultMapping>
-              <ComplexTypeMapping TypeName="CangooModel.spGetCompanyVehicle_Result">
-                <ScalarProperty Name="VehicleID" ColumnName="VehicleID" />
-                <ScalarProperty Name="PlateNumber" ColumnName="PlateNumber" />
-                <ScalarProperty Name="isActive" ColumnName="isActive" />
-                <ScalarProperty Name="isOccupied" ColumnName="isOccupied" />
-                <ScalarProperty Name="Model" ColumnName="Model" />
-                <ScalarProperty Name="Make" ColumnName="Make" />
-                <ScalarProperty Name="SeatingCapacity" ColumnName="SeatingCapacity" />
-                <ScalarProperty Name="OccupiedBy" ColumnName="OccupiedBy" />
-                <ScalarProperty Name="CompanyID" ColumnName="CompanyID" />
-              </ComplexTypeMapping>
-            </ResultMapping>
-          </FunctionImportMapping>
-          <FunctionImportMapping FunctionImportName="spGetUserPromos" FunctionName="CangooModel.Store.spGetUserPromos">
-            <ResultMapping>
-              <ComplexTypeMapping TypeName="CangooModel.spGetUserPromos_Result">
-                <ScalarProperty Name="ID" ColumnName="ID" />
-                <ScalarProperty Name="PromoID" ColumnName="PromoID" />
-                <ScalarProperty Name="NoOfUsage" ColumnName="NoOfUsage" />
-                <ScalarProperty Name="PaymentType" ColumnName="PaymentType" />
-                <ScalarProperty Name="PromoCode" ColumnName="PromoCode" />
-                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
-                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
-                <ScalarProperty Name="Amount" ColumnName="Amount" />
-                <ScalarProperty Name="Repetition" ColumnName="Repetition" />
-              </ComplexTypeMapping>
-            </ResultMapping>
-          </FunctionImportMapping>
-          <FunctionImportMapping FunctionImportName="spVehicleBookedUnBooked" FunctionName="CangooModel.Store.spVehicleBookedUnBooked">
-            <ResultMapping>
-              <ComplexTypeMapping TypeName="CangooModel.spVehicleBookedUnBooked_Result">
-                <ScalarProperty Name="MakeID" ColumnName="MakeID" />
-                <ScalarProperty Name="Make" ColumnName="Make" />
-                <ScalarProperty Name="ModelID" ColumnName="ModelID" />
-                <ScalarProperty Name="Model" ColumnName="Model" />
-                <ScalarProperty Name="SeatingCapacity" ColumnName="SeatingCapacity" />
-                <ScalarProperty Name="Categories" ColumnName="Categories" />
-                <ScalarProperty Name="Category" ColumnName="Category" />
-                <ScalarProperty Name="VehicleID" ColumnName="VehicleID" />
-                <ScalarProperty Name="PlateNumber" ColumnName="PlateNumber" />
-                <ScalarProperty Name="Color" ColumnName="Color" />
-                <ScalarProperty Name="Facilities" ColumnName="Facilities" />
-                <ScalarProperty Name="RegistrationYear" ColumnName="RegistrationYear" />
-                <ScalarProperty Name="CompanyID" ColumnName="CompanyID" />
-              </ComplexTypeMapping>
-            </ResultMapping>
-          </FunctionImportMapping>
           </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

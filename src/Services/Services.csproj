@@ -84,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ApplicationSettingService.cs" />
+    <Compile Include="InvitationService.cs" />
     <Compile Include="AuthenticationService.cs" />
     <Compile Include="Automapper\AutoMapperConfig.cs" />
     <Compile Include="Automapper\AutoMapperProfile.cs" />
@@ -120,7 +121,7 @@
       <Name>DatabaseModel</Name>
     </ProjectReference>
     <ProjectReference Include="..\DTOs\DTOs.csproj">
-      <Project>{8E47866C-81E6-42B7-AE04-A466F7D41AFD}</Project>
+      <Project>{8e47866c-81e6-42b7-ae04-a466f7d41afd}</Project>
       <Name>DTOs</Name>
     </ProjectReference>
     <ProjectReference Include="..\Integrations\Integrations.csproj">

@@ -621,7 +621,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-language")]
-        public async Task<HttpResponseMessage> UpdateLanguage(UpdateLanguageRequest model)
+        public async Task<HttpResponseMessage> UpdateLanguage( [FromBody] UpdateLanguageRequest model)
         {
             var result = await LanguageService.UpdatePassengerLanguage(model);
 
@@ -648,9 +648,9 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("get-trusted-contact")]
-        public async Task<HttpResponseMessage> GetTrustedContact(string passengerId)
+        public async Task<HttpResponseMessage> GetTrustedContact([FromUri] GetTrustedContacts model)
         {
-            var lstTrustedContact = await TrustedContactManagerService.GetTrustedContact(passengerId);
+            var lstTrustedContact = await TrustedContactManagerService.GetTrustedContact(model.PassengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
@@ -664,7 +664,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-trusted-contact")]
-        public async Task<HttpResponseMessage> UpdateTrustedContact(UpdateTrustedContactRequest model)
+        public async Task<HttpResponseMessage> UpdateTrustedContact([FromBody] UpdateTrustedContactRequest model)
         {
             var result = await TrustedContactManagerService.UpdateTrustedContact(model);
 
@@ -698,9 +698,9 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("passenger-earned-reward-points")]
-        public async Task<HttpResponseMessage> PassengerEarnedRewardPoints(string passengerId)
+        public async Task<HttpResponseMessage> PassengerEarnedRewardPoints([FromUri] GetPassengerEanedRewardPoints model)
         {
-            var result = await RewardPointService.GetPassengerRewardPoint(passengerId);
+            var result = await RewardPointService.GetPassengerRewardPoint(model.PassengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
@@ -816,7 +816,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-trip-payment-method")]
-        public async Task<HttpResponseMessage> UpdateTripPaymentMethod(UpdateTripPaymentMethod model)
+        public async Task<HttpResponseMessage> UpdateTripPaymentMethod([FromBody] UpdateTripPaymentMethod model)
         {
             var result = await TripsManagerService.UpdateTripPaymentMode(model);
 
@@ -839,7 +839,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-trip-promo-code")]
-        public async Task<HttpResponseMessage> UpdateTripPromoCode(UpdateTripPromoCode model)
+        public async Task<HttpResponseMessage> UpdateTripPromoCode([FromBody] UpdateTripPromoCode model)
         {
             var result = await TripsManagerService.UpdateTripPromo(model);
 
@@ -862,7 +862,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-trip-tip-amount")]
-        public async Task<HttpResponseMessage> UpdateTripTipAmount(UpdateTripTipAmount model)
+        public async Task<HttpResponseMessage> UpdateTripTipAmount( [FromBody] UpdateTripTipAmount model)
         {
             await FirebaseService.SetTipAmount(model.TripId, model.TipAmount);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -878,29 +878,34 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("add-promo-code")]
-        public async Task<HttpResponseMessage> AddPromoCode(AddPromoCode model)
+        public async Task<HttpResponseMessage> AddPromoCode([FromBody] AddPromoCode model)
         {
-            var result = await PromoCodeService.AddUserPromoCode(model);
-            if (result > 0)
+            var AddPromoResponse = await PromoCodeService.AddUserPromoCode(model);
+            if (AddPromoResponse != null)
             {
                 return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
                 {
                     Error = false,
-                    Message = ResponseKeys.msgSuccess
+                    Message = ResponseKeys.msgSuccess,
+                    Data = AddPromoResponse
                 });
             }
             else
             {
-                return Request.CreateResponse(HttpStatusCode.Forbidden, new ResponseWrapper { Message = ResponseKeys.failedToAdd });
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = true,
+                    Message = ResponseKeys.invalidPromo,
+                });
             }
-
+            
         }
 
         [HttpGet]
         [Route("get-promo-codes")]
-        public async Task<HttpResponseMessage> GetPromoCodesList(string passengerId)
+        public async Task<HttpResponseMessage> GetPromoCodesList([FromUri] GetPassengerPromo model)
         {
-            var lstPromoCodes = await PromoCodeService.GetPromoCodes(passengerId);
+            var lstPromoCodes = await PromoCodeService.GetPromoCodes(model.PassengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
@@ -1461,9 +1466,9 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("notifications-list")]
-        public async Task<HttpResponseMessage> GetNotificationsList(string ReceiverId)
+        public async Task<HttpResponseMessage> GetNotificationsList([FromUri] GetNotificationListModel model)
         {
-            var lstNotifications = await NotificationServices.GetNotifications(ReceiverId);
+            var lstNotifications = await NotificationServices.GetNotifications(model.ReceiverId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
@@ -1485,93 +1490,44 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("apply-invite-code")]
-        public async Task<HttpResponseMessage> ApplyInviteCode([FromBody] string model)
+        public async Task<HttpResponseMessage> ApplyInviteCode([FromBody] ApplyInviteCode model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
-            //if (!string.IsNullOrEmpty(model.passengerID) && !string.IsNullOrEmpty(model.inviteCode))
-            //{
-            //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //    {
-            //        var result = context.Captains.Where(cap => cap.ShareCode.ToLower().Equals(model.inviteCode.ToLower())
-            //        && cap.ApplicationID.ToString().ToLower().Equals(this.ApplicationID)
-            //        && cap.ResellerID.ToString().ToLower().Equals(this.ResellerID)
-            //        ).FirstOrDefault();
-
-            //        if (result == null)
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.invalidInviteCode;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-
-            //        if (context.Trips.Where(t => t.UserID.ToString().Equals(model.passengerID)
-            //        && t.ApplicationID.ToString().ToLower().Equals(this.ApplicationID)
-            //        && t.ResellerID.ToString().ToLower().Equals(this.ResellerID)
-            //        ).Count() > 0)
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.inviteCodeNotApplicable;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-
-            //        if (context.UserInvites.Where(ui => ui.UserID.ToString().Equals(model.passengerID)
-            //        && ui.ApplicationID.ToString().ToLower().Equals(this.ApplicationID)).Count() > 0)
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.inviteCodeAlreadyApplied;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-
-            //        UserInvite aui = new UserInvite()
-            //        {
-            //            UserInvitesID = Guid.NewGuid(),
-            //            UserID = Guid.Parse(model.passengerID),
-            //            CaptainID = result.CaptainID,
-            //            DateTime = Common.getUtcDateTime(),
-            //            ApplicationID = Guid.Parse(this.ApplicationID)
-            //        };
-
-            //        //Max earningPoints can be 300 only
-            //        result.EarningPoints = result.EarningPoints == null ? 50 : result.EarningPoints + 50 <= 300 ? result.EarningPoints + 50 : 300;
-
-            //        //WalletTransfer wallet = new WalletTransfer
-            //        //{
-            //        //	Amount = 10,
-            //        //	RechargeDate = DateTime.UtcNow,
-            //        //	WalletTransferID = Guid.NewGuid(),
-            //        //	Referrence = "Reward: Captain invite code applied.",
-            //        //	TransferredBy = Guid.Parse(this.ApplicationID),
-            //        //	TransferredTo = Guid.Parse(model.passengerID),
-            //        //	ApplicationID = Guid.Parse(this.ApplicationID),
-            //        //	ResellerID = Guid.Parse(this.ResellerID)
-            //        //};
-
-            //        //var profile = context.UserProfiles.Where(up => up.UserID.ToString().Equals(model.passengerID)).FirstOrDefault();
-            //        //if (profile != null)
-            //        //{
-            //        //	profile.LastRechargedAt = DateTime.UtcNow;
-            //        //	profile.WalletBalance = 10;
-            //        //}
-
-            //        context.UserInvites.Add(aui);
-            //        //context.WalletTransfers.Add(wallet);
-
-            //        context.SaveChanges();
-
-            //        FireBaseController fc = new FireBaseController();
-            //        fc.updateDriverEarnedPoints(result.CaptainID.ToString(), result.EarningPoints.ToString());
-
-            //        response.error = false;
-            //        response.message = AppMessage.msgSuccess;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
-            //}
-            //else
-            //{
-            //    response.error = true;
-            //    response.message = AppMessage.invalidParameters;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
+            if (InvitationService.IsUserInviteCodeApplicable(model.PassengerId))
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = true,
+                    Message = ResponseKeys.inviteCodeNotApplicable,
+                });
+            }
+            else if (InvitationService.IsUserInviteCodeAlreadyApplied(model.PassengerId))
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = true,
+                    Message = ResponseKeys.inviteCodeAlreadyApplied,
+                });
+            }
+            else
+            {
+                 var result = await InvitationService.ApplyInvitation(model);
+                if (result > 0)
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                    {
+                        Error = false,
+                        Message = ResponseKeys.msgSuccess,
+                    });
+                }
+                else
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                    {
+                        Error = true,
+                        Message = ResponseKeys.invalidInviteCode,
+                    });
+                }
+            }
         }
 
         #endregion
@@ -1580,11 +1536,11 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("recent-locations")]
-        public async Task<HttpResponseMessage> GetRecentLocations(string passengerId)
+        public async Task<HttpResponseMessage> GetRecentLocations([FromUri] GetRecentLocationList model)
         {
-            if (passengerId != string.Empty)
+            if (model.PassengerId != string.Empty)
             {
-                var lstLocation = await PassengerPlacesService.GetRecentTripsLocations(passengerId);
+                var lstLocation = await PassengerPlacesService.GetRecentTripsLocations(model.PassengerId);
                 return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
                 {
                     Error = false,
@@ -1665,7 +1621,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("submit-feedback")]
-        public async Task<HttpResponseMessage> SubmitFeedback(UpdateTripUserFeedback model)
+        public async Task<HttpResponseMessage> SubmitFeedback([FromBody] UpdateTripUserFeedback model)
         {
             var result = await TripsManagerService.UserSubmitFeedback(model);
 

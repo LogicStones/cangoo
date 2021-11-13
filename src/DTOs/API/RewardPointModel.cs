@@ -22,6 +22,12 @@ namespace DTOs.API
         public List<RewardDetails> Rewards { get; set; } = new List<RewardDetails>();
     }
 
+    public class GetPassengerEanedRewardPoints
+    {
+        [Required]
+        public string PassengerId { get; set; }
+    }
+
     public class PassengerReedemRewardRequsest
     {
         [Required]
