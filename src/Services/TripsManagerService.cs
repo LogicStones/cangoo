@@ -273,6 +273,7 @@ namespace Services
                     tp.facilities = model.RequiredFacilities;
                     tp.isReRouted = false;
                     tp.UTCTimeZoneOffset = int.Parse(model.TimeZoneOffset);
+                    tp.VehicleCategoryId = int.Parse(model.CategoryId);
 
                     tp.InBoundDistanceInMeters = int.Parse(model.InBoundDistanceInMeters);
                     tp.OutBoundDistanceInMeters = int.Parse(model.OutBoundDistanceInMeters);
@@ -394,7 +395,7 @@ namespace Services
                 //Explicitly create new thread to return API response.
                 var task = Task.Run(async () =>
                 {
-                    await FirebaseService.SendRideRequestToOnlineDrivers(bookingRN.tripID, model.PassengerId, Convert.ToInt32(model.SeatingCapacity), bookingRN, null);
+                    await FirebaseService.SendRideRequestToOnlineDrivers(bookingRN.tripID, model.PassengerId, model.CategoryId.ToString(), int.Parse(model.SeatingCapacity), bookingRN, null);
                 });
 
                 return new BookTripResponse

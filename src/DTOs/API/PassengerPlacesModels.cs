@@ -39,9 +39,6 @@ namespace DTOs.API
     public class PlaceDetails
     {
         [Required]
-        public string PlaceTypeId { get; set; } = "";
-
-        [Required]
         public string Name { get; set; } = "";
 
         [Required]
@@ -62,11 +59,17 @@ namespace DTOs.API
     {
         [Required]
         public string PassengerId { get; set; } = "";
+
+        [Required]
+        public string PlaceTypeId { get; set; } = "";
     }
 
     public class AddPassengerPlaceResponse : PlaceDetails
     {
         public string ID { get; set; } = "";
+
+        [Required]
+        public string PlaceTypeId { get; set; } = "";
     }
 
     public class GetRecentLocationList
@@ -79,6 +82,9 @@ namespace DTOs.API
     {
         [Required]
         public string ID { get; set; } = "";
+
+        [Required]
+        public string PlaceTypeId { get; set; } = "";
     }
 
     public class GetPassengerPlaceRequest
@@ -88,19 +94,19 @@ namespace DTOs.API
     }
 
 
-    public class GetRecentLocationDetails
-    {
-        public string DropOffLatitude { get; set; } = "";
-        public string DropOffLongitude { get; set; } = "";
-        public string DropOffLocation { get; set; } = "";
-        public string DropOffLocationPostalCode { get; set; } = "";
-        public string PickupLocationLatitude { get; set; } = "";
-        public string PickupLocationLongitude { get; set; } = "";
-        public string PickUpLocation { get; set; } = "";
-        public string PickupLocationPostalCode { get; set; } = "";
-        public string MidwayStop1Latitude { get; set; } = "";
-        public string MidwayStop1Longitude { get; set; } = "";
-        public string MidwayStop1Location { get; set; } = "";
-        public string MidwayStop1PostalCode { get; set; } = "";
-    }
+    //public class GetRecentLocationDetails
+    //{
+    //    public string DropOffLatitude { get; set; } = "";
+    //    public string DropOffLongitude { get; set; } = "";
+    //    public string DropOffLocation { get; set; } = "";
+    //    public string DropOffLocationPostalCode { get; set; } = "";
+    //    public string PickupLocationLatitude { get; set; } = "";
+    //    public string PickupLocationLongitude { get; set; } = "";
+    //    public string PickUpLocation { get; set; } = "";
+    //    public string PickupLocationPostalCode { get; set; } = "";
+    //    public string MidwayStop1Latitude { get; set; } = "";
+    //    public string MidwayStop1Longitude { get; set; } = "";
+    //    public string MidwayStop1Location { get; set; } = "";
+    //    public string MidwayStop1PostalCode { get; set; } = "";
+    //}
 }

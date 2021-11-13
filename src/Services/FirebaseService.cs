@@ -45,7 +45,7 @@ namespace Services
 
         #region Online / Offline Driver
 
-        public static async Task<Dictionary<string, dynamic>> GetOnlineDrivers()
+        public static async Task<Dictionary<string, FirebaseDriver>> GetOnlineDrivers()
         {
             //get online driver from firebase
             //client = new FireSharp.FirebaseClient(config);
@@ -55,11 +55,11 @@ namespace Services
 
             //Key: DriverID, Value: Online Driver Properties
 
-            Dictionary<string, dynamic> rawOnlineDrivers = new Dictionary<string, dynamic>();
+            Dictionary<string, FirebaseDriver> rawOnlineDrivers = new Dictionary<string, FirebaseDriver>();
 
             if (!string.IsNullOrEmpty(fbOnlineDrivers.Body) && !fbOnlineDrivers.Body.Equals("null"))
             {
-                rawOnlineDrivers = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(fbOnlineDrivers.Body);
+                rawOnlineDrivers = JsonConvert.DeserializeObject<Dictionary<string, FirebaseDriver>>(fbOnlineDrivers.Body);
 
                 //Make sure driver node have actual data
 
@@ -141,7 +141,7 @@ namespace Services
 
         #region Send Request to Online Drivers
 
-        public static async Task<bool> SendRideRequestToOnlineDrivers(string tripId, string passengerId, int reqSeatingCapacity, DriverBookingRequestNotification bookingRN, dynamic hotelSetting)
+        public static async Task<bool> SendRideRequestToOnlineDrivers(string tripId, string passengerId, string vehicleCategoryId, int reqSeatingCapacity, DriverBookingRequestNotification bookingRN, dynamic hotelSetting)
         {
             //Passenger data
             if (bookingRN.isReRouteRequest)
@@ -191,6 +191,11 @@ namespace Services
                 FirebaseDriver driver = JsonConvert.DeserializeObject<FirebaseDriver>(JsonConvert.SerializeObject(od.Value));
                 if (string.IsNullOrEmpty(driver.driverID) || driver.location == null) //Dirty data
                 {
+                    continue;
+                }
+
+                if(!od.Value.category.Contains(vehicleCategoryId))
+                { 
                     continue;
                 }
                 else

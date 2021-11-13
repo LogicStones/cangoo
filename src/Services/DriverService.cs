@@ -140,21 +140,24 @@ namespace Services
             }
         }
 
-        public static async Task UpdatePriorityHourLog(Guid driverId, DateTime endTime, DateTime startTime)
+        public static async Task<double> UpdatePriorityHourLog(Guid driverId)
         {
             using (var dbContext = new CangooEntities())
             {
+                var captain = dbContext.Captains.Where(c => c.CaptainID == driverId).FirstOrDefault();
+                captain.IsPriorityHoursActive = false;
+
                 dbContext.PriorityHourLogs.Add(new PriorityHourLog
                 {
                     PriorityHourLogID = Guid.NewGuid(),
                     CaptainID = driverId,
-                    PriorityHourEndTime = endTime,
-                    PriorityHourStartTime = startTime
+                    PriorityHourEndTime = (DateTime)captain.LastPriorityHourEndTime,
+                    PriorityHourStartTime = (DateTime)captain.LastPriorityHourStartTime
                 });
-                await dbContext.SaveChangesAsync();
 
+                await dbContext.SaveChangesAsync();
+                return (double)captain.EarningPoints;
             }
         }
-
     }
 }

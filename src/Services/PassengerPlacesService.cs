@@ -15,13 +15,16 @@ namespace Services
 {
     public class PassengerPlacesService
     {
-        public static async Task<List<GetRecentLocationDetails>> GetRecentTripsLocations(string passengerId)
+        public static async Task<List<PlaceDetails>> GetRecentTripsLocations(string passengerId)
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<GetRecentLocationDetails>("SELECT TOP(5) DropOffLocationLatitude,DropOffLocationLongitude,DropOffLocation,DropOffLocationPostalCode," +
-                    "PickupLocationLatitude,PickupLocationLongitude,PickUpLocation,PickupLocationPostalCode, " +
-                    "MidwayStop1Latitude,MidwayStop1Longitude, MidwayStop1Location, MidwayStop1PostalCode " +
+                //var query = dbContext.Database.SqlQuery<PlaceDetails>("SELECT TOP(5) DropOffLocationLatitude,DropOffLocationLongitude,DropOffLocation,DropOffLocationPostalCode," +
+                //    "PickupLocationLatitude,PickupLocationLongitude,PickUpLocation,PickupLocationPostalCode, " +
+                //    "MidwayStop1Latitude,MidwayStop1Longitude, MidwayStop1Location, MidwayStop1PostalCode " +
+                //    "FROM Trips WHERE UserID=@passengerId AND TripStatusID = @tripStatus ORDER BY ArrivalDateTime DESC",
+
+                var query = dbContext.Database.SqlQuery<PlaceDetails>("SELECT TOP(5) 'Recent PickUpLocation' Name, PickupLocationLatitude Latitude,PickupLocationLongitude Longitutde,PickUpLocation Address,PickupLocationPostalCode PostalCode " +
                     "FROM Trips WHERE UserID=@passengerId AND TripStatusID = @tripStatus ORDER BY ArrivalDateTime DESC",
                                                                                                                     new SqlParameter("@passengerId", passengerId),
                                                                                                                     new SqlParameter("@tripStatus", TripStatuses.Completed));
