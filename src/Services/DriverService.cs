@@ -86,6 +86,14 @@ namespace Services
             }
         }
 
+        public static async Task<Captain> GetDriverByInviteCode(string InviteCode)
+        {
+            using (CangooEntities dbcontext=new CangooEntities())
+            {
+                return dbcontext.Captains.Where(x => x.ShareCode.ToLower().Equals(InviteCode.ToLower())).FirstOrDefault();
+            }
+        }
+
         public static async Task<List<DatabaseOlineDriversDTO>> GetOnlineDriversByIds(string driverIds)
         {
             using (var context = new CangooEntities())

@@ -17,7 +17,7 @@ namespace Services
             {
                 var AppID = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString());
                 var ResellerId= Guid.Parse(ConfigurationManager.AppSettings["ResellerID"].ToString());
-                var result = dbcontext.Captains.Where(x => x.ShareCode.ToLower().Equals(model.InviteCode.ToLower())).FirstOrDefault();
+                var result = await DriverService.GetDriverByInviteCode(model.InviteCode);
                 if (result != null)
                 {
                     UserInvite userInvite = new UserInvite
