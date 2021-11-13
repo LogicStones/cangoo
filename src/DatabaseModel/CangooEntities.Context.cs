@@ -3023,15 +3023,6 @@ namespace DatabaseModel
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetCaptainOccupiedVehicleDetails_Result>("spGetCaptainOccupiedVehicleDetails", resellerIDParameter, applicationIDParameter, captainIDParameter);
         }
     
-        public virtual ObjectResult<spGetCompanyVehicle_Result> spGetCompanyVehicle(string companyID)
-        {
-            var companyIDParameter = companyID != null ?
-                new ObjectParameter("companyID", companyID) :
-                new ObjectParameter("companyID", typeof(string));
-    
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetCompanyVehicle_Result>("spGetCompanyVehicle", companyIDParameter);
-        }
-    
         public virtual ObjectResult<spGetCurrentReportNumber_Result> spGetCurrentReportNumber(string fleetId, string reportMonth, string status, Nullable<System.DateTime> processingStartDateTime)
         {
             var fleetIdParameter = fleetId != null ?
@@ -3658,31 +3649,6 @@ namespace DatabaseModel
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction("spUpdateReseller", resellerIDParameter, ownerNameParameter, companyNameParameter, logoParameter, originalLogoParameter, contractFileParameter, originalContractFileParameter, authorizedAreaParameter, percentagePayableParameter, percentageReceiveableParameter, subscriptionPlanIDParameter, subscriptionDateParameter, paymentDueDateParameter, subscriptionTypeIDParameter, paymentModeIDParameter, paymentTypeIDParameter, paymentStatusIDParameter, paypalAccountNumberParameter, addressParameter, taxNumberParameter, subscribedModulesParameter, paypalEmailParameter, paypalNationalNumberParameter, paypalCountryCodeParameter, paypalPhoneExtParameter, phoneNumberParameter);
         }
     
-        public virtual ObjectResult<spVehicleBookedUnBooked_Result> spVehicleBookedUnBooked(string captainID, string deviceToken, string vehicleID, Nullable<System.DateTime> logIndateTime, Nullable<bool> status)
-        {
-            var captainIDParameter = captainID != null ?
-                new ObjectParameter("captainID", captainID) :
-                new ObjectParameter("captainID", typeof(string));
-    
-            var deviceTokenParameter = deviceToken != null ?
-                new ObjectParameter("deviceToken", deviceToken) :
-                new ObjectParameter("deviceToken", typeof(string));
-    
-            var vehicleIDParameter = vehicleID != null ?
-                new ObjectParameter("vehicleID", vehicleID) :
-                new ObjectParameter("vehicleID", typeof(string));
-    
-            var logIndateTimeParameter = logIndateTime.HasValue ?
-                new ObjectParameter("LogIndateTime", logIndateTime) :
-                new ObjectParameter("LogIndateTime", typeof(System.DateTime));
-    
-            var statusParameter = status.HasValue ?
-                new ObjectParameter("status", status) :
-                new ObjectParameter("status", typeof(bool));
-    
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spVehicleBookedUnBooked_Result>("spVehicleBookedUnBooked", captainIDParameter, deviceTokenParameter, vehicleIDParameter, logIndateTimeParameter, statusParameter);
-        }
-    
         public virtual ObjectResult<spVehicleProfile_Result> spVehicleProfile(string vehicleID)
         {
             var vehicleIDParameter = vehicleID != null ?
@@ -4176,6 +4142,53 @@ namespace DatabaseModel
                 new ObjectParameter("rideCancelDateTime", typeof(System.DateTime));
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spCaptainCancelRide_Result>("spCaptainCancelRide", tripIDParameter, driverIDParameter, tripStatusIDParameter, cancelIDParameter, isWebParameter, isAtPickupLocationParameter, rideCancelDateTimeParameter);
+        }
+    
+        public virtual ObjectResult<spGetCompanyVehicle_Result> spGetCompanyVehicle(string companyID)
+        {
+            var companyIDParameter = companyID != null ?
+                new ObjectParameter("companyID", companyID) :
+                new ObjectParameter("companyID", typeof(string));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetCompanyVehicle_Result>("spGetCompanyVehicle", companyIDParameter);
+        }
+    
+        public virtual ObjectResult<spGetUserPromos_Result> spGetUserPromos(Nullable<System.Guid> passengerId, Nullable<bool> active)
+        {
+            var passengerIdParameter = passengerId.HasValue ?
+                new ObjectParameter("passengerId", passengerId) :
+                new ObjectParameter("passengerId", typeof(System.Guid));
+    
+            var activeParameter = active.HasValue ?
+                new ObjectParameter("active", active) :
+                new ObjectParameter("active", typeof(bool));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetUserPromos_Result>("spGetUserPromos", passengerIdParameter, activeParameter);
+        }
+    
+        public virtual ObjectResult<spVehicleBookedUnBooked_Result> spVehicleBookedUnBooked(string captainID, string deviceToken, string vehicleID, Nullable<System.DateTime> logIndateTime, Nullable<bool> status)
+        {
+            var captainIDParameter = captainID != null ?
+                new ObjectParameter("captainID", captainID) :
+                new ObjectParameter("captainID", typeof(string));
+    
+            var deviceTokenParameter = deviceToken != null ?
+                new ObjectParameter("deviceToken", deviceToken) :
+                new ObjectParameter("deviceToken", typeof(string));
+    
+            var vehicleIDParameter = vehicleID != null ?
+                new ObjectParameter("vehicleID", vehicleID) :
+                new ObjectParameter("vehicleID", typeof(string));
+    
+            var logIndateTimeParameter = logIndateTime.HasValue ?
+                new ObjectParameter("LogIndateTime", logIndateTime) :
+                new ObjectParameter("LogIndateTime", typeof(System.DateTime));
+    
+            var statusParameter = status.HasValue ?
+                new ObjectParameter("status", status) :
+                new ObjectParameter("status", typeof(bool));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spVehicleBookedUnBooked_Result>("spVehicleBookedUnBooked", captainIDParameter, deviceTokenParameter, vehicleIDParameter, logIndateTimeParameter, statusParameter);
         }
     }
 }

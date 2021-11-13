@@ -12,4 +12,11 @@ namespace DTOs.API
         public string Message { get; set; }
         public dynamic Data { get; set; }
     }
+
+    public class ResponseEntity
+    {
+        public bool error { get; set; }
+        public string message { get; set; }
+        public dynamic data { get; set; }
+    }
 }

@@ -225,7 +225,7 @@ namespace API.Controllers
                             var applicationData = context.spGetApplicationArea(ApplicationID).FirstOrDefault();
 
                             var isCaptanInTrip = await FirebaseService.isDriverInTrip(captain.CaptainID.ToString());
-                            DriverModel captainModel = new DriverModel
+                            DriverLoginResponse captainModel = new DriverLoginResponse
                             {
                                 userID = captain.CaptainID.ToString(),
                                 UserName = model.UserName,
@@ -423,7 +423,7 @@ namespace API.Controllers
                 await FirebaseService.OnlineDriver(model.driverID, model.vehicleID, Convert.ToInt32(vh.MakeID), vh.CompanyID.ToString(),
                     vh.SeatingCapacity.ToString(), vh.Make, vh.Model, model.driverName, cap.IsPriorityHoursActive,
                     cap.LastPriorityHourEndTime.ToString(), cap.EarningPoints.ToString(),
-                    vh.Facilities, cap.Facilities, cap.DeviceToken, cap.UserName, cap.PhoneNumber, vh.ModelID, vh.PlateNumber, vh.Category, vh.CategoryID,
+                    vh.Facilities, cap.Facilities, cap.DeviceToken, cap.UserName, cap.PhoneNumber, vh.ModelID, vh.PlateNumber, vh.Category, vh.Categories,
                     vh.RegistrationYear, vh.Color);
 
                 //This endpoint is accessed only when vehicle is booked. model.isBooked = true
@@ -609,8 +609,6 @@ namespace API.Controllers
         [Route("acceptRequest")]
         public async Task<HttpResponseMessage> acceptRequest([FromBody] DriverAcceptTripRequest model)
         {
-            if (model != null && !string.IsNullOrEmpty(model.tripID) && model.isAccept && !string.IsNullOrEmpty(model.driverID) && !string.IsNullOrEmpty(model.vehicleID))
-            { }
             int bookingStatus = 0;
 
             //Get trip current status before any status change
@@ -620,8 +618,6 @@ namespace API.Controllers
             }
             else
             {
-                //App_Start.Enumration.isRequestAccepted = true;
-
                 if (model.isDispatchedRide.ToLower().Equals("true"))
                     bookingStatus = (int)TripStatuses.OnTheWay;
                 else if (model.isReRouteRequest)
@@ -631,14 +627,14 @@ namespace API.Controllers
             }
 
             //In case of dispatched ride save id and device token of previous captain for logging purpose.
-            string driverId = "";
-            string driverDeviceToken = "";
+            string previousDriverId = "";
+            string previousDriverDeviceToken = "";
 
             var trip = await TripsManagerService.GetTripById(model.tripID);// context.Trips.Where(t => t.TripID.ToString().Equals(model.tripID)).FirstOrDefault();
             if (model.isDispatchedRide.ToLower().Equals("true"))
             {
-                driverId = trip.CaptainID.ToString();
-                driverDeviceToken = await DriverService.GetDriverDeviceToken(trip.CaptainID.ToString());
+                previousDriverId = trip.CaptainID.ToString();
+                previousDriverDeviceToken = await DriverService.GetDriverDeviceToken(trip.CaptainID.ToString());
             }
 
             //In case of laterbooking the flag is not maintained appropriately
@@ -650,7 +646,7 @@ namespace API.Controllers
 
             if (detail != null)
             {
-                var lstcr = await CancelReasonsService.GetCancelReasons(!model.isLaterBooking, model.isLaterBooking, true);
+                var driverCancelReasons = await CancelReasonsService.GetDriverCancelReasons(!model.isLaterBooking, model.isLaterBooking, true);
 
                 //Object to be used to populate passenger FCM object
                 AcceptRideDriverModel arm = new AcceptRideDriverModel
@@ -663,13 +659,15 @@ namespace API.Controllers
                     dropOffLocationLatitude = detail.dropoffLocationLatitude,
                     dropOffLocationLongitude = detail.dropofflocationLongitude,
                     requestTime = detail.RequestWaitingTime,
+
                     //UPDATE: After reverting google directions API, detail.ArrivedTime is distance in Meters - To enable arrived button on captain app before reaching pickup location
+
                     minDistance = detail.ArrivedTime,
                     passengerID = detail.UserID.ToString(),
                     passengerName = detail.PassengerName,
                     phone = detail.PhoneNumber,
                     isWeb = model.isWeb,
-                    lstCancel = lstcr,
+                    lstCancel = driverCancelReasons,
                     isLaterBooking = model.isLaterBooking,
                     laterBookingPickUpDateTime = Convert.ToDateTime(detail.PickUpBookingDateTime).ToString(Formats.DateFormat),
                     isDispatchedRide = model.isDispatchedRide,
@@ -686,28 +684,78 @@ namespace API.Controllers
                 await FirebaseService.SetDriverBusy(model.driverID, model.tripID);
                 await FirebaseService.SetEstimateDistanceToPickUpLocation(model.driverID, string.IsNullOrEmpty(model.distanceToPickUpLocation) ? "0" : model.distanceToPickUpLocation);
 
-                await FirebaseService.UpdateTripsAndNotifyPassengerOnRequestAcceptd(model.driverID, detail.UserID.ToString(), arm, model.tripID, model.isWeb);
+                var fd = await FirebaseService.GetOnlineDriverById(model.driverID);
+                var driverVehiclDetail = await DriverService.GetDriverVehicleDetail(model.driverID, fd == null ? "" : fd.vehicleID, detail.UserID.ToString(), model.isWeb);
+
+                var notificationPayLoad = new PassengerRequestAcceptedNotification
+                {
+                    TripId = detail.UserID.ToString(),
+                    IsWeb = model.isWeb.ToString(),
+                    IsLaterBooking = arm.isLaterBooking.ToString(),
+                    IsDispatchedRide = arm.isDispatchedRide,
+                    IsReRouteRequest = arm.isReRouteRequest,
+                    LaterBookingPickUpDateTime = arm.laterBookingPickUpDateTime,
+                    Description = arm.description,
+                    VoucherCode = arm.voucherCode,
+                    VoucherAmount = arm.voucherAmount,
+                    TotalFare = "0.00",
+                    PickUpLatitude = arm.pickupLocationLatitude,
+                    PickUpLongitude = arm.pickupLocationLongitude,
+                    PickUpLocation = "PUL To Be Set",
+                    MidwayStop1Latitude = "1.1",
+                    MidwayStop1Longitude = "2.2",
+                    MidwayStop1Location = "MWS1L To Be Set",
+                    DropOffLatitude = arm.dropOffLocationLatitude,
+                    DropOffLongitude = arm.dropOffLocationLongitude,
+                    DropOffLocation = "DOL To Be Set",
+                    DriverId = model.driverID,
+                    DriverName = driverVehiclDetail.Name,
+                    DriverContactNumber = driverVehiclDetail.ContactNumber,
+                    DriverRating = driverVehiclDetail.Rating.ToString(),
+                    DriverPicture = driverVehiclDetail.Picture,
+                    VehicleRating = driverVehiclDetail.vehicleRating.ToString(),
+                    Make = driverVehiclDetail.Make,
+                    Model = driverVehiclDetail.Model,// + " " + driverVehiclDetail.PlateNumber,
+                    VehicleNumber = driverVehiclDetail.PlateNumber,
+                    SeatingCapacity = arm.numberOfPerson,
+                    VehicleCategory = "VC STANDARD",
+                    CancelReasons = await CancelReasonsService.GetPassengerCancelReasons(!arm.isLaterBooking, arm.isLaterBooking, false),
+                    Facilities = await FacilitiesService.GetPassengerFacilitiesDetailByIds(trip.facilities)
+                };
+
+                //driver data
+                await FirebaseService.WriteTripDriverDetails(arm, model.driverID);
+
+                //passenger data
+                await FirebaseService.UpdateTripPassengerDetailsOnAccepted(notificationPayLoad, detail.UserID.ToString());
+
+                await FirebaseService.SetTripStatus(model.tripID, Enum.GetName(typeof(TripStatuses), TripStatuses.OnTheWay));
+
+                if (!model.isWeb)
+                {
+                    await PushyService.UniCast(driverVehiclDetail.DeviceToken, notificationPayLoad, NotificationKeys.pas_rideAccepted);
+                }
 
                 if (model.isDispatchedRide.ToLower().Equals("true"))
                 {
-                    await FirebaseService.sendNotificationsAfterDispatchingRide(driverDeviceToken, driverId, model.tripID);
+                    await FirebaseService.SendNotificationsAfterDispatchingRide(previousDriverDeviceToken, previousDriverId, model.tripID);
 
                     //TBD: Log previous captain priority points
                     await TripsManagerService.LogDispatchedTrips(new DispatchedRideLogDTO
                     {
                         DispatchedBy = Guid.Parse(model.dispatcherID),
-                        CaptainID = Guid.Parse(driverId),
+                        CaptainID = Guid.Parse(previousDriverId),
                         DispatchLogID = Guid.NewGuid(),
                         LogTime = DateTime.UtcNow,
                         TripID = Guid.Parse(model.tripID)
                     });
 
-                    var cap = await DriverService.GetDriverById(driverId);
+                    var cap = await DriverService.GetDriverById(previousDriverId);
                     if (!(bool)cap.IsPriorityHoursActive)
                     {
                         //TBD: Fetch distance traveled from driver node and update points accordingly.
 
-                        await FirebaseService.UpdateDriverEarnedPoints(driverId, cap.EarningPoints.ToString());
+                        await FirebaseService.UpdateDriverEarnedPoints(previousDriverId, cap.EarningPoints.ToString());
                     }
                 }
 
@@ -715,8 +763,8 @@ namespace API.Controllers
                 dic = new Dictionary<dynamic, dynamic>
                                     {
                                 //REFACTOR - These lat long keys are no more in use. Remove these keys.
-                                        //{ "lat", detail.PickupLocationLatitude },
-                                        //{ "lon", detail.PickupLocationLongitude },
+                                        { "lat", detail.PickupLocationLatitude },
+                                        { "lon", detail.PickupLocationLongitude },
                                         { "passengerID", detail.UserID },
                                         { "minDistance", detail.ArrivedTime },
                                         { "requestTime", detail.RequestWaitingTime },
@@ -725,7 +773,7 @@ namespace API.Controllers
                                         { "isWeb", model.isWeb },
                                         { "laterBookingPickUpDateTime", Convert.ToDateTime(detail.PickUpBookingDateTime).ToString(Formats.DateFormat) },
                                         { "isLaterBooking", model.isLaterBooking },
-                                        { "cancel_reasons", lstcr },
+                                        { "cancel_reasons", driverCancelReasons },
                                         { "passengerName",  detail.PassengerName},
                                         { "bookingMode", arm.bookingMode}
                                     };
@@ -737,7 +785,7 @@ namespace API.Controllers
 
                     Dictionary<string, dynamic> dic = new Dictionary<string, dynamic>
                                                                     {
-                                                                        { "lstCancel", lstcr }
+                                                                        { "lstCancel", driverCancelReasons }
                                                                     };
 
                     /*VERIFY:
@@ -879,7 +927,7 @@ namespace API.Controllers
                     await FirebaseService.UpdateTripDriverDetailsOnArrival(adr, model.tripID, model.driverID, trip.EarningPoints.ToString());
                     await FirebaseService.SetTripStatus(model.tripID, Enum.GetName(typeof(TripStatuses), (int)TripStatuses.Arrived));
 
-                    if (model.isWeb)
+                    if (!model.isWeb)
                     {
                         await PushyService.UniCast(trip.DeviceToken, new Dictionary<dynamic, dynamic>
                             {
@@ -894,7 +942,7 @@ namespace API.Controllers
                                 { "dropOffLat", trip.DropOffLocationLatitude != null ? trip.DropOffLocationLatitude : "" },
                                 { "dropOffLon", trip.DropOffLocationLongitude != null ? trip.DropOffLocationLongitude : "" },
                                 { "passenger_Pic", trip.pic },
-                                { "cancel_reasons", await CancelReasonsService.GetCancelReasons(true, false, true)},
+                                { "cancel_reasons", await CancelReasonsService.GetDriverCancelReasons(true, false, true)},
                                 { "bookingMode", adr.bookingMode}
                             };
 
@@ -941,7 +989,7 @@ namespace API.Controllers
                     await FirebaseService.SetTripStatus(model.tripID, Enum.GetName(typeof(TripStatuses), (int)TripStatuses.Picked));
                     //await FirebaseService.updateGo4Module(trip.CaptainName, trip.Name, trip.Go4ModuleDeviceToken);
 
-                    if (model.isWeb)
+                    if (!model.isWeb)
                     {
                         await PushyService.UniCast(trip.DeviceToken, new Dictionary<dynamic, dynamic>
                             {
@@ -980,6 +1028,24 @@ namespace API.Controllers
                                 { "discountType", "normal"},
                                 { "discountAmount", "0.00" }
                             };
+
+
+                    dic.Add("pickUpFareManagerID", "0.00");
+                    dic.Add("dropOffFareMangerID", "0.00");
+                    dic.Add("inBoundDistanceInKM", "0.00");
+                    dic.Add("inBoundDistanceFare", "0.00");
+                    dic.Add("inBoundTimeInMinutes", "0.00");
+                    dic.Add("inBoundTimeFare", "0.00");
+                    dic.Add("outBoundDistanceInKM", "0.00");
+                    dic.Add("outBoundDistanceFare", "0.00");
+                    dic.Add("outBoundTimeInMinutes", "0.00");
+                    dic.Add("outBoundTimeFare", "0.00");
+                    dic.Add("inBoundSurchargeAmount", "0.00");
+                    dic.Add("outBoundSurchargeAmount", "0.00");
+                    dic.Add("inBoundBaseFare", "0.00");
+                    dic.Add("outBoundBaseFare", "0.00");
+                    dic.Add("polyLine", "");
+
 
                     //get waiting time
                     DateTime arrivalTime = model.isLaterBooking ? Convert.ToDateTime(trip.PickUpBookingDateTime) : Convert.ToDateTime(trip.ArrivalDateTime);
@@ -1229,27 +1295,30 @@ namespace API.Controllers
                         var trp = await TripsManagerService.GetRideDetail(model.tripID, model.isWeb);
                         if (trp != null)
                         {
-                            EndRideFCM efcm = new EndRideFCM()
+                            EndRideFCM efc = new EndRideFCM()
                             {
-                                tripID = model.tripID,
-                                driverName = trp.Name,
-                                driverImage = trp.Picture,
-                                pickLat = trp.PickupLocationLatitude,
-                                pickLong = trp.PickupLocationLongitude,
-                                dropLat = trp.DropOffLocationLatitude,
-                                dropLong = trp.DropOffLocationLongitude,
-                                estimateFare = Convert.ToDecimal((trp.BaseFare != null ? trp.BaseFare : 0) + (trp.BookingFare != null ? trp.BookingFare : 0) + Convert.ToDecimal(trp.travelledFare != null ? trp.travelledFare : 0)),
-                                bookingDateTime = trp.BookingDateTime,
-                                endRideDateTime = trp.TripEndDatetime,
-                                totalRewardPoints = (trp.RewardPoints + (int.Parse(model.distance) / 500)).ToString(),
-                                tripRewardPoints = (int.Parse(model.distance) / 500).ToString(),
-                                distance = model.distance,
-                                date = string.Format("{0:dd MM yyyy}", trp.BookingDateTime),
-                                time = string.Format("{0:hh:mm tt}", trp.BookingDateTime),
-                                paymentMode = edr.paymentMethod,
-                                isFav = trp.favorite == 1 ? true : false
+                                TripId = model.tripID,
+                                DriverName = trp.Name,
+                                DriverImage = trp.Picture,
+                                PickUpLatitude = trp.PickupLocationLatitude,
+                                PickUpLongitude = trp.PickupLocationLongitude,
+                                MidwayStop1Latitude = trip.MidwayStop1Latitude,
+                                MidwayStop1Longitude = trip.MidwayStop1Longitude,
+                                DropOffLatitude = trp.DropOffLocationLatitude,
+                                DropOffLongitude = trp.DropOffLocationLongitude,
+                                TotalFare = ((trp.BaseFare != null ? trp.BaseFare : 0) + (trp.BookingFare != null ? trp.BookingFare : 0) + Convert.ToDecimal(trp.travelledFare != null ? trp.travelledFare : 0)).ToString(),
+                                BookingDateTime = trp.BookingDateTime.ToString(),
+                                EndTripDateTime = trp.TripEndDatetime.ToString(),
+                                TotalRewardPoints = (trp.RewardPoints + (int.Parse(model.distance) / 500)).ToString(),
+                                TripRewardPoints = (int.Parse(model.distance) / 500).ToString(),
+                                Distance = model.distance,
+                                Date = string.Format("{0:dd MM yyyy}", trp.BookingDateTime),
+                                Time = string.Format("{0:hh:mm tt}", trp.BookingDateTime),
+                                PaymentMode = edr.paymentMethod,
+                                PaymentModeId = ((int)Enum.Parse(typeof(PaymentModes), edr.paymentMethod)).ToString(),
+                                IsFavorite = trp.favorite == 1 ? true.ToString() : false.ToString()
                             };
-                            await PushyService.UniCast(trp.DeviceToken, efcm, NotificationKeys.pas_endRideDetail);
+                            await PushyService.UniCast(trp.DeviceToken, efc, NotificationKeys.pas_endRideDetail);
                         }
                     }
 
@@ -1306,250 +1375,250 @@ namespace API.Controllers
              NEED TO UPDATE FormWebRequest method as well
              */
 
-            if (model != null && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID) &&
-                !string.IsNullOrEmpty(model.fleetID) && !string.IsNullOrEmpty(model.isOverride) &&
-                !string.IsNullOrEmpty(model.totalFare) && !string.IsNullOrEmpty(model.tipAmount) &&
-                !string.IsNullOrEmpty(model.walletUsedAmount) && !string.IsNullOrEmpty(model.voucherUsedAmount) &&
-                !string.IsNullOrEmpty(model.promoDiscountAmount) && !string.IsNullOrEmpty(model.collectedAmount))
+            //if (model != null && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID) &&
+            //    !string.IsNullOrEmpty(model.fleetID) && !string.IsNullOrEmpty(model.isOverride) &&
+            //    !string.IsNullOrEmpty(model.totalFare) && !string.IsNullOrEmpty(model.tipAmount) &&
+            //    !string.IsNullOrEmpty(model.walletUsedAmount) && !string.IsNullOrEmpty(model.voucherUsedAmount) &&
+            //    !string.IsNullOrEmpty(model.promoDiscountAmount) && !string.IsNullOrEmpty(model.collectedAmount))
+            //{
+            using (CangooEntities context = new CangooEntities())
             {
-                using (CangooEntities context = new CangooEntities())
+                //dic = new Dictionary<dynamic, dynamic>();
+                if (await CheckIfAlreadyPaid(model.totalFare, model.tripID, model.driverID, dic, false))
                 {
-                    //dic = new Dictionary<dynamic, dynamic>();
-                    if (await CheckIfAlreadyPaid(model.totalFare, model.tripID, model.driverID, dic, false))
-                    {
-                        //TBD: send fcm to user - if required.
-                        response.data = dic;
-                        response.error = true;
-                        response.message = ResponseKeys.fareAlreadyPaid;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
-
-                    string passengerDeviceToken = "";
-                    var trip = context.Trips.Where(t => t.TripID.ToString().Equals(model.tripID)).FirstOrDefault();
-
-                    //In case of partial payment need to send invoice
-                    if ((decimal.Parse(model.walletUsedAmount) > 0.0M) || (decimal.Parse(model.promoDiscountAmount) > 0.0M))
-                    {
-                        var result = context.spAfterMobilePayment(false,//Convert.ToBoolean(model.isOverride), 
-                            model.tripID,
-                            "",
-                            (int)TripStatuses.Completed,
-                            trip.UserID.ToString(),
-                            ApplicationID,
-                            (decimal.Parse(model.totalFare) - decimal.Parse(model.tipAmount)).ToString(),
-                            "0.00",
-                            model.promoDiscountAmount,
-                            model.walletUsedAmount,
-                            model.tipAmount.ToString(),
-                            DateTime.UtcNow,
-                            (int)PaymentModes.Cash,
-                            (int)PaymentStatuses.Paid,
-                            model.fleetID).FirstOrDefault();
-
-                        await SendInvoice(new InvoiceModel
-                        {
-                            CustomerEmail = result.CustomerEmail,// context.AspNetUsers.Where(u => u.Id.Equals(model.passengerID)).FirstOrDefault().Email,
-                            TotalAmount = (decimal.Parse(model.collectedAmount) + decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString(),  // model.totalFare,
-                            CashAmount = model.collectedAmount,
-                            WalletUsedAmount = model.walletUsedAmount,
-                            PromoDiscountAmount = model.promoDiscountAmount,
-                            CaptainName = result.CaptainName,
-                            CustomerName = result.CustomerName,
-                            TripDate = result.TripDate,
-                            InvoiceNumber = result.InvoiceNumber,
-                            FleetName = result.FleetName,
-                            ATUNumber = result.FleetATUNumber,
-                            Street = result.FleetAddress,
-                            BuildingNumber = result.FleetBuildingNumber,
-                            PostCode = result.FleetPostalCode,
-                            City = result.FleetCity,
-                            PickUpAddress = result.PickUpLocation,
-                            DropOffAddress = result.DropOffLocation,
-                            CaptainUserName = result.CaptainUserName,
-                            Distance = result.DistanceInKM.ToString("0.00"),
-                            VehicleNumber = result.PlateNumber,
-                            FleetEmail = result.FleetEmail
-                        });
-
-                        passengerDeviceToken = result.PassengerDeviceToken;
-                    }
-                    else
-                    {
-                        trip.CompanyID = Guid.Parse(model.fleetID);
-
-                        //Fare details are calculated and saved on endTrip requests.
-
-                        trip.isOverRided = false;
-                        trip.TripPaymentMode = "Cash";
-                        trip.Tip = Convert.ToDecimal(model.tipAmount);
-
-                        model.userID = trip.UserID.ToString();
-
-                        ApplyPromoAdjustWalletUpdateVoucherAmount(model.voucherUsedAmount, model.walletUsedAmount, model.promoDiscountAmount, trip, context);
-
-                        Transaction tr = new Transaction()
-                        {
-                            TransactionID = Guid.NewGuid(),
-                            DebitedFrom = Guid.Parse(trip.UserID.ToString()),
-                            CreditedTo = Guid.Parse(ApplicationID),
-                            DateTime = DateTime.UtcNow,
-                            Amount = Convert.ToDecimal(model.collectedAmount), //Adjusted wallet amount and voucher amount is considered as mobile payment - RECEIVABLE
-                            PaymentModeID = (int)PaymentModes.Cash,
-                            Reference = "Trip cash payment received."
-                        };
-                        context.Transactions.Add(tr);
-                        context.SaveChanges();
-
-                        var result = context.spGetTripPassengerTokenByTripIDOnCollectPayment(model.tripID, (int)TripStatuses.Completed).FirstOrDefault();
-
-                        passengerDeviceToken = result.DeviceToken;
-                    }
-
-                    var paymentDetails = new cashPayment()
-                    {
-                        collectedAmount = model.collectedAmount,
-                        promoDiscountAmount = model.promoDiscountAmount,
-                        //voucherUsedAmount = model.voucherUsedAmount,  //In case of vouchered ride, user don't have passenger application
-                        walletAmountUsed = model.walletUsedAmount,
-                        totalFare = (decimal.Parse(model.collectedAmount) + decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString()
-                    };
-
-
-                    await FirebaseService.SetDriverFree(model.driverID, model.tripID);
-                    await FirebaseService.FreePassengerFromCurrentTrip(trip.UserID.ToString(), model.tripID);
-                    await FirebaseService.DeleteTrip(model.tripID);
-
-                    //In case of Request from Business it'll be empty. isWeb check can be applied here.
-                    if (!string.IsNullOrEmpty(passengerDeviceToken))
-                        await PushyService.UniCast(passengerDeviceToken, paymentDetails, NotificationKeys.pas_CashPaymentPaid);
-
-
-                    response.error = false;
-                    response.message = ResponseKeys.msgSuccess;
+                    //TBD: send fcm to user - if required.
+                    response.data = dic;
+                    response.error = true;
+                    response.message = ResponseKeys.fareAlreadyPaid;
                     return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
-            }
-            else
-            {
-                response.error = true;
-                response.message = ResponseKeys.invalidParameters;
+
+                string passengerDeviceToken = "";
+                var trip = context.Trips.Where(t => t.TripID.ToString().Equals(model.tripID)).FirstOrDefault();
+
+                //In case of partial payment need to send invoice
+                if ((decimal.Parse(model.walletUsedAmount) > 0.0M) || (decimal.Parse(model.promoDiscountAmount) > 0.0M))
+                {
+                    var result = context.spAfterMobilePayment(false,//Convert.ToBoolean(model.isOverride), 
+                        model.tripID,
+                        "",
+                        (int)TripStatuses.Completed,
+                        trip.UserID.ToString(),
+                        ApplicationID,
+                        (decimal.Parse(model.totalFare) - decimal.Parse(model.tipAmount)).ToString(),
+                        "0.00",
+                        model.promoDiscountAmount,
+                        model.walletUsedAmount,
+                        model.tipAmount.ToString(),
+                        DateTime.UtcNow,
+                        (int)PaymentModes.Cash,
+                        (int)PaymentStatuses.Paid,
+                        model.fleetID).FirstOrDefault();
+
+                    await SendInvoice(new InvoiceModel
+                    {
+                        CustomerEmail = result.CustomerEmail,// context.AspNetUsers.Where(u => u.Id.Equals(model.passengerID)).FirstOrDefault().Email,
+                        TotalAmount = (decimal.Parse(model.collectedAmount) + decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString(),  // model.totalFare,
+                        CashAmount = model.collectedAmount,
+                        WalletUsedAmount = model.walletUsedAmount,
+                        PromoDiscountAmount = model.promoDiscountAmount,
+                        CaptainName = result.CaptainName,
+                        CustomerName = result.CustomerName,
+                        TripDate = result.TripDate,
+                        InvoiceNumber = result.InvoiceNumber,
+                        FleetName = result.FleetName,
+                        ATUNumber = result.FleetATUNumber,
+                        Street = result.FleetAddress,
+                        BuildingNumber = result.FleetBuildingNumber,
+                        PostCode = result.FleetPostalCode,
+                        City = result.FleetCity,
+                        PickUpAddress = result.PickUpLocation,
+                        DropOffAddress = result.DropOffLocation,
+                        CaptainUserName = result.CaptainUserName,
+                        Distance = result.DistanceInKM.ToString("0.00"),
+                        VehicleNumber = result.PlateNumber,
+                        FleetEmail = result.FleetEmail
+                    });
+
+                    passengerDeviceToken = result.PassengerDeviceToken;
+                }
+                else
+                {
+                    trip.CompanyID = Guid.Parse(model.fleetID);
+
+                    //Fare details are calculated and saved on endTrip requests.
+
+                    trip.isOverRided = false;
+                    trip.TripPaymentMode = "Cash";
+                    trip.Tip = Convert.ToDecimal(model.tipAmount);
+
+                    model.userID = trip.UserID.ToString();
+
+                    ApplyPromoAdjustWalletUpdateVoucherAmount(model.voucherUsedAmount, model.walletUsedAmount, model.promoDiscountAmount, trip, context);
+
+                    Transaction tr = new Transaction()
+                    {
+                        TransactionID = Guid.NewGuid(),
+                        DebitedFrom = Guid.Parse(trip.UserID.ToString()),
+                        CreditedTo = Guid.Parse(ApplicationID),
+                        DateTime = DateTime.UtcNow,
+                        Amount = Convert.ToDecimal(model.collectedAmount), //Adjusted wallet amount and voucher amount is considered as mobile payment - RECEIVABLE
+                        PaymentModeID = (int)PaymentModes.Cash,
+                        Reference = "Trip cash payment received."
+                    };
+                    context.Transactions.Add(tr);
+                    context.SaveChanges();
+
+                    var result = context.spGetTripPassengerTokenByTripIDOnCollectPayment(model.tripID, (int)TripStatuses.Completed).FirstOrDefault();
+
+                    passengerDeviceToken = result.DeviceToken;
+                }
+
+                var paymentDetails = new CashPaymentNotification()
+                {
+                    CollectedAmount = model.collectedAmount,
+                    PromoDiscountAmount = model.promoDiscountAmount,
+                    VoucherUsedAmount = "0.00",  //In case of vouchered ride, user don't have passenger application
+                    WalletAmountUsed = model.walletUsedAmount,
+                    TotalFare = (decimal.Parse(model.collectedAmount) + decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString()
+                };
+
+
+                await FirebaseService.SetDriverFree(model.driverID, model.tripID);
+                await FirebaseService.FreePassengerFromCurrentTrip(trip.UserID.ToString(), model.tripID);
+                await FirebaseService.DeleteTrip(model.tripID);
+
+                //In case of Request from Business it'll be empty. isWeb check can be applied here.
+                if (!string.IsNullOrEmpty(passengerDeviceToken))
+                    await PushyService.UniCast(passengerDeviceToken, paymentDetails, NotificationKeys.pas_CashPaymentPaid);
+
+
+                response.error = false;
+                response.message = ResponseKeys.msgSuccess;
                 return Request.CreateResponse(HttpStatusCode.OK, response);
             }
+            //}
+            //else
+            //{
+            //    response.error = true;
+            //    response.message = ResponseKeys.invalidParameters;
+            //    return Request.CreateResponse(HttpStatusCode.OK, response);
+            //}
         }
 
         [HttpPost]
         [Route("passengerRating")]
         public HttpResponseMessage passengerRating([FromBody] PassengerRatingRequest model)
         {
-            if (model != null && model.customerRating > 0 && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID))
+            //if (model != null && model.customerRating > 0 && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID))
+            //{
+            using (CangooEntities context = new CangooEntities())
             {
-                using (CangooEntities context = new CangooEntities())
+                var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
+                if (tp != null)
                 {
-                    var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
-                    if (tp != null)
+                    tp.UserRating = Convert.ToInt32(model.customerRating);
+                    tp.DriverSubmittedFeedback = model.description;
+
+                    var user = context.UserProfiles.Where(u => u.UserID == tp.UserID.ToString()).FirstOrDefault();
+
+                    //Verify if ride was booked by business portal
+                    if (user != null)
                     {
-                        tp.UserRating = Convert.ToInt32(model.customerRating);
-                        tp.DriverSubmittedFeedback = model.description;
-
-                        var user = context.UserProfiles.Where(u => u.UserID == tp.UserID.ToString()).FirstOrDefault();
-
-                        //Verify if ride was booked by business portal
-                        if (user != null)
-                        {
-                            int userTrips = (int)(user.NoOfTrips == null ? 0 : user.NoOfTrips);
-                            user.Rating = Math.Round((double)((((user.Rating == null ? 0 : user.Rating) * (userTrips - 1)) + tp.UserRating) / userTrips), 1, MidpointRounding.ToEven);
-                        }
-
-                        context.SaveChanges();
-                        response.error = false;
-                        response.message = ResponseKeys.msgSuccess;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                        int userTrips = (int)(user.NoOfTrips == null ? 0 : user.NoOfTrips);
+                        user.Rating = Math.Round((double)((((user.Rating == null ? 0 : user.Rating) * (userTrips - 1)) + tp.UserRating) / userTrips), 1, MidpointRounding.ToEven);
                     }
-                    else
-                    {
-                        response.error = true;
-                        response.message = ResponseKeys.tripNotFound;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
+
+                    context.SaveChanges();
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.tripNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
             }
-            else
-            {
-                response.error = true;
-                response.message = ResponseKeys.invalidParameters;
-                return Request.CreateResponse(HttpStatusCode.OK, response);
-            }
+            //}
+            //else
+            //{
+            //    response.error = true;
+            //    response.message = ResponseKeys.invalidParameters;
+            //    return Request.CreateResponse(HttpStatusCode.OK, response);
+            //}
         }
 
         [HttpPost]
         [Route("passengerFavUnFav")]
         public HttpResponseMessage passengerFavUnFav([FromBody] PassengerFavUnFavRequest model)
         {
-            if (model != null && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID))
+            //if (model != null && !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.driverID))
+            //{
+            using (CangooEntities context = new CangooEntities())
             {
-                using (CangooEntities context = new CangooEntities())
+                var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
+                if (tp != null)
                 {
-                    var tp = context.Trips.Where(t => t.TripID.ToString() == model.tripID).FirstOrDefault();
-                    if (tp != null)
+                    //if (Request.Headers.Contains("ApplicationID"))
+                    //{
+                    //    ApplicationID = Request.Headers.GetValues("ApplicationID").First();
+                    //}
+                    var capt = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.driverID)).FirstOrDefault();
+                    var usr = context.UserFavoriteCaptains.Where(f => f.UserID == tp.UserID.ToString() && f.CaptainID.ToString() == model.driverID).FirstOrDefault();
+                    if (usr == null)
                     {
-                        //if (Request.Headers.Contains("ApplicationID"))
-                        //{
-                        //    ApplicationID = Request.Headers.GetValues("ApplicationID").First();
-                        //}
-                        var capt = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.driverID)).FirstOrDefault();
-                        var usr = context.UserFavoriteCaptains.Where(f => f.UserID == tp.UserID.ToString() && f.CaptainID.ToString() == model.driverID).FirstOrDefault();
-                        if (usr == null)
+                        UserFavoriteCaptain uf = new UserFavoriteCaptain
                         {
-                            UserFavoriteCaptain uf = new UserFavoriteCaptain
-                            {
-                                ID = Guid.NewGuid(),
-                                UserID = tp.UserID.ToString(),
-                                CaptainID = tp.CaptainID,
-                                IsFavByPassenger = false,
-                                IsFavByCaptain = true,
-                                ApplicationID = Guid.Parse(ApplicationID)
-                            };
+                            ID = Guid.NewGuid(),
+                            UserID = tp.UserID.ToString(),
+                            CaptainID = tp.CaptainID,
+                            IsFavByPassenger = false,
+                            IsFavByCaptain = true,
+                            ApplicationID = Guid.Parse(ApplicationID)
+                        };
 
-                            capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == null ? 1 : (int)capt.NumberOfFavoriteUser + 1;
-                            context.UserFavoriteCaptains.Add(uf);
-                        }
-                        else
-                        {
-                            if ((bool)usr.IsFavByCaptain && (bool)usr.IsFavByPassenger)
-                            {
-                                usr.IsFavByCaptain = false;
-                                capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == 1 ? 0 : (int)capt.NumberOfFavoriteUser - 1;
-                            }
-                            else if ((bool)usr.IsFavByCaptain)
-                            {
-                                context.UserFavoriteCaptains.Remove(usr);
-                                capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == 1 ? 0 : (int)capt.NumberOfFavoriteUser - 1;
-                            }
-                            else
-                            {
-                                usr.IsFavByCaptain = true;
-                                capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == null ? 1 : (int)capt.NumberOfFavoriteUser + 1;
-                            }
-                        }
-                        context.SaveChanges();
-                        response.error = false;
-                        response.message = ResponseKeys.msgSuccess;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                        capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == null ? 1 : (int)capt.NumberOfFavoriteUser + 1;
+                        context.UserFavoriteCaptains.Add(uf);
                     }
                     else
                     {
-                        response.error = true;
-                        response.message = ResponseKeys.tripNotFound;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
+                        if ((bool)usr.IsFavByCaptain && (bool)usr.IsFavByPassenger)
+                        {
+                            usr.IsFavByCaptain = false;
+                            capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == 1 ? 0 : (int)capt.NumberOfFavoriteUser - 1;
+                        }
+                        else if ((bool)usr.IsFavByCaptain)
+                        {
+                            context.UserFavoriteCaptains.Remove(usr);
+                            capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == 1 ? 0 : (int)capt.NumberOfFavoriteUser - 1;
+                        }
+                        else
+                        {
+                            usr.IsFavByCaptain = true;
+                            capt.NumberOfFavoriteUser = capt.NumberOfFavoriteUser == null ? 1 : (int)capt.NumberOfFavoriteUser + 1;
+                        }
                     }
+                    context.SaveChanges();
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.tripNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
             }
-            else
-            {
-                response.error = true;
-                response.message = ResponseKeys.invalidParameters;
-                return Request.CreateResponse(HttpStatusCode.OK, response);
-            }
+            //}
+            //else
+            //{
+            //    response.error = true;
+            //    response.message = ResponseKeys.invalidParameters;
+            //    return Request.CreateResponse(HttpStatusCode.OK, response);
+            //}
         }
 
         #endregion
@@ -1560,86 +1629,87 @@ namespace API.Controllers
         [Route("activatePriorityHour")]
         public async Task<HttpResponseMessage> activatePriorityHour([FromBody] ActivatePriorityHourRequest model)
         {
-
+            //if (model != null && model.captainID != string.Empty && model.duration > 0)
+            //{
             using (CangooEntities context = new CangooEntities())
             {
-                if (model != null && model.captainID != string.Empty && model.duration > 0)
+
+                var captain = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.captainID)).FirstOrDefault();
+                if (captain != null)
                 {
-                    var captain = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.captainID)).FirstOrDefault();
-                    if (captain != null)
-                    {
-                        var settings = context.ApplicationSettings.Where(a => a.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())).FirstOrDefault();
+                    var settings = context.ApplicationSettings.Where(a => a.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())).FirstOrDefault();
 
-                        captain.IsPriorityHoursActive = true;
-                        captain.LastPriorityHourStartTime = DateTime.UtcNow;
-                        captain.LastPriorityHourEndTime = DateTime.UtcNow.AddHours(model.duration);
-                        captain.EarningPoints -= model.duration * (settings.AwardpointsDeduction != null ? (int)settings.AwardpointsDeduction : 100);
-                        context.SaveChanges();
+                    captain.IsPriorityHoursActive = true;
+                    captain.LastPriorityHourStartTime = DateTime.UtcNow;
+                    captain.LastPriorityHourEndTime = DateTime.UtcNow.AddHours(model.duration);
+                    captain.EarningPoints -= model.duration * (settings.AwardpointsDeduction != null ? (int)settings.AwardpointsDeduction : 100);
+                    context.SaveChanges();
 
-                        var priorityHourRemainingTime = ((int)(((DateTime)captain.LastPriorityHourEndTime).
-                                                        Subtract((DateTime)captain.LastPriorityHourStartTime).TotalMinutes)).ToString();
-                        
-                        await FirebaseService.SetPriorityHourStatus(true, priorityHourRemainingTime, model.captainID, DateTime.Parse(captain.LastPriorityHourEndTime.ToString()).ToString(Formats.DateFormat), captain.EarningPoints.ToString());
+                    var priorityHourRemainingTime = ((int)(((DateTime)captain.LastPriorityHourEndTime).
+                                                    Subtract((DateTime)captain.LastPriorityHourStartTime).TotalMinutes)).ToString();
 
-                        response.error = false;
-                        response.message = ResponseKeys.msgSuccess;
-                        dic = new Dictionary<dynamic, dynamic>
+                    await FirebaseService.SetPriorityHourStatus(true, priorityHourRemainingTime, model.captainID, DateTime.Parse(captain.LastPriorityHourEndTime.ToString()).ToString(Formats.DateFormat), captain.EarningPoints.ToString());
+
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    dic = new Dictionary<dynamic, dynamic>
                                     {
                                         { "priorityHour", model }
                                     };
-                        response.data = dic;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
-                    else
-                    {
-                        response.message = ResponseKeys.captainNotFound;
-                        response.error = true;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
+                    response.data = dic;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
                 else
                 {
-                    response.message = ResponseKeys.invalidParameters;
+                    response.message = ResponseKeys.captainNotFound;
                     response.error = true;
                     return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
             }
+            //}
+            //else
+            //{
+            //    response.message = ResponseKeys.invalidParameters;
+            //    response.error = true;
+            //    return Request.CreateResponse(HttpStatusCode.OK, response);
+            //}
         }
+
 
         [HttpGet]
         [Route("getCaptainEarnedPoints")]
-        public HttpResponseMessage getCaptainEarnedPoints(string captainID)
+        public HttpResponseMessage getCaptainEarnedPoints([FromUri] GetDriverEarnedPointsRequest model)
         {
-            if (!string.IsNullOrEmpty(captainID))
+            //if (!string.IsNullOrEmpty(model.captainID))
+            //{
+            using (CangooEntities context = new CangooEntities())
             {
-                using (CangooEntities context = new CangooEntities())
+                var captain = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.captainID)).FirstOrDefault();
+                if (captain != null)
                 {
-                    var captain = context.Captains.Where(c => c.CaptainID.ToString().Equals(captainID)).FirstOrDefault();
-                    if (captain != null)
-                    {
-                        response.error = false;
-                        response.message = ResponseKeys.msgSuccess;
-                        dic = new Dictionary<dynamic, dynamic>
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    dic = new Dictionary<dynamic, dynamic>
                                     {
                                         { "earnedPoints", captain.EarningPoints }
                                     };
-                        response.data = dic;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
-                    else
-                    {
-                        response.error = true;
-                        response.message = ResponseKeys.captainNotFound;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
+                    response.data = dic;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.captainNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
             }
-            else
-            {
-                response.message = ResponseKeys.invalidParameters;
-                response.error = true;
-                return Request.CreateResponse(HttpStatusCode.OK, response);
-            }
+            //}
+            //else
+            //{
+            //    response.message = ResponseKeys.invalidParameters;
+            //    response.error = true;
+            //    return Request.CreateResponse(HttpStatusCode.OK, response);
+            //}
         }
 
         #endregion
@@ -1648,282 +1718,281 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("getAllUnAcceptedLaterBooking")]
-        public async Task<HttpResponseMessage> getAllUnAcceptedLaterBooking(int offset, int limit, int vehicleSeatingCapacity)
+        public async Task<HttpResponseMessage> getAllUnAcceptedLaterBooking([FromUri] GetDriverPendingLaterBookingsRequest model)
         {
-            if (offset > 0 && limit > 0 && vehicleSeatingCapacity > 0)
+            //if (model.offset > 0 && model.limit > 0 && model.vehicleSeatingCapacity > 0)
+            //{
+            using (CangooEntities context = new CangooEntities())
             {
-                using (CangooEntities context = new CangooEntities())
+                //UserController uc = new UserController();
+                var lstLaterBooking = context.spGetAllUnAcceptedLateBooking(ResellerID, ApplicationID, DateTime.UtcNow, (int)TripStatuses.RequestSent, model.vehicleSeatingCapacity, model.offset, model.limit).ToList(); //date time utc
+                if (lstLaterBooking.Count > 0)
                 {
-                    //UserController uc = new UserController();
-                    var lstLaterBooking = context.spGetAllUnAcceptedLateBooking(ResellerID, ApplicationID, DateTime.UtcNow, (int)TripStatuses.RequestSent, vehicleSeatingCapacity, offset, limit).ToList(); //date time utc
-                    if (lstLaterBooking.Count > 0)
+                    List<ScheduleBookingResponse> lstSB = new List<ScheduleBookingResponse>();
+                    foreach (var item in lstLaterBooking)
                     {
-                        List<ScheduleBooking> lstSB = new List<ScheduleBooking>();
-                        foreach (var item in lstLaterBooking)
-                        {
-                            //dic = new Dictionary<dynamic, dynamic>() {
-                            //        { "discountType", "normal"},
-                            //        { "discountAmount", "0.00" }
-                            //    };
+                        //dic = new Dictionary<dynamic, dynamic>() {
+                        //        { "discountType", "normal"},
+                        //        { "discountAmount", "0.00" }
+                        //    };
 
-                           var result = await FareManagerService.IsSpecialPromotionApplicable(item.pickupLocationLatitude, item.pickuplocationlongitude, item.DropOffLocationLatitude,
-                                item.DropOffLocationLongitude, ApplicationID, true, item.pickUpBookingDateTime);
-                           
-                            dic = new Dictionary<dynamic, dynamic>() {
+                        var result = await FareManagerService.IsSpecialPromotionApplicable(item.pickupLocationLatitude, item.pickuplocationlongitude, item.DropOffLocationLatitude,
+                             item.DropOffLocationLongitude, ApplicationID, true, item.pickUpBookingDateTime);
+
+                        dic = new Dictionary<dynamic, dynamic>() {
                                     { "discountType", result.DiscountType },
                                     { "discountAmount", result.DiscountAmount }
                                 };
 
-                            var lstTripFacilities = await FacilitiesService.GetFacilitiesDetailByIds(item.facilities);
-                            //if (item.NoOfPerson <= vehicleSeatingCapacity)
-                            //{
-                            ScheduleBooking sb = new ScheduleBooking
-                            {
-                                tripID = item.TripID.ToString(),
-                                pickUplatitude = item.pickupLocationLatitude,
-                                pickUplongitude = item.pickuplocationlongitude,
-                                pickUpLocation = item.PickUpLocation,
-                                dropOfflatitude = item.DropOffLocationLatitude,
-                                dropOfflongitude = item.DropOffLocationLongitude,
-                                dropOffLocation = item.DropOffLocation,
-                                isLaterBooking = Convert.ToBoolean(item.isLaterBooking),
-                                passengerID = item.UserID.ToString(),
-                                passengerName = item.passengName,
-                                rating = item.Rating.ToString(),
-                                tripPaymentMode = item.TripPaymentMode,
-                                pickUpDateTime = Convert.ToDateTime(item.pickUpBookingDateTime).ToString(Formats.DateFormat),
-                                isFav = item.favorite != null ? (bool)item.favorite : false,
-                                seatingCapacity = (int)item.NoOfPerson,
-                                estimatedDistance = item.DistanceTraveled.ToString(),
-                                facilities = lstTripFacilities,
-                                discountType = dic["discountType"],
-                                discountAmount = dic["discountAmount"]
-                            };
-                            lstSB.Add(sb);
-                            //}
-                        }
+                        var lstTripFacilities = await FacilitiesService.GetDriverFacilitiesDetailByIds(item.facilities);
+                        //if (item.NoOfPerson <= vehicleSeatingCapacity)
+                        //{
+                        ScheduleBookingResponse sb = new ScheduleBookingResponse
+                        {
+                            tripID = item.TripID.ToString(),
+                            pickUplatitude = item.pickupLocationLatitude,
+                            pickUplongitude = item.pickuplocationlongitude,
+                            pickUpLocation = item.PickUpLocation,
+                            dropOfflatitude = item.DropOffLocationLatitude,
+                            dropOfflongitude = item.DropOffLocationLongitude,
+                            dropOffLocation = item.DropOffLocation,
+                            isLaterBooking = Convert.ToBoolean(item.isLaterBooking),
+                            passengerID = item.UserID.ToString(),
+                            passengerName = item.passengName,
+                            rating = item.Rating.ToString(),
+                            tripPaymentMode = item.TripPaymentMode,
+                            pickUpDateTime = Convert.ToDateTime(item.pickUpBookingDateTime).ToString(Formats.DateFormat),
+                            isFav = item.favorite != null ? (bool)item.favorite : false,
+                            seatingCapacity = (int)item.NoOfPerson,
+                            estimatedDistance = item.DistanceTraveled.ToString(),
+                            facilities = lstTripFacilities,
+                            discountType = dic["discountType"],
+                            discountAmount = dic["discountAmount"]
+                        };
+                        lstSB.Add(sb);
+                        //}
+                    }
 
-                        dic = new Dictionary<dynamic, dynamic>
+                    dic = new Dictionary<dynamic, dynamic>
                             {
                                 { "pendingLaterBooking", lstSB },
                                 { "totalRecords", lstLaterBooking.FirstOrDefault().totalRecord }
                             };
 
-                        response.error = false;
-                        response.message = ResponseKeys.msgSuccess;
-                        response.data = dic;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
-                    else
-                    {
-                        dic = new Dictionary<dynamic, dynamic>
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    response.data = dic;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    dic = new Dictionary<dynamic, dynamic>
                             {
-                                { "pendingLaterBooking", new List<ScheduleBooking>() },
+                                { "pendingLaterBooking", new List<ScheduleBookingResponse>() },
                                 { "totalRecords", 0 }
                             };
 
-                        response.error = false;
-                        response.message = ResponseKeys.msgSuccess;
-                        response.data = dic;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    response.data = dic;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
             }
-            else
-            {
-                response.error = true;
-                response.message = ResponseKeys.invalidParameters;
-                return Request.CreateResponse(HttpStatusCode.BadRequest, response);
-            }
+            //}
+            //else
+            //{
+            //    response.error = true;
+            //    response.message = ResponseKeys.invalidParameters;
+            //    return Request.CreateResponse(HttpStatusCode.BadRequest, response);
+            //}
         }
 
         [HttpPost]      //Get accepted upcoming later bookings
         [Route("getDriverLaterBooking")]
         public async Task<HttpResponseMessage> getDriverLaterBooking([FromBody] DriverGetUpComingBookingsRequest model)
         {
-
             using (CangooEntities context = new CangooEntities())
             {
-                if (model != null && model.userID != string.Empty && model.offset > 0 && model.limit > 0)
+                //if (model != null && model.userID != string.Empty && model.offset > 0 && model.limit > 0)
+                //{
+                //UserController uc = new UserController();
+
+                var lstScheduleRides = context.spCaptainLaterTrips(DateTime.UtcNow, model.userID, (int)TripStatuses.LaterBookingAccepted, model.offset, model.limit).ToList();
+                if (lstScheduleRides.Count > 0)
                 {
-                    //UserController uc = new UserController();
-
-                    var lstScheduleRides = context.spCaptainLaterTrips(DateTime.UtcNow, model.userID, (int)TripStatuses.LaterBookingAccepted, model.offset, model.limit).ToList();
-                    if (lstScheduleRides.Count > 0)
+                    List<ScheduleBookingResponse> lstSB = new List<ScheduleBookingResponse>();
+                    foreach (var item in lstScheduleRides)
                     {
-                        List<ScheduleBooking> lstSB = new List<ScheduleBooking>();
-                        foreach (var item in lstScheduleRides)
-                        {
-                            var result = await FareManagerService.IsSpecialPromotionApplicable(item.pickupLocationLatitude, item.pickuplocationlongitude, item.DropOffLocationLatitude,
-                                item.DropOffLocationLongitude, ApplicationID, true, item.pickUpBookingDateTime);
+                        var result = await FareManagerService.IsSpecialPromotionApplicable(item.pickupLocationLatitude, item.pickuplocationlongitude, item.DropOffLocationLatitude,
+                            item.DropOffLocationLongitude, ApplicationID, true, item.pickUpBookingDateTime);
 
-                            dic = new Dictionary<dynamic, dynamic>() {
+                        dic = new Dictionary<dynamic, dynamic>() {
                                     { "discountType", result.DiscountType },
                                     { "discountAmount", result.DiscountAmount }
                                 };
 
-                            //dic = new Dictionary<dynamic, dynamic>() {
-                            //        { "discountType", "normal"},
-                            //        { "discountAmount", "0.00" }
-                            //    };
+                        //dic = new Dictionary<dynamic, dynamic>() {
+                        //        { "discountType", "normal"},
+                        //        { "discountAmount", "0.00" }
+                        //    };
 
 
-                            //Common.GetFacilities(ResellerID, ApplicationID, context, item.facilities, out List<Facilities> lstTripFacilities);
-                            var lstTripFacilities = await FacilitiesService.GetFacilitiesDetailByIds(item.facilities);
-                            ScheduleBooking sb = new ScheduleBooking
-                            {
-                                tripID = item.TripID.ToString(),
-                                pickUplatitude = item.pickupLocationLatitude,
-                                pickUplongitude = item.pickuplocationlongitude,
-                                pickUpLocation = item.PickUpLocation,
-                                dropOfflatitude = item.DropOffLocationLatitude,
-                                dropOfflongitude = item.DropOffLocationLongitude,
-                                dropOffLocation = item.DropOffLocation,
-                                isLaterBooking = Convert.ToBoolean(item.isLaterBooking),
-                                passengerID = item.UserID.ToString(),
-                                passengerName = item.passengName,
-                                rating = item.Rating.ToString(),
-                                tripPaymentMode = item.TripPaymentMode,
-                                isFav = item.favorite != null ? (bool)item.favorite : false,
-                                pickUpDateTime = Convert.ToDateTime(item.pickUpBookingDateTime).ToString(Formats.DateFormat),
-                                seatingCapacity = (int)item.NoOfPerson,
-                                estimatedDistance = item.DistanceTraveled.ToString(),
-                                facilities = lstTripFacilities,
-                                isWeb = item.isWeb,
-                                discountType = dic["discountType"],
-                                discountAmount = dic["discountAmount"],
-                                remainingTime = ((DateTime)item.pickUpBookingDateTime - DateTime.UtcNow).TotalSeconds
-                            };
-                            lstSB.Add(sb);
-                        }
+                        //Common.GetFacilities(ResellerID, ApplicationID, context, item.facilities, out List<Facilities> lstTripFacilities);
+                        var lstTripFacilities = await FacilitiesService.GetDriverFacilitiesDetailByIds(item.facilities);
+                        ScheduleBookingResponse sb = new ScheduleBookingResponse
+                        {
+                            tripID = item.TripID.ToString(),
+                            pickUplatitude = item.pickupLocationLatitude,
+                            pickUplongitude = item.pickuplocationlongitude,
+                            pickUpLocation = item.PickUpLocation,
+                            dropOfflatitude = item.DropOffLocationLatitude,
+                            dropOfflongitude = item.DropOffLocationLongitude,
+                            dropOffLocation = item.DropOffLocation,
+                            isLaterBooking = Convert.ToBoolean(item.isLaterBooking),
+                            passengerID = item.UserID.ToString(),
+                            passengerName = item.passengName,
+                            rating = item.Rating.ToString(),
+                            tripPaymentMode = item.TripPaymentMode,
+                            isFav = item.favorite != null ? (bool)item.favorite : false,
+                            pickUpDateTime = Convert.ToDateTime(item.pickUpBookingDateTime).ToString(Formats.DateFormat),
+                            seatingCapacity = (int)item.NoOfPerson,
+                            estimatedDistance = item.DistanceTraveled.ToString(),
+                            facilities = lstTripFacilities,
+                            isWeb = item.isWeb,
+                            discountType = dic["discountType"],
+                            discountAmount = dic["discountAmount"],
+                            remainingTime = ((DateTime)item.pickUpBookingDateTime - DateTime.UtcNow).TotalSeconds
+                        };
+                        lstSB.Add(sb);
+                    }
 
-                        dic = new Dictionary<dynamic, dynamic>
+                    dic = new Dictionary<dynamic, dynamic>
                             {
                                 { "laterBooking", lstSB },
                                 { "totalRecords", lstScheduleRides.FirstOrDefault().totalRecord }
                             };
 
-                        response.error = false;
-                        response.message = ResponseKeys.msgSuccess;
-                        response.data = dic;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
-                    else
-                    {
-                        dic = new Dictionary<dynamic, dynamic>
-                            {
-                                { "laterBooking", new List<ScheduleBooking>() },
-                                { "totalRecords", 0 }
-                            };
-
-                        response.error = false;
-                        response.message = ResponseKeys.msgSuccess;
-                        response.data = dic;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    response.data = dic;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
                 else
                 {
-                    response.error = true;
-                    response.message = ResponseKeys.invalidParameters;
+                    dic = new Dictionary<dynamic, dynamic>
+                            {
+                                { "laterBooking", new List<ScheduleBookingResponse>() },
+                                { "totalRecords", 0 }
+                            };
+
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    response.data = dic;
                     return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
+                //}
+                //else
+                //{
+                //    response.error = true;
+                //    response.message = ResponseKeys.invalidParameters;
+                //    return Request.CreateResponse(HttpStatusCode.OK, response);
+                //}
             }
         }
 
         [HttpGet]
         [Route("getDriverBookingHistory")]
-        public async Task<HttpResponseMessage> getDriverBookingHistory(string captainID, string pageNo, string pageSize, string dateTo, string dateFrom)
+        public async Task<HttpResponseMessage> getDriverBookingHistory([FromUri] GetDriverBookingHistoryRequest model)
         {
-            if (!string.IsNullOrEmpty(captainID) && !string.IsNullOrEmpty(pageSize) && !string.IsNullOrEmpty(pageNo) &&
-                !string.IsNullOrEmpty(dateFrom) && !string.IsNullOrEmpty(dateTo))
+            //if (!string.IsNullOrEmpty(captainID) && !string.IsNullOrEmpty(pageSize) && !string.IsNullOrEmpty(pageNo) &&
+            //    !string.IsNullOrEmpty(dateFrom) && !string.IsNullOrEmpty(dateTo))
+            //{
+            using (CangooEntities context = new CangooEntities())
             {
-                using (CangooEntities context = new CangooEntities())
+
+                var result = context.spCaptainTripHistory(model.captainID, int.Parse(model.pageNo), int.Parse(model.pageSize),
+                    Convert.ToDateTime(model.dateFrom), Convert.ToDateTime(model.dateTo)).ToList();
+                if (result.Count > 0)
                 {
+                    List<DriverTripsDTO> lstTrips = new List<DriverTripsDTO>();
 
-                    var result = context.spCaptainTripHistory(captainID, int.Parse(pageNo), int.Parse(pageSize),
-                        Convert.ToDateTime(dateFrom), Convert.ToDateTime(dateTo)).ToList();
-                    if (result.Count > 0)
+                    foreach (var temp in result)
                     {
-                        List<DriverTrips> lstTrips = new List<DriverTrips>();
-
-                        foreach (var temp in result)
+                        //Common.GetFacilities(ResellerID, ApplicationID, context, item.facilities, out List<Facilities> lstTripFacilities);
+                        var lstTripFacilities = await FacilitiesService.GetDriverFacilitiesDetailByIds(temp.facilities);
+                        DriverTripsDTO trip = new DriverTripsDTO()
                         {
-                            //Common.GetFacilities(ResellerID, ApplicationID, context, item.facilities, out List<Facilities> lstTripFacilities);
-                            var lstTripFacilities = await FacilitiesService.GetFacilitiesDetailByIds(temp.facilities);
-                            DriverTrips trip = new DriverTrips()
-                            {
-                                tripID = temp.tripID.ToString(),
-                                pickupLocationLatitude = temp.PickupLocationLatitude,
-                                pickupLocationLongitude = temp.PickupLocationLongitude,
-                                pickupLocation = temp.PickUpLocation,
-                                dropOffLocationLatitude = temp.DropOffLocationLatitude,
-                                dropOffLocationLongitude = temp.DropOffLocationLongitude,
-                                dropOffLocation = temp.DropOffLocation,
-                                bookingDateTime = Convert.ToDateTime(temp.BookingDateTime).ToString(Formats.DateFormat),
-                                pickUpBookingDateTime = Convert.ToDateTime(temp.PickUpBookingDateTime).ToString(Formats.DateFormat),
-                                tripArrivalDatetime = Convert.ToDateTime(temp.ArrivalDateTime).ToString(Formats.DateFormat),
-                                tripStartDatetime = Convert.ToDateTime(temp.TripStartDatetime).ToString(Formats.DateFormat),
-                                tripEndDatetime = Convert.ToDateTime(temp.TripEndDatetime).ToString(Formats.DateFormat),
-                                tripStatus = temp.Status,
-                                facilities = lstTripFacilities,
-                                tip = temp.Tip.ToString(),
-                                fare = temp.Fare.ToString(),
-                                cashPayment = temp.TripCashPayment.ToString(),
-                                mobilePayment = temp.TripMobilePayment.ToString(),
-                                bookingType = temp.BookingType,
-                                bookingMode = temp.BookingMode,
-                                paymentMode = temp.PaymentMode,
-                                passengerName = temp.PassengerName,
-                                make = temp.make,
-                                model = temp.Model,
-                                plateNumber = temp.PlateNumber,
-                                distanceTraveled = temp.DistanceTraveled.ToString(),
-                                vehicleRating = temp.VehicleRating.ToString(),
-                                driverEarnedPoints = temp.DriverEarnedPoints.ToString(),
-                                driverRating = temp.DriverRating.ToString()
-                            };
-                            lstTrips.Add(trip);
-                        }
-
-                        DriverTripsHistory history = new DriverTripsHistory()
-                        {
-                            avgDriverRating = result.FirstOrDefault().avgDriverRating.ToString(),
-                            avgVehicleRating = result.FirstOrDefault().avgVehicleRating.ToString(),
-                            totalTrips = result.FirstOrDefault().totalTrips.ToString(),
-                            totalFare = (result.FirstOrDefault().totalTip + result.FirstOrDefault().totalFare).ToString(),
-                            totalTip = result.FirstOrDefault().totalTip.ToString(),
-                            totalEarnedPoints = result.FirstOrDefault().totalEarnedPoints.ToString(),
-                            totalCashEarning = result.FirstOrDefault().totalCashEarning.ToString(),
-                            totalMobilePayEarning = result.FirstOrDefault().totalMobilePayEarning.ToString(),
-                            trips = lstTrips
+                            tripID = temp.tripID.ToString(),
+                            pickupLocationLatitude = temp.PickupLocationLatitude,
+                            pickupLocationLongitude = temp.PickupLocationLongitude,
+                            pickupLocation = temp.PickUpLocation,
+                            dropOffLocationLatitude = temp.DropOffLocationLatitude,
+                            dropOffLocationLongitude = temp.DropOffLocationLongitude,
+                            dropOffLocation = temp.DropOffLocation,
+                            bookingDateTime = Convert.ToDateTime(temp.BookingDateTime).ToString(Formats.DateFormat),
+                            pickUpBookingDateTime = Convert.ToDateTime(temp.PickUpBookingDateTime).ToString(Formats.DateFormat),
+                            tripArrivalDatetime = Convert.ToDateTime(temp.ArrivalDateTime).ToString(Formats.DateFormat),
+                            tripStartDatetime = Convert.ToDateTime(temp.TripStartDatetime).ToString(Formats.DateFormat),
+                            tripEndDatetime = Convert.ToDateTime(temp.TripEndDatetime).ToString(Formats.DateFormat),
+                            tripStatus = temp.Status,
+                            facilities = lstTripFacilities,
+                            tip = temp.Tip.ToString(),
+                            fare = temp.Fare.ToString(),
+                            cashPayment = temp.TripCashPayment.ToString(),
+                            mobilePayment = temp.TripMobilePayment.ToString(),
+                            bookingType = temp.BookingType,
+                            bookingMode = temp.BookingMode,
+                            paymentMode = temp.PaymentMode,
+                            passengerName = temp.PassengerName,
+                            make = temp.make,
+                            model = temp.Model,
+                            plateNumber = temp.PlateNumber,
+                            distanceTraveled = temp.DistanceTraveled.ToString(),
+                            vehicleRating = temp.VehicleRating.ToString(),
+                            driverEarnedPoints = temp.DriverEarnedPoints.ToString(),
+                            driverRating = temp.DriverRating.ToString()
                         };
-                        response.data = history;
+                        lstTrips.Add(trip);
                     }
-                    else
+
+                    DriverTripsHistoryResponse history = new DriverTripsHistoryResponse()
                     {
-                        response.data = new DriverTripsHistory()
-                        {
-                            avgDriverRating = "0",
-                            avgVehicleRating = "0",
-                            totalEarnedPoints = "0",
-                            totalFare = "0",
-                            totalTip = "0",
-                            totalTrips = "0",
-                            trips = new List<DriverTrips>()
-                        };
-                    }
-                    response.error = false;
-                    response.message = ResponseKeys.msgSuccess;
-                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                        avgDriverRating = result.FirstOrDefault().avgDriverRating.ToString(),
+                        avgVehicleRating = result.FirstOrDefault().avgVehicleRating.ToString(),
+                        totalTrips = result.FirstOrDefault().totalTrips.ToString(),
+                        totalFare = (result.FirstOrDefault().totalTip + result.FirstOrDefault().totalFare).ToString(),
+                        totalTip = result.FirstOrDefault().totalTip.ToString(),
+                        totalEarnedPoints = result.FirstOrDefault().totalEarnedPoints.ToString(),
+                        totalCashEarning = result.FirstOrDefault().totalCashEarning.ToString(),
+                        totalMobilePayEarning = result.FirstOrDefault().totalMobilePayEarning.ToString(),
+                        trips = lstTrips
+                    };
+                    response.data = history;
                 }
-            }
-            else
-            {
-                response.error = true;
-                response.message = ResponseKeys.invalidParameters;
+                else
+                {
+                    response.data = new DriverTripsHistoryResponse()
+                    {
+                        avgDriverRating = "0",
+                        avgVehicleRating = "0",
+                        totalEarnedPoints = "0",
+                        totalFare = "0",
+                        totalTip = "0",
+                        totalTrips = "0",
+                        trips = new List<DriverTripsDTO>()
+                    };
+                }
+                response.error = false;
+                response.message = ResponseKeys.msgSuccess;
                 return Request.CreateResponse(HttpStatusCode.OK, response);
             }
+            //}
+            //else
+            //{
+            //    response.error = true;
+            //    response.message = ResponseKeys.invalidParameters;
+            //    return Request.CreateResponse(HttpStatusCode.OK, response);
+            //}
         }
 
         #endregion
@@ -1932,192 +2001,192 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("captainProfile")]
-        public async Task<HttpResponseMessage> captainProfile(string captainID, string vehicleID)
+        public async Task<HttpResponseMessage> captainProfile([FromUri] GetDriverProfileRequest model)
         {
-            if (!string.IsNullOrEmpty(captainID))
+            //if (!string.IsNullOrEmpty(captainID))
+            //{
+
+            using (CangooEntities context = new CangooEntities())
             {
+                var cap = context.spCaptainProfile(model.captainID, model.vehicleID, new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1)).FirstOrDefault();
 
-                using (CangooEntities context = new CangooEntities())
+                if (cap != null)
                 {
-                    var cap = context.spCaptainProfile(captainID, vehicleID, new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1)).FirstOrDefault();
+                    //Common.GetFacilities(ResellerID, ApplicationID, context, cap.Facilities, out List<Facilities> lstCaptainFacilities);
+                    //Common.GetFacilities(ResellerID, ApplicationID, context, cap.VehicleFacilities, out List<Facilities> lstVehicleFacilities);
 
-                    if (cap != null)
+                    var lstCaptainFacilities = await FacilitiesService.GetDriverFacilitiesDetailByIds(cap.Facilities);
+                    var lstVehicleFacilities = await FacilitiesService.GetDriverFacilitiesDetailByIds(cap.VehicleFacilities);
+
+                    var profile = new CaptainProfileResponse()
                     {
-                        //Common.GetFacilities(ResellerID, ApplicationID, context, cap.Facilities, out List<Facilities> lstCaptainFacilities);
-                        //Common.GetFacilities(ResellerID, ApplicationID, context, cap.VehicleFacilities, out List<Facilities> lstVehicleFacilities);
+                        name = cap.Name,
+                        email = cap.Email,
+                        phone = cap.PhoneNumber,
+                        shareCode = cap.ShareCode,
+                        captainFacilitiesList = lstCaptainFacilities,
+                        make = cap.Make,
+                        model = cap.Model,
+                        number = cap.PlateNumber,
+                        seatingCapacity = cap.SeatingCapacity.ToString(),
+                        vehicleFacilitiesList = lstVehicleFacilities
+                    };
+                    response.data = profile;
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
 
-                        var lstCaptainFacilities = await FacilitiesService.GetFacilitiesDetailByIds(cap.Facilities);
-                        var lstVehicleFacilities = await FacilitiesService.GetFacilitiesDetailByIds(cap.VehicleFacilities);
-
-                        var profile = new CaptainProfile()
-                        {
-                            name = cap.Name,
-                            email = cap.Email,
-                            phone = cap.PhoneNumber,
-                            shareCode = cap.ShareCode,
-                            captainFacilitiesList = lstCaptainFacilities,
-                            make = cap.Make,
-                            model = cap.Model,
-                            number = cap.PlateNumber,
-                            seatingCapacity = cap.SeatingCapacity.ToString(),
-                            vehicleFacilitiesList = lstVehicleFacilities
-                        };
-                        response.data = profile;
-                        response.error = false;
-                        response.message = ResponseKeys.msgSuccess;
-
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
-                    else
-                    {
-                        response.error = true;
-                        response.message = ResponseKeys.captainNotFound;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.captainNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
             }
-            else
-            {
-                response.error = true;
-                response.message = ResponseKeys.invalidParameters;
-                return Request.CreateResponse(HttpStatusCode.OK, response);
-            }
+            //}
+            //else
+            //{
+            //    response.error = true;
+            //    response.message = ResponseKeys.invalidParameters;
+            //    return Request.CreateResponse(HttpStatusCode.OK, response);
+            //}
         }
 
         [HttpGet]
         [Route("captainStats")]
-        public HttpResponseMessage captainStats(string captainID, string vehicleID)
+        public HttpResponseMessage captainStats([FromUri] GetDriverStatsRequest model)
         {
-            if (!string.IsNullOrEmpty(captainID) && !string.IsNullOrEmpty(vehicleID))
+            ////if (!string.IsNullOrEmpty(captainID) && !string.IsNullOrEmpty(vehicleID))
+            ////{
+            using (CangooEntities context = new CangooEntities())
             {
-                using (CangooEntities context = new CangooEntities())
+                var cap = context.spCaptainProfile(model.captainID, model.vehicleID, new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1)).FirstOrDefault();
+
+                if (cap != null)
                 {
-                    var cap = context.spCaptainProfile(captainID, vehicleID, new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1)).FirstOrDefault();
-
-                    if (cap != null)
+                    var stats = new CaptainStatsResponse()
                     {
-                        var stats = new CaptainStats()
-                        {
-                            captainRating = string.Format("{0:0.00}", cap.Rating.ToString()),
-                            vehicleRating = string.Format("{0:0.00}", cap.VehicleRating.ToString()),
-                            cashRides = cap.CashTrips.ToString(),
-                            mobilePayRides = cap.MobilePayTrips.ToString(),
-                            cashEarning = string.Format("{0:0.00}", cap.CashEarning.ToString()),
-                            mobilePayEarning = string.Format("{0:0.00}", cap.MobilePayEarning.ToString()),
-                            favPassengers = cap.NumberOfFavoriteUser.ToString(),
-                            memberSince = DateTime.Parse(cap.MemberSince.ToString()).ToString(Formats.DateFormat),
-                            avgCashEarning = string.Format("{0:0.00}", cap.AverageCashEarning.ToString()),
-                            avgMobilePayEarning = string.Format("{0:0.00}", cap.AverageMobilePayEarning.ToString()),
-                            currentMonthAcceptanceRate = string.Format("{0:0.00}", cap.currentMonthAcceptanceRate),
-                            currentMonthOnlineHours = string.Format("{0:0.00}", cap.AverageMobilePayEarning)
-                        };
+                        captainRating = string.Format("{0:0.00}", cap.Rating.ToString()),
+                        vehicleRating = string.Format("{0:0.00}", cap.VehicleRating.ToString()),
+                        cashRides = cap.CashTrips.ToString(),
+                        mobilePayRides = cap.MobilePayTrips.ToString(),
+                        cashEarning = string.Format("{0:0.00}", cap.CashEarning.ToString()),
+                        mobilePayEarning = string.Format("{0:0.00}", cap.MobilePayEarning.ToString()),
+                        favPassengers = cap.NumberOfFavoriteUser.ToString(),
+                        memberSince = DateTime.Parse(cap.MemberSince.ToString()).ToString(Formats.DateFormat),
+                        avgCashEarning = string.Format("{0:0.00}", cap.AverageCashEarning.ToString()),
+                        avgMobilePayEarning = string.Format("{0:0.00}", cap.AverageMobilePayEarning.ToString()),
+                        currentMonthAcceptanceRate = string.Format("{0:0.00}", cap.currentMonthAcceptanceRate),
+                        currentMonthOnlineHours = string.Format("{0:0.00}", cap.AverageMobilePayEarning)
+                    };
 
-                        response.data = stats;
-                        response.error = false;
-                        response.message = ResponseKeys.msgSuccess;
+                    response.data = stats;
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
 
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
-                    else
-                    {
-                        response.error = true;
-                        response.message = ResponseKeys.captainNotFound;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.captainNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
             }
-            else
-            {
-                response.error = true;
-                response.message = ResponseKeys.invalidParameters;
-                return Request.CreateResponse(HttpStatusCode.OK, response);
-            }
+            //}
+            //else
+            //{
+            //    response.error = true;
+            //    response.message = ResponseKeys.invalidParameters;
+            //    return Request.CreateResponse(HttpStatusCode.OK, response);
+            //}
         }
 
         [HttpGet]
         [Route("getCaptainSettings")]
-        public HttpResponseMessage getCaptainSettings(string captainID)
+        public HttpResponseMessage getCaptainSettings([FromUri] GetDriverSettingsRequest model)
         {
-            if (!string.IsNullOrEmpty(captainID))
+            //if (!string.IsNullOrEmpty(captainID))
+            //{
+            using (CangooEntities context = new CangooEntities())
             {
-                using (CangooEntities context = new CangooEntities())
+                var cap = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.captainID)).FirstOrDefault();
+
+                if (cap != null)
                 {
-                    var cap = context.Captains.Where(c => c.CaptainID.ToString().Equals(captainID)).FirstOrDefault();
-
-                    if (cap != null)
+                    var settings = new CaptainSettingsDTO()
                     {
-                        var settings = new CaptainSettings()
-                        {
-                            laterBookingNotificationTone = string.IsNullOrEmpty(cap.LaterBookingNotificationTone) ? "6.mp3" : cap.LaterBookingNotificationTone,
-                            normalBookingNotificationTone = string.IsNullOrEmpty(cap.NormalBookingNotificationTone) ? "6.mp3" : cap.NormalBookingNotificationTone,
-                            requestRadius = cap.RideRadius != null ? cap.RideRadius.ToString() : "N/A",
-                            showOtherVehicles = cap.ShowOtherVehicles.ToString().ToLower(),
-                            captainID = captainID
-                        };
+                        laterBookingNotificationTone = string.IsNullOrEmpty(cap.LaterBookingNotificationTone) ? "6.mp3" : cap.LaterBookingNotificationTone,
+                        normalBookingNotificationTone = string.IsNullOrEmpty(cap.NormalBookingNotificationTone) ? "6.mp3" : cap.NormalBookingNotificationTone,
+                        requestRadius = cap.RideRadius != null ? cap.RideRadius.ToString() : "N/A",
+                        showOtherVehicles = cap.ShowOtherVehicles.ToString().ToLower(),
+                        captainID = model.captainID
+                    };
 
-                        response.data = settings;
-                        response.error = false;
-                        response.message = ResponseKeys.msgSuccess;
+                    response.data = settings;
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
 
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
-                    else
-                    {
-                        response.error = true;
-                        response.message = ResponseKeys.captainNotFound;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.captainNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
             }
-            else
-            {
-                response.error = true;
-                response.message = ResponseKeys.invalidParameters;
-                return Request.CreateResponse(HttpStatusCode.OK, response);
-            }
+            //}
+            //else
+            //{
+            //    response.error = true;
+            //    response.message = ResponseKeys.invalidParameters;
+            //    return Request.CreateResponse(HttpStatusCode.OK, response);
+            //}
         }
 
         [HttpPost]
         [Route("saveCaptainSettings")]
         public HttpResponseMessage saveCaptainSettings([FromBody] SaveCaptainSettingsRequest model)
         {
-            if (!string.IsNullOrEmpty(model.captainID))
+            //if (!string.IsNullOrEmpty(model.captainID))
+            //{
+            using (CangooEntities context = new CangooEntities())
             {
-                using (CangooEntities context = new CangooEntities())
+                var cap = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.captainID)).FirstOrDefault();
+
+                if (cap != null)
                 {
-                    var cap = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.captainID)).FirstOrDefault();
+                    if (!string.IsNullOrEmpty(model.laterBookingNotificationTone))
+                        cap.LaterBookingNotificationTone = model.laterBookingNotificationTone;
+                    if (!string.IsNullOrEmpty(model.normalBookingNotificationTone))
+                        cap.NormalBookingNotificationTone = model.normalBookingNotificationTone;
+                    if (!string.IsNullOrEmpty(model.requestRadius))
+                        cap.RideRadius = double.Parse(model.requestRadius);
+                    if (!string.IsNullOrEmpty(model.showOtherVehicles))
+                        cap.ShowOtherVehicles = bool.Parse(model.showOtherVehicles.ToLower());
 
-                    if (cap != null)
-                    {
-                        if (!string.IsNullOrEmpty(model.laterBookingNotificationTone))
-                            cap.LaterBookingNotificationTone = model.laterBookingNotificationTone;
-                        if (!string.IsNullOrEmpty(model.normalBookingNotificationTone))
-                            cap.NormalBookingNotificationTone = model.normalBookingNotificationTone;
-                        if (!string.IsNullOrEmpty(model.requestRadius))
-                            cap.RideRadius = double.Parse(model.requestRadius);
-                        if (!string.IsNullOrEmpty(model.showOtherVehicles))
-                            cap.ShowOtherVehicles = bool.Parse(model.showOtherVehicles.ToLower());
+                    context.SaveChanges();
 
-                        context.SaveChanges();
-
-                        response.error = false;
-                        response.message = ResponseKeys.msgSuccess;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
-                    else
-                    {
-                        response.error = true;
-                        response.message = ResponseKeys.captainNotFound;
-                        return Request.CreateResponse(HttpStatusCode.OK, response);
-                    }
+                    response.error = false;
+                    response.message = ResponseKeys.msgSuccess;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
+                }
+                else
+                {
+                    response.error = true;
+                    response.message = ResponseKeys.captainNotFound;
+                    return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
             }
-            else
-            {
-                response.error = true;
-                response.message = ResponseKeys.invalidParameters;
-                return Request.CreateResponse(HttpStatusCode.OK, response);
-            }
+            //}
+            //else
+            //{
+            //    response.error = true;
+            //    response.message = ResponseKeys.invalidParameters;
+            //    return Request.CreateResponse(HttpStatusCode.OK, response);
+            //}
         }
 
         #endregion
@@ -2174,11 +2243,11 @@ namespace API.Controllers
 
                 if (agreement != null)
                 {
-                    List<AgreementTypeModel> lst = new List<AgreementTypeModel>();
+                    List<AgreementTypeResponse> lst = new List<AgreementTypeResponse>();
 
                     foreach (var item in agreement)
                     {
-                        lst.Add(new AgreementTypeModel
+                        lst.Add(new AgreementTypeResponse
                         {
                             TypeId = item.ID,
                             Name = item.TypeName
@@ -2200,22 +2269,22 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("getAgreements")]
-        public HttpResponseMessage getAgreements(string agreementTypeId)
+        public HttpResponseMessage getAgreements([FromUri] GetAgreementsRequest model)
         {
             using (CangooEntities context = new CangooEntities())
             {
-                int id = int.Parse(agreementTypeId);
+                int id = int.Parse(model.agreementTypeId);
 
                 var agreement = context.Agreements.Where(a => a.AgreementTypeID == id
                 && a.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())
                 ).ToList();
                 if (agreement != null)
                 {
-                    List<AgreementModel> lst = new List<AgreementModel>();
+                    List<AgreementResponse> lst = new List<AgreementResponse>();
 
                     foreach (var item in agreement)
                     {
-                        lst.Add(new AgreementModel
+                        lst.Add(new AgreementResponse
                         {
                             AgreementId = item.AgreementID,
                             Title = item.Name,
@@ -2249,11 +2318,11 @@ namespace API.Controllers
 
                 if (faqs != null)
                 {
-                    List<FAQModel> lst = new List<FAQModel>();
+                    List<FAQResponse> lst = new List<FAQResponse>();
 
                     foreach (var item in faqs)
                     {
-                        lst.Add(new FAQModel
+                        lst.Add(new FAQResponse
                         {
                             FaqId = item.ID,
                             Question = item.Question,
@@ -2285,11 +2354,11 @@ namespace API.Controllers
                 && nf.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())).ToList().OrderByDescending(nf => nf.CreationDate);
                 if (feed != null)
                 {
-                    List<NewsFeedModel> lst = new List<NewsFeedModel>();
+                    List<NewsFeedResponse> lst = new List<NewsFeedResponse>();
 
                     foreach (var item in feed)
                     {
-                        lst.Add(new NewsFeedModel
+                        lst.Add(new NewsFeedResponse
                         {
                             FeedId = item.FeedID,
                             ShortDescrption = item.ShortDescription,
@@ -2806,7 +2875,7 @@ namespace API.Controllers
 
             if (Convert.ToDecimal(voucherUsedAmount) == 0)
             {
-                VoucherService.RefundFullVoucherAmount(trip, context);
+                VoucherService.RefundFullVoucherAmount(trip);
             }
 
             if (Convert.ToDecimal(voucherUsedAmount) > 0)
@@ -2873,7 +2942,7 @@ namespace API.Controllers
                 {
                     if (!isWalkIn)
                     {
-                        await FirebaseService.fareAlreadyPaidFreeUserAndDriver(tripID, trip.UserID.ToString(), driverID);
+                        await FirebaseService.FareAlreadyPaidFreeUserAndDriver(tripID, trip.UserID.ToString(), driverID);
                         dic.Add("tripID", trip.TripID.ToString());
                         dic.Add("tip", trip.Tip == null ? "0.00" : trip.Tip.ToString());
                         dic.Add("amount", string.Format("{0:0.00}", Convert.ToDouble(totalFare)));
@@ -2908,7 +2977,7 @@ namespace API.Controllers
             }
         }
 
-        private  BookTripRequest GetCancelledTripRequestObject(DriverCancelTripRequest req, spCaptainCancelRide_Result tp)
+        private BookTripRequest GetCancelledTripRequestObject(DriverCancelTripRequest req, spCaptainCancelRide_Result tp)
         {
             BookTripRequest pr = new BookTripRequest
             {
@@ -2957,11 +3026,11 @@ namespace API.Controllers
             return pr;
         }
 
-        private LaterBookingConflict checkLaterBookingDate(string captainID, DateTime pickUpDateTime)
+        private LaterBookingConflictDTO checkLaterBookingDate(string captainID, DateTime pickUpDateTime)
         {
             using (CangooEntities context = new CangooEntities())
             {
-                LaterBookingConflict lbc = new LaterBookingConflict();
+                LaterBookingConflictDTO lbc = new LaterBookingConflictDTO();
                 var lstLaterTrips = context.Trips.Where(t => t.CaptainID.ToString() == captainID && t.TripStatusID == (int)TripStatuses.LaterBookingAccepted && t.isLaterBooking == true).ToList();
                 foreach (var item in lstLaterTrips)
                 {

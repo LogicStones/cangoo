@@ -1,432 +1,436 @@
-﻿using System;
+﻿using API.Filters;
+using Constants;
+using DatabaseModel;
+using DTOs.API;
+using Microsoft.AspNet.Identity;
+using Microsoft.AspNet.Identity.EntityFramework;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.Owin.Security;
+using Newtonsoft.Json;
+using Services;
+using System;
 using System.Collections.Generic;
+using System.Configuration;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Security.Claims;
+using System.Text;
+using System.Threading.Tasks;
 using System.Web;
-using System.Web.Mvc;
+using System.Web.Http;
 
 namespace API.Controllers
 {
+    [AllowAnonymous]
+    [RoutePrefix("api/CronJobs")]
     public class CronJobsController : BaseController
     {
-        //[HttpGet]
-        //[AllowAnonymous]
-        //public HttpResponseMessage UpdateTimer()
-        //{
-        //    try
-        //    {
-        //        client = new FireSharp.FirebaseClient(config);
+        [HttpGet]
+        [Route("UpdateTimer")]
+        public async Task<HttpResponseMessage> UpdateTimer()
+        {
+            await FirebaseService.SetCurrentTime();
 
-        //        client.Set("CurenntDateTime/", Common.getUtcDateTime().ToString(Common.dateFormat));
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseEntity
+            {
+                error = false,
+                message = ResponseKeys.msgSuccess
+            });
+        }
 
-        //        //UpdateGlobalSettings();
-        //        //UpdateActivatedPriorityHours();
-        //        //UpdatePendingLaterBookings();
-        //        //UpdateUpcomingLaterBookings();
+        [HttpGet]
+        [Route("UpdateGlobalSettings")]
+        public async Task<HttpResponseMessage> UpdateGlobalSettings()
+        {
+            await FirebaseService.SetGlobalSettings();
 
-        //        response.error = false;
-        //        response.message = AppMessage.msgSuccess;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        response.error = true;
-        //        Logger.WriteLog(ex);
-        //        response.message = AppMessage.serverError;
-        //        response.data = ex.InnerException;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseEntity
+            {
+                error = false,
+                message = ResponseKeys.msgSuccess
+            });
+        }
 
-        //[HttpGet]
-        //[AllowAnonymous]
-        //public HttpResponseMessage UpdateGlobalSettings()
-        //{
-        //    try
-        //    {
-        //        using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-        //        {
-        //            var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
-        //            client = new FireSharp.FirebaseClient(config);
-        //            var settings = context.ApplicationSettings.Where(a => a.ApplicationID.ToString().ToUpper().Equals(applicationId)).FirstOrDefault();
-        //            client.Set("GolbalSettings/PriorityHourEnableThreshold", settings.AwardPointsThreshold != null ? settings.AwardPointsThreshold.ToString() : "100");
-        //        }
+        [HttpGet]
+        [Route("OfflineInActiveDrivers")]
+        public async Task<HttpResponseMessage> OfflineInActiveDrivers()
+        {
+            var onlineDrivers = await FirebaseService.GetOnlineDrivers();
 
-        //        response.error = false;
-        //        response.message = AppMessage.msgSuccess;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        response.error = true;
-        //        Logger.WriteLog(ex);
-        //        response.message = AppMessage.serverError;
-        //        response.data = ex.InnerException;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
+            foreach (var od in onlineDrivers)
+            {
+                var applicationSettings = await ApplicationSettingService.GetApplicationSettings(ConfigurationManager.AppSettings["ApplicationID"].ToString());
 
-        //[HttpGet]
-        //[AllowAnonymous]
-        //public HttpResponseMessage UpdateActivatedPriorityHours()
-        //{
-        //    try
-        //    {
-        //        var onlineDrivers = GetOnlineDrivers();
+                FirebaseDriver driver = JsonConvert.DeserializeObject<FirebaseDriver>(JsonConvert.SerializeObject(od.Value));
 
-        //        foreach (var od in onlineDrivers)
-        //        {
-        //            FirbaseDriver driver = JsonConvert.DeserializeObject<FirbaseDriver>(JsonConvert.SerializeObject(od.Value));
-        //            if (string.IsNullOrEmpty(driver.driverID) || driver.location == null) //Dirty data
-        //            {
-        //                continue;
-        //            }
-        //            else
-        //            {
-        //                //make sure priortiy hour is active
-        //                if (!(driver.isPriorityHoursActive != true))
-        //                {
-        //                    var remainingTimeDictionary = new Dictionary<string, string>
-        //                                                        {
-        //                                                            { "priorityHourRemainingTime", "0" }
-        //                                                        };
+                if (string.IsNullOrEmpty(driver.driverID)) //Dirty data
+                {
+                    await SetDriverOffline(od.Key, driver.vehicleID);
+                }
+                //Cushion for new online drivers - wait for location update
+                else if ((DateTime.UtcNow - DateTime.Parse(driver.onlineSince)).TotalSeconds > applicationSettings.CaptainAllowedIdleTimeInSeconds)
+                {
+                    if (string.IsNullOrEmpty(driver.lastUpdated))
+                    {
+                        await SetDriverOffline(driver.driverID, driver.vehicleID);
+                    }
+                    else
+                    {
+                        DateTime currentLocationUpdateTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(driver.lastUpdated)).UtcDateTime;
+                        if ((DateTime.UtcNow - currentLocationUpdateTime).TotalSeconds > applicationSettings.CaptainAllowedIdleTimeInSeconds)
+                        {
+                            await SetDriverOffline(driver.driverID, driver.vehicleID);
+                        }
+                    }
+                }
+            }
 
-        //                    if (DateTime.Compare(DateTime.Parse(driver.priorityHourEndTime), DateTime.Parse(Common.getUtcDateTime().ToString(Common.dateFormat))) <= 0)
-        //                    {
-        //                        using (var context = new CanTaxiResellerEntities())
-        //                        {
-        //                            var captain = context.Captains.Where(c => c.CaptainID.ToString().Equals(driver.driverID)).FirstOrDefault();
-        //                            captain.IsPriorityHoursActive = false;
-        //                            context.PriorityHourLogs.Add(new PriorityHourLog
-        //                            {
-        //                                CaptainID = Guid.Parse(driver.driverID),
-        //                                PriorityHourEndTime = DateTime.Parse(captain.LastPriorityHourEndTime.ToString()),
-        //                                PriorityHourStartTime = DateTime.Parse(captain.LastPriorityHourStartTime.ToString()),
-        //                                PriorityHourLogID = Guid.NewGuid()
-        //                            });
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseEntity
+            {
+                error = false,
+                message = ResponseKeys.msgSuccess
+            });
+        }
 
-        //                            setPriorityHourStatus(false, "", driver.driverID, "", captain.EarningPoints.ToString());
-        //                            context.SaveChanges();
-        //                        }
-        //                    }
-        //                    else
-        //                    {
-        //                        var priorityHourRemainingTime = ((int)(DateTime.Parse(driver.priorityHourEndTime).
-        //                        Subtract(DateTime.Parse(Common.getUtcDateTime().ToString(Common.dateFormat))).TotalMinutes)).ToString();
-        //                        remainingTimeDictionary["priorityHourRemainingTime"] = priorityHourRemainingTime;
-        //                    }
+        [HttpGet]
+        [Route("UpdateActivatedPriorityHours")]
+        public async Task<HttpResponseMessage> UpdateActivatedPriorityHours()
+        {
+            var onlineDrivers = await FirebaseService.GetOnlineDrivers();
 
-        //                    client = new FireSharp.FirebaseClient(config);
-        //                    client.Update("OnlineDriver/" + driver.driverID + "/", remainingTimeDictionary);
-        //                }
-        //            }
-        //        }
+            foreach (var od in onlineDrivers)
+            {
+                FirebaseDriver driver = JsonConvert.DeserializeObject<FirebaseDriver>(JsonConvert.SerializeObject(od.Value));
+                if (string.IsNullOrEmpty(driver.driverID) || driver.location == null) //Dirty data
+                {
+                    continue;
+                }
+                else
+                {
+                    //make sure priortiy hour is active
+                    if (!(driver.isPriorityHoursActive != true))
+                    {
+                        if (DateTime.Compare(DateTime.Parse(driver.priorityHourEndTime), DateTime.Parse(DateTime.UtcNow.ToString(Formats.DateFormat))) <= 0)
+                        {
+                            var captain = await DriverService.GetDriverById(driver.driverID);
+                            captain.IsPriorityHoursActive = false;
 
-        //        response.error = false;
-        //        response.message = AppMessage.msgSuccess;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        response.error = true;
-        //        Logger.WriteLog(ex);
-        //        response.message = AppMessage.serverError;
-        //        response.data = ex.InnerException;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
+                            await DriverService.UpdatePriorityHourLog(
+                                Guid.Parse(driver.driverID),
+                                DateTime.Parse(captain.LastPriorityHourEndTime.ToString()),
+                                DateTime.Parse(captain.LastPriorityHourStartTime.ToString()));
 
-        //[HttpGet]
-        //[AllowAnonymous]
-        //public HttpResponseMessage UpdatePendingLaterBookings()
-        //{
-        //    try
-        //    {
-        //        //TBD: Remove nodes from pending and trips if difference is negative.
-        //        client = new FireSharp.FirebaseClient(config);
-        //        FirebaseResponse pendingResp = client.Get("PendingLaterBookings");
-        //        if (!string.IsNullOrEmpty(pendingResp.Body) && !pendingResp.Body.Equals("null"))
-        //        {
-        //            Dictionary<string, LaterBooking> pendingLaterBookings = JsonConvert.DeserializeObject<Dictionary<string, LaterBooking>>(pendingResp.Body);
-        //            if (pendingLaterBookings.Any())
-        //            {
-        //                foreach (var booking in pendingLaterBookings)
-        //                {
-        //                    //TimeOut later booking atleast 2 minutes before pickup time if no captain accepts the booking
+                            await FirebaseService.SetPriorityHourStatus(false, "", driver.driverID, "", captain.EarningPoints.ToString());
+                        }
+                        else
+                        {
+                            var priorityHourRemainingTime = ((int)(DateTime.Parse(driver.priorityHourEndTime).Subtract(DateTime.Parse(DateTime.UtcNow.ToString(Formats.DateFormat))).TotalMinutes)).ToString();
+                            await FirebaseService.UpdatePriorityHourTime(driver.driverID, priorityHourRemainingTime);
+                        }
+                    }
+                }
+            }
 
-        //                    //if (DateTime.Compare(DateTime.Parse(booking.Value.pickUpDateTime),
-        //                    //	DateTime.Parse(Common.getUtcDateTime().ToString(Common.dateFormat)).AddMinutes(2)) <= 0)
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseEntity
+            {
+                error = false,
+                message = ResponseKeys.msgSuccess
+            });
+        }
 
-        //                    if ((DateTime.Parse(booking.Value.pickUpDateTime) - Common.getUtcDateTime()).TotalMinutes <= 2)
-        //                    {
-        //                        using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-        //                        {
-        //                            var tp = context.Trips.Where(t => t.TripID.ToString() == booking.Key).FirstOrDefault();
-        //                            if (tp != null)
-        //                            {
-        //                                tp.TripStatusID = (int)App_Start.TripStatus.TimeOut;
+        [HttpGet]
+        [Route("UpdatePendingLaterBookings")]
+        public async Task<HttpResponseMessage> UpdatePendingLaterBookings()
+        {
+            var pendingLaterBookings = await FirebaseService.GetPendingLaterBookings();
 
-        //                                var user = context.UserProfiles.Where(u => u.UserID.ToString().Equals(booking.Value.userID)).FirstOrDefault();
+            foreach (var booking in pendingLaterBookings)
+            {
+                //TimeOut later booking atleast 2 minutes before pickup time if no captain accepts the booking
 
-        //                                //user will be null if ride is booked by hotel / company. No need to send notifications on portals.
-        //                                string deviceToken = user != null ? user.DeviceToken : "";
+                if ((DateTime.Parse(booking.Value.pickUpDateTime) - DateTime.UtcNow).TotalMinutes <= 2)
+                {
+                    var tp = await TripsManagerService.GetTripById(booking.Key);
+                    if (tp != null)
+                    {
+                        tp.TripStatusID = (int)TripStatuses.TimeOut;
 
-        //                                //Refund voucher amount
-        //                                if (user == null && tp.BookingModeID == (int)TripBookingMod.Voucher)
-        //                                {
-        //                                    Common.RefundFullVoucherAmount(tp, context);
-        //                                }
-        //                                context.SaveChanges();
+                        var user = await UserService.GetProfileAsync(booking.Value.userID, ApplicationID, ResellerID);
 
-        //                                var task = Task.Run(async () =>
-        //                                {
-        //                                    addRemovePendingLaterBookings(false, "", tp.TripID.ToString(), "", 0);
-        //                                    await delTripNode(tp.TripID.ToString());
-        //                                    await sentSingleFCM(deviceToken, "Later booking timed out. No captain accepted your request.", "pas_LaterBookingTimeOut");
-        //                                });
-        //                            }
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //        }
+                        //user will be null if ride is booked by hotel / company.No need to send notifications on portals.
+                        string deviceToken = user != null ? user.DeviceToken : "";
 
-        //        response.error = false;
-        //        response.message = AppMessage.msgSuccess;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        response.error = true;
-        //        Logger.WriteLog(ex);
-        //        response.message = AppMessage.serverError;
-        //        response.data = ex.InnerException;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
+                        //Refund voucher amount
+                        if (user == null && tp.BookingModeID == (int)BookingModes.Voucher)
+                        {
+                            VoucherService.RefundFullVoucherAmount(tp);
+                        }
 
-        //[HttpGet]
-        //[AllowAnonymous]
-        //public HttpResponseMessage UpdateUpcomingLaterBookings()
-        //{
-        //    try
-        //    {
-        //        Dictionary<string, LaterBooking> dic = new Dictionary<string, LaterBooking>();
-        //        //send fcm 30/20 minutes fcm
-        //        client = new FireSharp.FirebaseClient(config);
-        //        FirebaseResponse resp = client.Get("UpcomingLaterBooking");
-        //        if (!string.IsNullOrEmpty(resp.Body) && !resp.Body.Equals("null"))
-        //        {
-        //            dic = JsonConvert.DeserializeObject<Dictionary<string, LaterBooking>>(resp.Body);
+                        await FirebaseService.DeletePendingLaterBooking(tp.TripID.ToString());
+                        await FirebaseService.DeleteTrip(tp.TripID.ToString());
+                        await PushyService.UniCast(deviceToken, "Later booking timed out. No captain accepted your request.", NotificationKeys.pas_LaterBookingTimeOut);
+                    }
+                }
+            }
 
-        //            //TBD: Need to reconsider this function call for the sake of cron-job preformance. Seems to be un-necessary.
-        //            //getUpcomingLaterBooking(dic);
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseEntity
+            {
+                error = false,
+                message = ResponseKeys.msgSuccess
+            });
+        }
 
-        //            if (dic != null)
-        //            {
-        //                foreach (var item in dic)
-        //                {
-        //                    //DateTime dt = Convert.ToDateTime(item.Value.pickUpDateTime);
-        //                    //TimeSpan ts = dt.Subtract(Common.getUtcDateTime());//utc datetime
-        //                    //var diff = ts.TotalMinutes;
+        [HttpGet]
+        [Route("UpdateUpcomingLaterBookings")]
+        public async Task<HttpResponseMessage> UpdateUpcomingLaterBookings()
+        {
+            Dictionary<string, UpcomingLaterBooking> dic = await FirebaseService.GetUpcomingLaterBookings();
 
-        //                    var diff = (Convert.ToDateTime(item.Value.pickUpDateTime) - Common.getUtcDateTime()).TotalMinutes;
+            if (dic != null)
+            {
+                foreach (var item in dic)
+                {
+                    var diff = (Convert.ToDateTime(item.Value.pickUpDateTime) - DateTime.UtcNow).TotalMinutes;
 
-        //                    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-        //                    {
-        //                        var tokens = new spGetDriverUserDeviceTokens_Result();
-        //                        if (Convert.ToInt32(diff) == 30 && Convert.ToInt32(diff) > 0 && !item.Value.isSend30MinutSendFCM)
-        //                        {
-        //                            client.Set("UpcomingLaterBooking/" + item.Key + "/isSend30MinutSendFCM", true);
-        //                            tokens = context.spGetDriverUserDeviceTokens(item.Value.tripID).FirstOrDefault();
-        //                            var task = Task.Run(async () =>
-        //                            {
-        //                                //captain fcm
-        //                                await sentSingleFCM(tokens.captainDeviceToken, tokens.captainName + " 30 minutes left your later booking.", "cap_30MinutesLeft");
+                    var tokens = new spGetDriverUserDeviceTokens_Result();
+                    if (Convert.ToInt32(diff) == 30 && Convert.ToInt32(diff) > 0 && !item.Value.isSend30MinutSendFCM)
+                    {
+                        await FirebaseService.UpdateUpcomingBooking30MinuteFlag(item.Key);
+                        tokens = await TripsManagerService.GetDriverAndPassengerDeviceToken(item.Value.tripID);
 
-        //                                //user fcm
-        //                                await sentSingleFCM(tokens.userDeviceToken, tokens.userName + " 30 minutes left your later booking.", "pas_30MinutesLeft");
-        //                            });
-        //                        }
-        //                        else if (Convert.ToInt32(diff) == 20 && Convert.ToInt32(diff) > 0 && !item.Value.isSend20MinutSendFCM)
-        //                        {
-        //                            tokens = context.spGetDriverUserDeviceTokens(item.Value.tripID).FirstOrDefault();
-        //                            var task = Task.Run(async () =>
-        //                            {
-        //                                client.Set("UpcomingLaterBooking/" + item.Key + "/isSend20MinutSendFCM", true);
+                        //captain fcm
+                        await PushyService.UniCast(tokens.captainDeviceToken, tokens.captainName + " 30 minutes left your later booking.", NotificationKeys.cap_30MinutesLeft);
 
-        //                                //captain fcm
-        //                                await sentSingleFCM(tokens.captainDeviceToken, tokens.captainName + " 20 minutes left your later booking.", "cap_20MinutesLeft");
+                        //user fcm
+                        await PushyService.UniCast(tokens.userDeviceToken, tokens.userName + " 30 minutes left your later booking.", NotificationKeys.pas_30MinutesLeft);
+                    }
+                    else if (Convert.ToInt32(diff) == 20 && Convert.ToInt32(diff) > 0 && !item.Value.isSend20MinutSendFCM)
+                    {
+                        tokens = await TripsManagerService.GetDriverAndPassengerDeviceToken(item.Value.tripID);
 
-        //                                //user fcm
-        //                                await sentSingleFCM(tokens.userDeviceToken, tokens.userName + " 20 minutes left your later booking.", "pas_20MinutesLeft");
-        //                            });
-        //                        }
+                        await FirebaseService.UpdateUpcomingBooking20MinuteFlag(item.Key);
 
-        //                        //Upcoming later booking is cancelled from application if captain don't start 15 min before pick up, if somehow
-        //                        //application fails to cancel upcoming later booking then in next min, server will cancel and re-route the booking
+                        //captain fcm
+                        await PushyService.UniCast(tokens.captainDeviceToken, tokens.captainName + " 20 minutes left your later booking.", NotificationKeys.cap_20MinutesLeft);
 
-        //                        else if (Convert.ToInt32(diff) < 14)// && Convert.ToInt32(diff) > 0)
-        //                        {
-        //                            var trip = context.spUpcomingLaterBookingDetailsForCancel(item.Value.tripID).FirstOrDefault();
+                        //user fcm
+                        await PushyService.UniCast(tokens.userDeviceToken, tokens.userName + " 20 minutes left your later booking.", NotificationKeys.pas_20MinutesLeft);
+                    }
 
-        //                            //If later booking was of less than 15 min, then it is started as soon as driver accepts it.
-        //                            //Following check is applied to make precise decision - to be discussed.
+                    /*Upcoming later booking is cancelled from application if captain don't start 15 min before pick up, if somehow
+                    application fails to cancel upcoming later booking then in next min, server will cancel and re-route the booking*/
 
-        //                            if (trip != null && trip.diff > 15)
-        //                            {
-        //                                var req = new RequestModel()
-        //                                {
-        //                                    isLaterBooking = trip.isLaterBooking,
-        //                                    //resellerID = this.ResellerID,
-        //                                    //resellerID = trip.ResellerID.ToString(),
-        //                                    resellerArea = trip.AuthorizedArea,
-        //                                    timeZoneOffset = "0", //Will not be considered, in case of reroute PickUpBookingDateTime is being fetched from db
-        //                                    isWeb = trip.isWeb == 1,
-        //                                    isAtPickupLocation = "false",
-        //                                    driverID = trip.CaptainID.ToString(),
-        //                                    cancelID = 1,
-        //                                    tripID = item.Value.tripID,
-        //                                    isDispatchedRide = "false",
-        //                                    isReRouteRequest = true   //Flag to ReRoute "On The Way" cancelled ride
-        //                                };
+                    else if (Convert.ToInt32(diff) < 14)// && Convert.ToInt32(diff) > 0)
+                    {
+                        var trip = await TripsManagerService.GetUpcomingLaterBookingDetailsForCancel(item.Value.tripID);
 
-        //                                DriverController dc = new DriverController();
-        //                                dc.cancelRide(req, Request);
-        //                            }
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //        }
-        //        else
-        //        {
-        //            //if somehow upcoming later booking trips node was removed from firebase.
-        //            getUpcomingLaterBooking(dic);
-        //        }
+                        //If later booking was of less than 15 min, then it is started as soon as driver accepts it.
+                        //    Following check is applied to make precise decision - to be discussed.
 
-        //        response.error = false;
-        //        response.message = AppMessage.msgSuccess;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        response.error = true;
-        //        Logger.WriteLog(ex);
-        //        response.message = AppMessage.serverError;
-        //        response.data = ex.InnerException;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
+                        if (trip != null && trip.diff > 15)
+                        {
+                            var req = new DriverCancelTripRequest()
+                            {
+                                isLaterBooking = trip.isLaterBooking,
+                                resellerID = trip.ResellerID.ToString(),
+                                resellerArea = trip.AuthorizedArea,
+                                timeZoneOffset = "0", //Will not be considered, in case of reroute PickUpBookingDateTime is being fetched from db
+                                isWeb = trip.isWeb == 1,
+                                isAtPickupLocation = "false",
+                                driverID = trip.CaptainID.ToString(),
+                                cancelID = 1,
+                                tripID = item.Value.tripID,
+                                isDispatchedRide = "false",
+                                isReRouteRequest = true   //Flag to ReRoute "On The Way" cancelled ride
+                            };
 
-        //[HttpGet]
-        //[AllowAnonymous]
-        //public HttpResponseMessage OfflineInActiveDrivers()
-        //{
-        //    try
-        //    {
-        //        var onlineDrivers = GetOnlineDrivers();
+                            DriverController dc = new DriverController();
+                            await dc.cancelRide(req, Request);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                //Need to reconsider where clause, scenario not clear:
+                //select * from cte where rn =1 
 
-        //        foreach (var od in onlineDrivers)
-        //        {
-        //            using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-        //            {
-        //                string applicationID = ConfigurationManager.AppSettings["ApplicationID"].ToString();
-        //                var applicationSettings = context.ApplicationSettings.Where(a => a.ApplicationID.ToString().Equals(applicationID)).FirstOrDefault();
+                var lstLaterBooking = await TripsManagerService.GetUpcomingLaterBookings();
+                foreach (var laterBooking in lstLaterBooking)
+                {
+                    UpcomingLaterBooking lb = new UpcomingLaterBooking
+                    {
+                        tripID = laterBooking.TripID.ToString(),
+                        pickUpDateTime = Convert.ToDateTime(laterBooking.PickUpBookingDateTime).ToString(Formats.DateFormat),
+                        seatingCapacity = Convert.ToInt32(laterBooking.Noofperson),
+                        pickUplatitude = laterBooking.PickupLocationLatitude,
+                        pickUplongitude = laterBooking.PickupLocationLongitude,
+                        pickUpLocation = laterBooking.PickUpLocation,
+                        dropOfflatitude = laterBooking.DropOffLocationLatitude,
+                        dropOfflongitude = laterBooking.DropOffLocationLongitude,
+                        dropOffLocation = laterBooking.DropOffLocation,
+                        passengerName = laterBooking.Name,
+                        isSend30MinutSendFCM = (Convert.ToDateTime(laterBooking.PickUpBookingDateTime) - DateTime.UtcNow).TotalMinutes <= 30 ? true : false,
+                        isSend20MinutSendFCM = (Convert.ToDateTime(laterBooking.PickUpBookingDateTime) - DateTime.UtcNow).TotalMinutes <= 20 ? true : false,
+                        isWeb = laterBooking.isWeb
 
-        //                FirbaseDriver driver = JsonConvert.DeserializeObject<FirbaseDriver>(JsonConvert.SerializeObject(od.Value));
-        //                if (string.IsNullOrEmpty(driver.driverID)) //Dirty data
-        //                {
-        //                    SetDriverOffline(od.Key, driver.vehicleID);
-        //                }
-        //                //Cushion for new online drivers - wait for location update
-        //                else if ((Common.getUtcDateTime() - DateTime.Parse(driver.onlineSince)).TotalSeconds > applicationSettings.CaptainAllowedIdleTimeInSeconds)
-        //                {
-        //                    if (string.IsNullOrEmpty(driver.lastUpdated))
-        //                    {
-        //                        SetDriverOffline(driver.driverID, driver.vehicleID);
-        //                    }
-        //                    else
-        //                    {
-        //                        DateTime currentLocationUpdateTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(driver.lastUpdated)).UtcDateTime;
-        //                        if ((Common.getUtcDateTime() - currentLocationUpdateTime).TotalSeconds > applicationSettings.CaptainAllowedIdleTimeInSeconds)
-        //                        {
-        //                            SetDriverOffline(driver.driverID, driver.vehicleID);
-        //                        }
-        //                    }
-        //                }
-        //            }
-        //        }
+                    };
 
-        //        response.error = false;
-        //        response.message = AppMessage.msgSuccess;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        response.error = true;
-        //        Logger.WriteLog(ex);
-        //        response.message = AppMessage.serverError;
-        //        response.data = ex.InnerException;
-        //        return Request.CreateResponse(HttpStatusCode.OK, response);
-        //    }
-        //}
+                    //if there are some later bookings on firebase
+                    if (dic != null)
+                    {
+                        //if this booking already exists on firebase then no need to update the node
+                        var checkOldLaterBooking = dic.Any(d => d.Value.tripID == laterBooking.TripID.ToString());
+                        if (!checkOldLaterBooking)
+                        {
+                            await FirebaseService.AddUpcomingLaterBooking(laterBooking.CaptainID.ToString(), lb);
+                        }
+                    }
+                    else
+                    {
+                        await FirebaseService.AddUpcomingLaterBooking(laterBooking.CaptainID.ToString(), lb);
+                    }
+                }
+            }
 
-        //private void SetDriverOffline(string driverID, string vehicleID)
-        //{
-        //    insertDeleteOnlineDriver(false, driverID, "", 0, "", "", "", "", "", null, "", "", "", "", "", "", "", 0, "", "", 0, "", "");
-        //    Common.OnlineOfflineDriver(driverID, string.IsNullOrEmpty(vehicleID) ? "" : vehicleID, false, Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString()));
-        //}
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseEntity
+            {
+                error = false,
+                message = ResponseKeys.msgSuccess
+            });
+        }
 
-        ////make sure every upcoming laterbooking exists on firebase by verifing from database
-        //public void getUpcomingLaterBooking(Dictionary<string, LaterBooking> dic)
-        //{
-        //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-        //    {
-        //        //Need to reconsider where clause, scenario not clear:
-        //        //select * from cte where rn =1 
+        [HttpGet]
+        [Route("UpdateFlags")]
+        public async Task UpdateFlags(
+                    string iOSPassengerForceUpdate,
+                    string iOSPassengerAppVersion,
+                    string iOSPassengerShowAlertMessage,
+                    string iOSPassengerAlertMessage,
 
-        //        var lstLaterBooking = context.spGetUpcomingLaterBooking(Common.getUtcDateTime().ToString(), (int)TripStatus.LaterBookingAccepted).ToList();
-        //        if (lstLaterBooking.Count > 0)
-        //        {
-        //            foreach (var laterBooking in lstLaterBooking)
-        //            {
-        //                LaterBooking lb = new LaterBooking
-        //                {
-        //                    tripID = laterBooking.TripID.ToString(),
-        //                    pickUpDateTime = Convert.ToDateTime(laterBooking.PickUpBookingDateTime).ToString(Common.dateFormat),
-        //                    seatingCapacity = Convert.ToInt32(laterBooking.Noofperson),
-        //                    pickUplatitude = laterBooking.PickupLocationLatitude,
-        //                    pickUplongitude = laterBooking.PickupLocationLongitude,
-        //                    pickUpLocation = laterBooking.PickUpLocation,
-        //                    dropOfflatitude = laterBooking.DropOffLocationLatitude,
-        //                    dropOfflongitude = laterBooking.DropOffLocationLongitude,
-        //                    dropOffLocation = laterBooking.DropOffLocation,
-        //                    passengerName = laterBooking.Name,
-        //                    isSend30MinutSendFCM = (Convert.ToDateTime(laterBooking.PickUpBookingDateTime) - Common.getUtcDateTime()).TotalMinutes <= 30 ? true : false,
-        //                    isSend20MinutSendFCM = (Convert.ToDateTime(laterBooking.PickUpBookingDateTime) - Common.getUtcDateTime()).TotalMinutes <= 20 ? true : false,
-        //                    isWeb = laterBooking.isWeb
+                    string iOSCaptainForceUpdate,
+                    string iOSCaptainAppVersion,
+                    string iOSCaptainShowAlertMessage,
+                    string iOSCaptainAlertMessage,
 
-        //                };
-        //                string path = "UpcomingLaterBooking/" + laterBooking.CaptainID;
+                    string androidPassengerForceUpdate,
+                    string androidPassengerAppVersion,
+                    string andriodPassengerShowAlertMessage,
+                    string andriodPassengerAlertMessage,
 
-        //                //if there are some later bookings on firebase
-        //                if (dic != null)
-        //                {
-        //                    //if this booking already exists on firebase then no need to update the node
-        //                    var checkOldLaterBooking = dic.Any(d => d.Value.tripID == laterBooking.TripID.ToString());
-        //                    if (!checkOldLaterBooking)
-        //                    {
-        //                        addDeleteNode(false, lb, path);
-        //                    }
-        //                }
-        //                else
-        //                {
-        //                    addDeleteNode(false, lb, path);
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
+                    string androidCaptainForceUpdate,
+                    string androidCaptainAppVersion,
+                    string andriodCaptainShowAlertMessage,
+                    string andriodCaptainAlertMessage)
+        {
+            #region ForceUpdate
 
+            if (!string.IsNullOrEmpty(androidCaptainForceUpdate))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Captain/Android/ForceUpdate", androidCaptainForceUpdate.ToLower());
+            }
+
+            if (!string.IsNullOrEmpty(androidPassengerForceUpdate))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Passenger/Android/ForceUpdate", androidPassengerForceUpdate.ToLower());
+            }
+
+            if (!string.IsNullOrEmpty(iOSCaptainForceUpdate))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Captain/IOS/ForceUpdate", iOSCaptainForceUpdate.ToLower());
+            }
+
+            if (!string.IsNullOrEmpty(iOSPassengerForceUpdate))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Passenger/IOS/ForceUpdate", iOSPassengerForceUpdate.ToLower());
+            }
+
+            #endregion
+
+            #region AppVersion
+
+            if (!string.IsNullOrEmpty(androidCaptainAppVersion))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Captain/Android/AppVersion", androidCaptainAppVersion);
+            }
+
+            if (!string.IsNullOrEmpty(androidPassengerAppVersion))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Passenger/Android/AppVersion", androidPassengerAppVersion);
+            }
+
+            if (!string.IsNullOrEmpty(iOSCaptainAppVersion))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Captain/IOS/AppVersion", iOSCaptainAppVersion);
+            }
+
+            if (!string.IsNullOrEmpty(iOSPassengerAppVersion))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Passenger/IOS/AppVersion", iOSPassengerAppVersion);
+            }
+
+            #endregion
+
+            #region ShowAlertMessage
+
+            if (!string.IsNullOrEmpty(andriodCaptainShowAlertMessage))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Captain/Android/ShowAlertMessage", andriodCaptainShowAlertMessage);
+            }
+
+            if (!string.IsNullOrEmpty(andriodPassengerShowAlertMessage))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Passenger/Android/ShowAlertMessage", andriodPassengerShowAlertMessage);
+            }
+
+            if (!string.IsNullOrEmpty(iOSCaptainShowAlertMessage))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Captain/IOS/ShowAlertMessage", iOSCaptainShowAlertMessage);
+            }
+
+            if (!string.IsNullOrEmpty(iOSPassengerShowAlertMessage))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Passenger/IOS/ShowAlertMessage", iOSPassengerShowAlertMessage);
+            }
+
+            #endregion
+
+            #region AlertMessage
+
+            if (!string.IsNullOrEmpty(andriodCaptainAlertMessage))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Captain/Android/AlertMessage", andriodCaptainAlertMessage);
+            }
+
+            if (!string.IsNullOrEmpty(andriodPassengerAlertMessage))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Passenger/Android/AlertMessage", andriodPassengerAlertMessage);
+            }
+
+            if (!string.IsNullOrEmpty(iOSCaptainAlertMessage))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Captain/IOS/AlertMessage", iOSCaptainAlertMessage);
+            }
+
+            if (!string.IsNullOrEmpty(iOSPassengerAlertMessage))
+            {
+                await FirebaseService.UpdateUtilities("GolbalSettings/Passenger/IOS/AlertMessage", iOSPassengerAlertMessage);
+            }
+
+            #endregion
+        }
+
+
+        #region Helper Function
+
+        private async Task SetDriverOffline(string driverID, string vehicleID)
+        {
+            await FirebaseService.OfflineDriver(driverID);
+            DriverService.OnlineOfflineDriver(driverID, string.IsNullOrEmpty(vehicleID) ? "" : vehicleID, false, Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString()));
+        }
+
+        #endregion
     }
 }

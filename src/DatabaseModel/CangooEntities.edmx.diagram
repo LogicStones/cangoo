@@ -30,7 +30,7 @@
         <EntityTypeShape EntityType="CangooModel.CourierServicesDistrict" Width="1.5" PointX="14.75" PointY="5.75" />
         <EntityTypeShape EntityType="CangooModel.CourierServiceZone" Width="1.5" PointX="6.75" PointY="14.75" />
         <EntityTypeShape EntityType="CangooModel.CoworkerQuota" Width="1.5" PointX="14.75" PointY="9.75" />
-        <EntityTypeShape EntityType="CangooModel.DispatchedRidesLog" Width="1.5" PointX="14.75" PointY="12.75" />
+        <EntityTypeShape EntityType="CangooModel.DispatchedRidesLog" Width="1.5" PointX="14.75" PointY="12.75" IsExpanded="false" />
         <EntityTypeShape EntityType="CangooModel.Dispatcher" Width="1.5" PointX="12.75" PointY="15.75" />
         <EntityTypeShape EntityType="CangooModel.DispatcherBooking" Width="1.5" PointX="14.75" PointY="15.75" />
         <EntityTypeShape EntityType="CangooModel.DispatcherProfile" Width="1.5" PointX="16.75" PointY="0.75" />

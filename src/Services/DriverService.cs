@@ -131,5 +131,22 @@ namespace Services
                 
             }
         }
+
+        public static async Task UpdatePriorityHourLog(Guid driverId, DateTime endTime, DateTime startTime)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                dbContext.PriorityHourLogs.Add(new PriorityHourLog
+                {
+                    PriorityHourLogID = Guid.NewGuid(),
+                    CaptainID = driverId,
+                    PriorityHourEndTime = endTime,
+                    PriorityHourStartTime = startTime
+                });
+                await dbContext.SaveChangesAsync();
+
+            }
+        }
+
     }
 }

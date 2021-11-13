@@ -79,7 +79,7 @@ namespace DTOs.API
         public string Make { get; set; } = "";
         public string Model { get; set; } = "";
         public string PlateNumber { get; set; } = "";
-        public List<FacilitiyDTO> FacilitiesList { get; set; }
+        public List<PassengerFacilitiyDTO> FacilitiesList { get; set; }
     }
 
     public class BookTripRequest : FareBreakDownDTO

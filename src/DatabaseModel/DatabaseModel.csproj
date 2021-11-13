@@ -663,6 +663,9 @@
     <Compile Include="spGetUserDeviceToken_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="spGetUserPromos_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="spGetUserUpdateTripOnStartRide_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>

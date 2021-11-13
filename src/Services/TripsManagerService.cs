@@ -60,7 +60,7 @@ namespace Services
                 var query = dbContext.Database.SqlQuery<TripDetails>("exec spGetTripDetails @TripId",
                                                                 new SqlParameter("@TripId", tripId));
                 var details = await query.FirstOrDefaultAsync();
-                details.FacilitiesList = await FacilitiesService.GetFacilitiesListAsync();
+                details.FacilitiesList = await FacilitiesService.GetPassengerFacilitiesList();
                 return details;
             }
         }
@@ -156,8 +156,8 @@ namespace Services
                     requestTimeOut = timeOut,// double.Parse(timeOut.ToString()),
                     isDispatchedRide = false.ToString(),
                     fav = false,
-                    facilities = await FacilitiesService.GetFacilitiesDetailByIds(model.RequiredFacilities),
-                    lstCancel = await CancelReasonsService.GetCancelReasons(true, false, false),
+                    facilities = await FacilitiesService.GetDriverFacilitiesDetailByIds(model.RequiredFacilities),
+                    lstCancel = await CancelReasonsService.GetDriverCancelReasons(true, false, false),
                     discountType = "normal",
                     discountAmount = "0.0"
                     //IsWeb = false,
@@ -390,7 +390,12 @@ namespace Services
 
                 //Send FCM of new / updated trip to online drivers
                 //string tripId, string passengerId, int reqSeatingCapacity, DriverBookingRequestNotification bookingRN, dynamic hotelSetting
-                await FirebaseService.SendRideRequestToOnlineDrivers(bookingRN.tripID, model.PassengerId, Convert.ToInt32(model.SeatingCapacity), bookingRN, null);
+
+                //Explicitly create new thread to return API response.
+                var task = Task.Run(async () =>
+                {
+                    await FirebaseService.SendRideRequestToOnlineDrivers(bookingRN.tripID, model.PassengerId, Convert.ToInt32(model.SeatingCapacity), bookingRN, null);
+                });
 
                 return new BookTripResponse
                 {
@@ -520,6 +525,30 @@ namespace Services
             }
         }
 
+        public static async Task<spGetDriverUserDeviceTokens_Result> GetDriverAndPassengerDeviceToken(string tripId)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                return dbContext.spGetDriverUserDeviceTokens(tripId).FirstOrDefault();
+            }
+        }
+
+        public static async Task<spUpcomingLaterBookingDetailsForCancel_Result> GetUpcomingLaterBookingDetailsForCancel(string tripId)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                return dbContext.spUpcomingLaterBookingDetailsForCancel(tripId).FirstOrDefault();
+            }
+        }
+
+
+        public static async Task<List<spGetUpcomingLaterBooking_Result>> GetUpcomingLaterBookings()
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                return dbContext.spGetUpcomingLaterBooking(DateTime.UtcNow.ToString(), (int)TripStatuses.LaterBookingAccepted).ToList();
+            }
+        }
 
         public static async Task<spGetRideDetail_Result> GetRideDetail(string tripID, bool isWeb)
         {

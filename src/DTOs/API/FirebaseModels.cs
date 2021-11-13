@@ -9,8 +9,8 @@ namespace DTOs.API
 {
 	public class DriverStatus
 	{
-		public string ongoingRide { get; set; } = "";
-		public string isBusy { get; set; } = "";
+		public string OngoingRide { get; set; } = "";
+		public string isBusy { get; set; } = "false";
 	}
 
 	public class DriverEarnedPoints
@@ -35,16 +35,15 @@ namespace DTOs.API
 		public string isWeb { get; set; } = "";
 	}
 
-	public class FirebaseDriver
+	public class FirebaseDriver : DriverStatus
 	{
 		public string driverID { get; set; }
-		public string isBusy { get; set; }
+		public string tripId { get; set; }
 		public string driverFacilities { get; set; }
 		public bool isPriorityHoursActive { get; set; }
 		public Location location { get; set; }
 		public string seatingCapacity { get; set; }
 		public string vehicleFacilities { get; set; }
-		public string ongoingRide { get; set; }
 		public string companyID { get; set; }
 		public string userName { get; set; }
 		public string driverName { get; set; }
@@ -57,7 +56,7 @@ namespace DTOs.API
 		public string deviceToken { get; set; }
 		public int makeID { get; set; }
 		public string make { get; set; }
-		public int categoryID { get; set; }
+		public string categoryID { get; set; }
 		public string category { get; set; }
 		public int modelID { get; set; }
 		public string model { get; set; }
@@ -82,10 +81,9 @@ namespace DTOs.API
 	public class PendingLaterBooking
 	{
 		public string userID { get; set; } = "";
-		public string pickupDateTime { get; set; } = "";
+		public string pickUpDateTime { get; set; } = "";
 		public string numberOfPerson { get; set; } = "";
 	}
-
 
 	public class AcceptRideDriverModel
 	{
@@ -102,7 +100,7 @@ namespace DTOs.API
 		public string phone { get; set; }
 		public bool isWeb { get; set; }
 		public bool isLaterBooking { get; set; }
-		public List<CanclReasonsDTO> lstCancel = new List<CanclReasonsDTO>();
+		public List<DriverCancelReasonsDTO> lstCancel = new List<DriverCancelReasonsDTO>();
 		public string tripID { get; set; }
 		public string laterBookingPickUpDateTime { get; set; }
 		public string isDispatchedRide { get; set; }

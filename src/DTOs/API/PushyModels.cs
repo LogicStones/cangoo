@@ -18,10 +18,13 @@ namespace DTOs.API
 		public string TripId { get; set; }
 		public string PickUpLatitude { get; set; }
 		public string PickUpLongitude { get; set; }
+		public string PickUpLocation { get; set; }
 		public string MidwayStop1Latitude { get; set; }
 		public string MidwayStop1Longitude { get; set; }
+		public string MidwayStop1Location { get; set; }
 		public string DropOffLatitude { get; set; }
 		public string DropOffLongitude { get; set; }
+		public string DropOffLocation { get; set; }
 		public string DriverId { get; set; }
 		public string DriverName { get; set; }
 		public string DriverPicture { get; set; }
@@ -30,40 +33,55 @@ namespace DTOs.API
 		public string VehicleNumber { get; set; }
 		public string Model { get; set; }
 		public string Make { get; set; }
+		public string SeatingCapacity { get; set; }
 		public string VehicleRating { get; set; }
+		public string VehicleCategory { get; set; }
 		public string IsWeb { get; set; }
 		public string IsLaterBooking { get; set; }
 		public string IsDispatchedRide { get; set; }
 		public string IsReRouteRequest { get; set; }
-		public string SeatingCapacity { get; set; }
 		public string LaterBookingPickUpDateTime { get; set; }
 		public string Description { get; set; }
 		public string VoucherCode { get; set; }
 		public string VoucherAmount { get; set; }
-		public List<CanclReasonsDTO> lstCancel = new List<CanclReasonsDTO>();
-
+		public string TotalFare { get; set; }
+		public List<PassengerCancelReasonsDTO> CancelReasons = new List<PassengerCancelReasonsDTO>();
+		public List<PassengerFacilitiyDTO> Facilities = new List<PassengerFacilitiyDTO>();
 	}
 
 	public class EndRideFCM
 	{
-		public string tripID { get; set; }
-		public string tripRewardPoints { get; set; }
-		public string totalRewardPoints { get; set; }
-		public string driverName { get; set; }
-		public string driverImage { get; set; }
-		public bool isFav { get; set; }
-		public decimal estimateFare { get; set; }
-		public DateTime? bookingDateTime { get; set; }
-		public DateTime? endRideDateTime { get; set; }
-		public string pickLat { get; set; }
-		public string pickLong { get; set; }
-		public string dropLat { get; set; }
-		public string dropLong { get; set; }
-		public string distance { get; set; }
-		public string date { get; set; }
-		public string time { get; set; }
-		public string paymentMode { get; set; }
+		public string TripId { get; set; }
+		public string TripRewardPoints { get; set; }
+		public string TotalRewardPoints { get; set; }
+		public string DriverName { get; set; }
+		public string DriverImage { get; set; }
+		public string IsFavorite { get; set; }
+		public string TotalFare { get; set; }
+		public string BookingDateTime { get; set; }
+		public string EndTripDateTime { get; set; }
+		public string PickUpLatitude { get; set; }
+		public string PickUpLongitude { get; set; }
+		public string MidwayStop1Latitude { get; set; }
+		public string MidwayStop1Longitude { get; set; }
+		public string DropOffLatitude { get; set; }
+		public string DropOffLongitude { get; set; }
+		public string Distance { get; set; }
+		public string Date { get; set; }
+		public string Time { get; set; }
+		public string PaymentMode { get; set; }
+		public string PaymentModeId { get; set; }
 	}
+
+	public class CashPaymentNotification
+	{
+		public string CollectedAmount { get; set; }
+		public string VoucherUsedAmount { get; set; }
+		public string WalletAmountUsed { get; set; }
+		public string PromoDiscountAmount { get; set; }
+		public string TotalFare { get; set; }
+	}
+
 
 	public class DriverBookingRequestNotification //: DiscountTypeDTO
 	{
@@ -78,7 +96,7 @@ namespace DTOs.API
 		public bool isLaterBooking { get; set; }
 		public int numberOfPerson { get; set; }
 		public DateTime pickUpDateTime { get; set; }
-		public List<FacilitiyDTO> facilities { get; set; }
+		public List<DriverFacilitiyDTO> facilities { get; set; }
 		public string discountAmount { get; set; }
 		public string discountType { get; set; }
 		public string isDispatchedRide { get; set; }
@@ -90,7 +108,7 @@ namespace DTOs.API
 		//Only Aforementioned properties are being consumed from notification in driver app
 
 		public double? requestTimeOut { get; set; }
-		public List<CanclReasonsDTO> lstCancel = new List<CanclReasonsDTO>();
+		public List<DriverCancelReasonsDTO> lstCancel = new List<DriverCancelReasonsDTO>();
 		public string description { get; set; }
 		public string voucherAmount { get; set; }
 		public string voucherCode { get; set; }

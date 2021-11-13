@@ -14,7 +14,7 @@ namespace Services
 {
     public class FacilitiesService
     {
-        public static async Task<List<FacilitiyDTO>> GetFacilitiesListAsync()
+        public static async Task<List<PassengerFacilitiyDTO>> GetPassengerFacilitiesList()
         {
             using (var context = new CangooEntities())
             {
@@ -24,11 +24,11 @@ namespace Services
                 var facilities = await context.Facilities.Where(f => f.ResellerID.ToString().Equals(resellerId) 
                 && f.ApplicationID.ToString().Equals(applicationId) 
                 && f.isActive == true).ToListAsync();
-                return AutoMapperConfig._mapper.Map<List<Facility>, List<FacilitiyDTO>>(facilities);
+                return AutoMapperConfig._mapper.Map<List<Facility>, List<PassengerFacilitiyDTO>>(facilities);
             }
         }
 
-        public static async Task<List<FacilitiyDTO>> GetFacilitiesDetailByIds(string subscribedFacilities)
+        public static async Task<List<PassengerFacilitiyDTO>> GetPassengerFacilitiesDetailByIds(string subscribedFacilities)
         {
 
             using (var context = new CangooEntities())
@@ -42,34 +42,40 @@ namespace Services
                     && f.FacilityID.ToString().Contains(subscribedFacilities)
                     && f.isActive == true).ToListAsync();
 
-                return AutoMapperConfig._mapper.Map<List<Facility>, List<FacilitiyDTO>>(facilities);
+                return AutoMapperConfig._mapper.Map<List<Facility>, List<PassengerFacilitiyDTO>>(facilities);
             }
+        }
 
-            //var facilities = await GetFacilitiesListAsync();
+        public static async Task<List<DriverFacilitiyDTO>> GetDriverFacilitiesList()
+        {
+            using (var context = new CangooEntities())
+            {
+                var resellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
+                var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
 
-            //var capFac = subscribedFacilities.Split(',');
-            //var lstFacilities = new List<FacilitiyDTO>();
-            //foreach (var temp in capFac)
-            //{
-            //    foreach (var fac in facilities)
-            //    {
-            //        if (temp.Equals(fac.FacilityID.ToString()))
-            //        {
-            //            lstFacilities.Add(new FacilitiyDTO()
-            //            {
-            //                FacilityID = fac.FacilityID.ToString(),
-            //                FacilityName = fac.FacilityName,
-            //                FacilityIcon = fac.FacilityIcon
-            //            });
-            //            break;
-            //        }
-            //    }
-            //}
+                var facilities = await context.Facilities.Where(f => f.ResellerID.ToString().Equals(resellerId)
+                && f.ApplicationID.ToString().Equals(applicationId)
+                && f.isActive == true).ToListAsync();
+                return AutoMapperConfig._mapper.Map<List<Facility>, List<DriverFacilitiyDTO>>(facilities);
+            }
+        }
 
-            //Filter facilities
-            //lstFacilities.Select(f => f.FacilityID.())
+        public static async Task<List<DriverFacilitiyDTO>> GetDriverFacilitiesDetailByIds(string subscribedFacilities)
+        {
 
-            //return facilities;
+            using (var context = new CangooEntities())
+            {
+                var resellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
+                var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
+
+                var facilities = await context.Facilities
+                    .Where(f => f.ResellerID.ToString().Equals(resellerId)
+                    && f.ApplicationID.ToString().Equals(applicationId)
+                    && f.FacilityID.ToString().Contains(subscribedFacilities)
+                    && f.isActive == true).ToListAsync();
+
+                return AutoMapperConfig._mapper.Map<List<Facility>, List<DriverFacilitiyDTO>>(facilities);
+            }
         }
     }
 }

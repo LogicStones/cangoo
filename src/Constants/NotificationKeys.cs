@@ -17,11 +17,17 @@ namespace Constants
         public const string pas_rideStarted = "pas_rideStarted";
         public const string pas_endRideDetail = "pas_endRideDetail";
         public const string pas_CashPaymentPaid = "pas_CashPaymentPaid";
+        public const string pas_LaterBookingTimeOut = "pas_LaterBookingTimeOut";
+        public const string pas_30MinutesLeft = "pas_30MinutesLeft";
+        public const string pas_20MinutesLeft = "pas_20MinutesLeft";
 
         public const string cap_rideCancel = "cap_rideCancel";
         public const string cap_laterRideCancel = "cap_laterRideCancel";
         public const string cap_rideRequest = "cap_rideRequest";
         public const string cap_NewDeviceLoggedIn = "cap_NewDeviceLoggedIn";
         public const string cap_rideDispatched = "cap_rideDispatched";
+        public const string cap_30MinutesLeft = "cap_30MinutesLeft";
+        public const string cap_20MinutesLeft = "cap_20MinutesLeft";
+
     }
 }

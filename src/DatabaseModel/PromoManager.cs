@@ -27,5 +27,6 @@ namespace DatabaseModel
         public string DropOffLocation { get; set; }
         public System.Guid ApplicationID { get; set; }
         public int Repetition { get; set; }
+        public Nullable<bool> IsActive { get; set; }
     }
 }

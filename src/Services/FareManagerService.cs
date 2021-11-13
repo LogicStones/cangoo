@@ -269,7 +269,7 @@ namespace Services
                     }
                 },
                 Courier = new CourierFareEstimate(),
-                Facilities = await FacilitiesService.GetFacilitiesListAsync()
+                Facilities = await FacilitiesService.GetPassengerFacilitiesList()
             };
         }
 

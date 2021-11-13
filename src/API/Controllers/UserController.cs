@@ -123,7 +123,7 @@ namespace API.Controllers
                     await UserService.CreateUserProfileAsync(user.Id, verificationCode, model.CountryCode, model.DeviceToken, ApplicationID, ResellerID);
 
                     //SendSMS.SendSms("Herzlich willkommen bei cangoo!", model.PhoneNumber);
-                   await TextMessageService.SendWelcomeSMS(model.PhoneNumber);
+                    await TextMessageService.SendWelcomeSMS(model.PhoneNumber);
 
                     //EmailManager.SendEmail(pasngr.email, "Welcome to Cangoo !!<br /> Your Cangoo account veification code is:" + verificationCode, "New User Welcome Email Subject", "support@cangoo.at", "Support Cangoo");
 
@@ -257,7 +257,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("verify-device-token")]
-        public async Task<HttpResponseMessage>  VerifyDeviceToken([FromBody] PassengerVerifyDeviceTokenRequest model)
+        public async Task<HttpResponseMessage> VerifyDeviceToken([FromBody] PassengerVerifyDeviceTokenRequest model)
         {
             var userProfile = await UserService.GetProfileAsync(model.PassengerId, ApplicationID, ResellerID);
 
@@ -422,7 +422,7 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("update-email-otp")]
-        public async Task<HttpResponseMessage> GetUpdateEmailOTP([FromUri]UpdatePassengerEmailOTPRequest model)
+        public async Task<HttpResponseMessage> GetUpdateEmailOTP([FromUri] UpdatePassengerEmailOTPRequest model)
         {
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
@@ -495,7 +495,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("add-place")]
-        public async Task<HttpResponseMessage> AddPlace(AddPassengerPlaceRequest model)
+        public async Task<HttpResponseMessage> AddPlace([FromBody] AddPassengerPlaceRequest model)
         {
             var result = await PassengerPlacesService.AddPlace(model);
             if (result > 0)
@@ -514,7 +514,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-place")]
-        public async Task<HttpResponseMessage> UpdatePlace(UpdatePassengerPlaceRequest model)
+        public async Task<HttpResponseMessage> UpdatePlace([FromBody] UpdatePassengerPlaceRequest model)
         {
             var result = await PassengerPlacesService.UpdatePassengerPlaces(model);
 
@@ -538,19 +538,18 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("get-places")]
-        public async Task<HttpResponseMessage> GetPlaces(string passengerId)
+        public async Task<HttpResponseMessage> GetPlaces([FromUri] GetPassengerPlaceRequest model)
         {
-            var lstPlaces = PassengerPlacesService.GetPassengerPlaces(passengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
-                Data = lstPlaces
+                Data = await PassengerPlacesService.GetPassengerPlaces(model.PassengerId)
             });
         }
 
         #endregion
-         
+
         #region Favorites
 
         [HttpPost]
@@ -1072,7 +1071,7 @@ namespace API.Controllers
         //Make Payment
 
         #endregion
-        
+
         #region Credit/Debit Card
 
         [HttpGet]   //To Add credit card on client side
@@ -1333,7 +1332,7 @@ namespace API.Controllers
 
         [HttpPost]  //Used to complete payment with PayPal / Wallet.
         [Route("add-paypal-account")]
-        public async Task<HttpResponseMessage> AddPayPalAccount([FromBody] string  model)
+        public async Task<HttpResponseMessage> AddPayPalAccount([FromBody] string model)
         {
             return Request.CreateResponse(HttpStatusCode.OK);
         }
@@ -1685,6 +1684,21 @@ namespace API.Controllers
                     Message = ResponseKeys.msgSuccess,
                 });
             }
+        }
+
+        [HttpGet]
+        [Route("current-utc-datetime")]
+        public HttpResponseMessage getCurrentUTCDateTime()
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new Dictionary<dynamic, dynamic>
+                            {
+                                {"currentDateTime", DateTime.UtcNow.ToString(Formats.DateFormat) }
+                            }
+            });
         }
 
         #endregion

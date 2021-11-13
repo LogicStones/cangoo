@@ -27,10 +27,14 @@ namespace Services.Automapper
 
         private void MapSingle()
         {
+            CreateMap<CancelReason, PassengerCancelReasonsDTO>();
+            CreateMap<CancelReason, DriverCancelReasonsDTO>();
+
+            CreateMap<Facility, PassengerFacilitiyDTO>();
+            CreateMap<Facility, DriverFacilitiyDTO>();
+
             CreateMap<AspNetUser, PassengerIdentityDTO>();
             CreateMap<UserProfile, PassengerProfileDTO>();
-            CreateMap<CancelReason, CanclReasonsDTO>();
-            CreateMap<Facility, FacilitiyDTO>();
             CreateMap<PassengerPlace, AddPassengerPlaceRequest>().ReverseMap();
             CreateMap<TrustedContact, UpdateTrustedContactRequest>().ReverseMap();
             CreateMap<spGetOnlineDriver_Result, DatabaseOlineDriversDTO>().ReverseMap();

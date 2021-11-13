@@ -15,19 +15,7 @@ namespace Services
 {
     public class FirebaseService
     {
-        //#region Single Login
-
-        //public bool isUserInTrip(string UserID)
-        //{
-        //    string path = "CustomerTrips/" + UserID;
-        //    client = new FireSharp.FirebaseClient(config);
-        //    FirebaseResponse resp = client.Get(path);
-
-        //    if (string.IsNullOrEmpty(resp.Body) || resp.Body.Equals("null") || resp.Body.Equals("\"\""))
-        //        return false;
-        //    else
-        //        return true;
-        //}
+        #region Single Login
 
         public static async Task<bool> isDriverInTrip(string driverId)
         {
@@ -53,7 +41,7 @@ namespace Services
             return true;
         }
 
-        //#endregion
+        #endregion
 
         #region Online / Offline Driver
 
@@ -83,7 +71,7 @@ namespace Services
             return rawOnlineDrivers;
         }
 
-        public static async Task<FirebaseDriver> GetOnlineDriver(string driverId)
+        public static async Task<FirebaseDriver> GetOnlineDriverById(string driverId)
         {
             //get online driver from firebase
             //client = new FireSharp.FirebaseClient(config);
@@ -104,7 +92,7 @@ namespace Services
         public static async Task OnlineDriver(string driverId, string vehicleId, int makeId, string companyId, string seatingCapacity, string make, string model, string driverName,
                                               Nullable<bool> isPriorityHoursActive, string priorityHourEndTime, string earningPoints, string vehicleFeatures, string driverFeatures,
                                               string deviceToken, string userName, string phoneNumber, int modelId, string plateNumber, string category,
-                                              int categoryId, string registrationYear, string color)
+                                              string categoryId, string registrationYear, string color)
         {
             var fd = new FirebaseDriver
             {
@@ -123,10 +111,9 @@ namespace Services
                 priorityHourEndTime = priorityHourEndTime,
                 onlineSince = DateTime.UtcNow.ToString(Formats.DateFormat),
                 earningPoints = string.IsNullOrEmpty(earningPoints) ? "0.0" : earningPoints,
-                priorityHourRemainingTime = isPriorityHoursActive == true ? ((int)(DateTime.Parse(priorityHourEndTime).
-                Subtract(DateTime.Parse(DateTime.UtcNow.ToString(Formats.DateFormat))).TotalMinutes)).ToString() : "0",
+                priorityHourRemainingTime = isPriorityHoursActive == true ? ((int)(DateTime.Parse(priorityHourEndTime).Subtract(DateTime.Parse(DateTime.UtcNow.ToString(Formats.DateFormat))).TotalMinutes)).ToString() : "0",
                 lastUpdated = "",
-                ongoingRide = "",
+                OngoingRide = "",
 
                 vehicleID = vehicleId,
                 makeID = makeId,
@@ -147,7 +134,7 @@ namespace Services
 
         public static async Task OfflineDriver(string driverId)
         {
-           await FirebaseIntegration.Delete("OnlineDriver/" + driverId);
+            await FirebaseIntegration.Delete("OnlineDriver/" + driverId);
         }
 
         #endregion
@@ -295,7 +282,7 @@ namespace Services
             int? minDistanceRange = 0;
             var maxDistanceRange = distanceInterval;
             var requestSearchRange = bookingRN.isLaterBooking ? (int)(applicationSettings.LaterBookingRequestSearchRange * 1000) : (int)(applicationSettings.RequestSearchRange * 1000);
-            var captainMinRating = applicationSettings.CaptainMinRating; 
+            var captainMinRating = applicationSettings.CaptainMinRating;
             var pickPosition = new GeoCoordinate(Convert.ToDouble(bookingRN.lat), Convert.ToDouble(bookingRN.lan));
 
             var lstPreferredCaptainsDetail = new List<DatabaseOlineDriversDTO>();
@@ -773,7 +760,7 @@ namespace Services
         {
             await FirebaseIntegration.Write("Trips/" + tripId + "/isDispatchedRide", isDispatchedRide);
         }
-        
+
         private static async Task SendInProcessLaterBookingReRouteNotfication(string bookingModeId, string captainId, string tripId, string passengerId, string deviceToken)
         {
             //step 1 : Free current captain
@@ -833,7 +820,7 @@ namespace Services
             {
                 //make sure if user is in in same trip (may be in another trip, or in walkin trip payment processing)
                 //TBD: Create new class for firebase user
-                var customerTrips = JsonConvert.DeserializeObject<FirebaseDriver>(oldResp.Body);
+                FirebaseDriver customerTrips = JsonConvert.DeserializeObject<FirebaseDriver>(oldResp.Body);
 
                 if (customerTrips.tripId.Equals(tripId))
                     await DeletePassengerTrip(passengerId);
@@ -847,23 +834,23 @@ namespace Services
 
         public static async Task SetDriverFree(string driverId, string tripId)
         {
-            FirebaseDriver onlineDriver = await GetOnlineDriver(driverId);
+            FirebaseDriver onlineDriver = await GetOnlineDriverById(driverId);
             if (onlineDriver != null)
             {
                 string path = "OnlineDriver/" + driverId;
 
                 //Dictionary<string, string> dic = new Dictionary<string, string>();
-                if (string.IsNullOrEmpty(onlineDriver.ongoingRide))
+                if (string.IsNullOrEmpty(onlineDriver.OngoingRide))
                 {
                     //dic.Add("OngoingRide", "");
                     //dic.Add("isBusy", "false");
-                    await FirebaseIntegration.Update(path, new DriverStatus { isBusy = "false" });
+                    await FirebaseIntegration.Update(path, new DriverStatus());
                 }
-                else if (onlineDriver.ongoingRide.Equals(tripId))
+                else if (onlineDriver.OngoingRide.Equals(tripId))
                 {
                     //dic.Add("OngoingRide", "");
                     //dic.Add("isBusy", "false");
-                    await FirebaseIntegration.Update(path, new DriverStatus { isBusy = "false" });
+                    await FirebaseIntegration.Update(path, new DriverStatus());
                 }
             }
         }
@@ -874,8 +861,243 @@ namespace Services
             //Dictionary<string, string> dic = new Dictionary<string, string>();
             //dic.Add("OngoingRide", tripId);
             //dic.Add("isBusy", "true");
-            await FirebaseIntegration.Update(path, new DriverStatus { ongoingRide = tripId, isBusy = "true" });
+            await FirebaseIntegration.Update(path, new DriverStatus { OngoingRide = tripId, isBusy = "true" });
         }
+
+        public static async Task SetPassengerLaterBookingCancelReasons()
+        {
+            await FirebaseIntegration.Write("CancelReasonsLaterBooking/Passenger", await CancelReasonsService.GetPassengerCancelReasons(false, true, false));
+        }
+
+        public static async Task SetDriverLaterBookingCancelReasons()
+        {
+            await FirebaseIntegration.Write("CancelReasonsLaterBooking/Captain", await CancelReasonsService.GetDriverCancelReasons(false, true, true));
+        }
+
+        #endregion
+
+        #region Request Dispatched / ReRouted
+
+        public static async Task SendNotificationsAfterDispatchingRide(string deviceToken, string driverId, string tripId)
+        {
+            //step 1 : Free current captain
+            await SetDriverFree(driverId, tripId);
+
+            //step 2 : Update driver about trip status
+            Dictionary<string, string> dic = new Dictionary<string, string>
+                    {
+                        { "tripID", tripId }
+                    };
+
+            await PushyService.UniCast(deviceToken, dic, NotificationKeys.cap_rideDispatched);
+
+            //step 3 : update trip node
+            await RemoveTripDriverDetails(tripId, driverId);
+        }
+
+        public static async Task SetEstimateDistanceToPickUpLocation(string driverId, string estDistToPickUpLoc)
+        {
+            await FirebaseIntegration.Write("OnlineDriver/" + driverId + "/EstDistToPickUpLoc/", estDistToPickUpLoc);
+        }
+
+        public static async Task UpdateDriverEarnedPoints(string driverId, string earnedPoints)
+        {
+            await FirebaseIntegration.Update("OnlineDriver/" + driverId + "/", new DriverEarnedPoints
+            {
+                earningPoints = earnedPoints
+            });
+        }
+
+        public static async Task<double> GetTripEstimatedDistanceOnArrival(string driverId)
+        {
+            var response = await FirebaseIntegration.Read("OnlineDriver/" + driverId + "/EstDistToPickUpLoc/");
+
+            double distance = 0.0;
+
+            if (!string.IsNullOrEmpty(response.Body) && !response.Body.Equals("null"))
+            {
+                distance = JsonConvert.DeserializeObject<double>(response.Body);
+                //get upcoming laterbookings from database and write on firebase database
+            }
+            return distance;
+        }
+
+        #endregion
+
+        public static async Task FareAlreadyPaidFreeUserAndDriver(string tripID, string userID, string driverID)
+        {
+            //delete trip node
+            await DeleteTrip(tripID);
+
+            //free driver
+            await SetDriverFree(driverID, tripID);
+
+            //free user
+            await FreePassengerFromCurrentTrip(userID, tripID);
+        }
+
+        public static async Task WriteTripPassengerDetails(DriverBookingRequestNotification data, string passengerId)
+        {
+            await FirebaseIntegration.Write("Trips/" + data.tripID + "/" + passengerId, data);
+        }
+
+        public static async Task UpdateTripPassengerDetailsOnAccepted(PassengerRequestAcceptedNotification data, string passengerId)
+        {
+            await FirebaseIntegration.Write("Trips/" + data.TripId + "/" + passengerId, data);
+        }
+
+        public static async Task UpdateTripPassengerDetailsOnEnd(PaymentPendingPassenger data, string tripId, string passengerId)
+        {
+            await FirebaseIntegration.Write("Trips/" + tripId + "/" + passengerId, data);
+        }
+
+        public static async Task WriteTripDriverDetails(AcceptRideDriverModel data, string driverId)
+        {
+            await FirebaseIntegration.Write("Trips/" + data.tripID + "/" + driverId, data);
+        }
+
+        public static async Task UpdateTripDriverDetailsOnArrival(ArrivedDriverRideModel data, string tripID, string driverId, string earnedPoints)
+        {
+            await FirebaseIntegration.Write("Trips/" + tripID + "/" + driverId, data);
+            await UpdateDriverEarnedPoints(driverId, earnedPoints);
+        }
+
+        public static async Task UpdateTripDriverDetailsOnStart(startDriverRideModel data, string tripID, string driverId)
+        {
+            await FirebaseIntegration.Write("Trips/" + tripID + "/" + driverId, data);
+        }
+        
+        public static async Task UpdateTripDriverDetailsOnEnd(EndDriverRideModel data, string tripID, string driverId)
+        {
+            await FirebaseIntegration.Write("Trips/" + tripID + "/" + driverId, data);
+        }
+
+        public static async Task RemoveTripDriverDetails(string tripId, string driverId)
+        {
+            await FirebaseIntegration.Delete("Trips/" + tripId + "/" + driverId);
+        }
+
+        public static async Task SetTripStatus(string tripId, string status)
+        {
+            await FirebaseIntegration.Write("Trips/" + tripId + "/TripStatus", status);
+        }
+
+        public static async Task SetTipAmount(string tripId, string tipAmount)
+        {
+            await FirebaseIntegration.Write("Trips/" + tripId + "/TipAmount", tipAmount);
+        }
+
+        public static async Task DeleteTrip(string tripId)
+        {
+            await FirebaseIntegration.Delete("Trips/" + tripId);
+        }
+
+        public static async Task AddPendingLaterBookings(string userID, string tripID, string pickupDateTime, string numberOfPerson)
+        {
+            await FirebaseIntegration.Write("PendingLaterBookings/" + tripID, new PendingLaterBooking
+            {
+                userID = userID,
+                pickUpDateTime = pickupDateTime,
+                numberOfPerson = numberOfPerson
+            });
+        }
+
+        public static async Task DeletePendingLaterBooking(string tripId)
+        {
+            await FirebaseIntegration.Delete("PendingLaterBookings/" + tripId);
+        }
+
+        public static async Task<Dictionary<string, PendingLaterBooking>> GetPendingLaterBookings()
+        {
+            var pendingLaterBookings = new Dictionary<string, PendingLaterBooking>();
+
+            var response = await FirebaseIntegration.Read("PendingLaterBookings");
+
+            if (!string.IsNullOrEmpty(response.Body) && !response.Body.Equals("null"))
+            {
+                pendingLaterBookings = JsonConvert.DeserializeObject<Dictionary<string, PendingLaterBooking>>(response.Body);
+            }
+
+            return pendingLaterBookings;
+        }
+
+        public static async Task AddUpcomingLaterBooking(string driverId, UpcomingLaterBooking data)
+        {
+            await FirebaseIntegration.Write("UpcomingLaterBooking/" + driverId, data);
+        }
+
+        public static async Task DeleteUpcomingLaterBooking(string driverId)
+        {
+            await FirebaseIntegration.Delete("UpcomingLaterBooking/" + driverId);
+        }
+
+        public static async Task UpdateUpcomingBooking30MinuteFlag(string driverId)
+        {
+            await FirebaseIntegration.Update("UpcomingLaterBooking/" + driverId + "/isSend30MinutSendFCM", true);
+        }
+        
+        public static async Task UpdateUpcomingBooking20MinuteFlag(string driverId)
+        {
+            await FirebaseIntegration.Update("UpcomingLaterBooking/" + driverId + "/isSend20MinutSendFCM", true);
+        }
+
+        public static async Task<Dictionary<string, UpcomingLaterBooking>> GetUpcomingLaterBookings()
+        {
+            var bookings = new Dictionary<string, UpcomingLaterBooking>();
+
+            var response = await FirebaseIntegration.Read("UpcomingLaterBooking");
+
+            if (!string.IsNullOrEmpty(response.Body) && !response.Body.Equals("null"))
+            {
+                bookings = JsonConvert.DeserializeObject<Dictionary<string, UpcomingLaterBooking>>(response.Body);
+            }
+
+            return bookings;
+        }
+
+        public static async Task SetTripCancelReasonsForPassenger(string tripId, string passengerId, Dictionary<string, dynamic> data)
+        {
+            await FirebaseIntegration.Write("Trips/" + tripId + "/" + passengerId + "/", data);
+        }
+
+        public static async Task SetCurrentTime()
+        {
+            await FirebaseIntegration.Write("CurenntDateTime/", DateTime.UtcNow.ToString(Formats.DateFormat));
+        }
+
+        public static async Task SetGlobalSettings()
+        {
+            var settings = await ApplicationSettingService.GetApplicationSettings(ConfigurationManager.AppSettings["ApplicationID"].ToString());
+            await FirebaseIntegration.Write("GolbalSettings/PriorityHourEnableThreshold", settings.AwardPointsThreshold != null ? settings.AwardPointsThreshold.ToString() : "100");
+        }
+        
+        public static async Task SetPriorityHourStatus(bool isActive, string priorityHourRemainingTime, string captainID, string priorityHourEndTime, string earnedPoints)
+        {
+            Dictionary<string, dynamic> dic = new Dictionary<string, dynamic>
+                {
+                    { "isPriorityHoursActive", isActive },
+                    { "priorityHourEndTime", priorityHourEndTime },
+                    { "earningPoints", earnedPoints },
+                    { "priorityHourRemainingTime", priorityHourRemainingTime }
+                };
+            await FirebaseIntegration.Update("OnlineDriver/" + captainID + "/", dic);
+        }
+
+        public static async Task UpdatePriorityHourTime(string driverId, string priorityHourRemainingTime)
+        {
+            Dictionary<string, dynamic> dic = new Dictionary<string, dynamic>
+                {
+                    { "priorityHourRemainingTime", priorityHourRemainingTime }
+                };
+            await FirebaseIntegration.Update("OnlineDriver/" + driverId + "/", dic);
+        }
+
+        public static async Task UpdateUtilities(string path, string data)
+        {
+            await FirebaseIntegration.Write(path, data);
+        }
+
+        //#region Ride started
 
         //public bool updateDriverStatus(string driverID, string status, string tripId)
         //{
@@ -913,127 +1135,6 @@ namespace Services
         //    }
         //    return true;
         //}
-
-        public static async Task SetPassengerLaterBookingCancelReasons()
-        {
-            await FirebaseIntegration.Write("CancelReasonsLaterBooking/Passenger", await CancelReasonsService.GetCancelReasons(false, true, false));
-        }
-
-        public static async Task SetDriverLaterBookingCancelReasons()
-        {
-            await FirebaseIntegration.Write("CancelReasonsLaterBooking/Captain", await CancelReasonsService.GetCancelReasons(false, true, true));
-        }
-
-        #endregion
-
-        //#region Request Dispatched / ReRouted
-
-        public static async Task sendNotificationsAfterDispatchingRide(string deviceToken, string driverId, string tripId)
-        {
-            //step 1 : Free current captain
-            await SetDriverFree(driverId, tripId);
-
-            //step 2 : Update driver about trip status
-            Dictionary<string, string> dic = new Dictionary<string, string>
-                    {
-                        { "tripID", tripId }
-                    };
-
-            await PushyService.UniCast(deviceToken, dic, NotificationKeys.cap_rideDispatched);
-
-            //step 3 : update trip node
-            await RemoveTripDriverDetails(tripId, driverId);
-        }
-
-        //#endregion
-
-        //#region Request Accepted
-
-        public static async Task SetEstimateDistanceToPickUpLocation(string driverId, string estDistToPickUpLoc)
-        {
-            await FirebaseIntegration.Write("OnlineDriver/" + driverId + "/EstDistToPickUpLoc/", estDistToPickUpLoc);
-        }
-        
-        public async static Task UpdateTripsAndNotifyPassengerOnRequestAcceptd(string driverId, string passengerId, AcceptRideDriverModel arm, string tripId, bool isWeb)
-        {
-            var fd = await GetOnlineDriver(driverId);
-            var driverVehiclDetail = await DriverService.GetDriverVehicleDetail(driverId, fd == null ? "" : fd.vehicleID, passengerId, isWeb);
-
-            var notificationPayLoad = new PassengerRequestAcceptedNotification
-            {
-                TripId = tripId,
-                IsWeb = isWeb.ToString(),
-                DriverId = driverId,
-                DriverName = driverVehiclDetail.Name,
-                DriverContactNumber = driverVehiclDetail.ContactNumber,
-                DriverRating = driverVehiclDetail.Rating.ToString(),
-                VehicleRating = driverVehiclDetail.vehicleRating.ToString(),
-                DriverPicture = driverVehiclDetail.Picture,
-                Make = driverVehiclDetail.Make,
-                Model = driverVehiclDetail.Model,// + " " + driverVehiclDetail.PlateNumber,
-                VehicleNumber = driverVehiclDetail.PlateNumber,
-                PickUpLatitude = arm.pickupLocationLatitude,
-                PickUpLongitude = arm.pickupLocationLongitude,
-                MidwayStop1Latitude = "",
-                MidwayStop1Longitude = "",
-                DropOffLatitude = arm.dropOffLocationLatitude,
-                DropOffLongitude = arm.dropOffLocationLongitude,
-                IsLaterBooking = arm.isLaterBooking.ToString(),
-                IsDispatchedRide = arm.isDispatchedRide,
-                lstCancel = await CancelReasonsService.GetCancelReasons(!arm.isLaterBooking, arm.isLaterBooking, false),
-                IsReRouteRequest = arm.isReRouteRequest,
-                SeatingCapacity = arm.numberOfPerson,
-                LaterBookingPickUpDateTime = arm.laterBookingPickUpDateTime,
-                Description = arm.description,
-                VoucherCode = arm.voucherCode,
-                VoucherAmount = arm.voucherAmount
-            };
-
-            //driver data
-            await WriteTripDriverDetails(arm, driverId);
-
-            //passenger data
-            await UpdateTripPassengerDetailsOnAccepted(notificationPayLoad, passengerId);
-
-            await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.OnTheWay));
-
-            if (!isWeb)
-            {
-                await PushyService.UniCast(driverVehiclDetail.DeviceToken, notificationPayLoad, NotificationKeys.pas_rideAccepted);
-            }
-        }
-
-        //#endregion
-
-        //#region Driver Arrived
-
-        public static async Task UpdateDriverEarnedPoints(string driverId, string earnedPoints)
-        {
-            await FirebaseIntegration.Update("OnlineDriver/" + driverId + "/", new DriverEarnedPoints
-            {
-                earningPoints = earnedPoints
-            });
-        }
-
-        public static async Task<double> GetTripEstimatedDistanceOnArrival(string driverId)
-        {
-            var response = await FirebaseIntegration.Read("OnlineDriver/" + driverId + "/EstDistToPickUpLoc/");
-
-            double distance = 0.0;
-
-            if (!string.IsNullOrEmpty(response.Body) && !response.Body.Equals("null"))
-            {
-                distance = JsonConvert.DeserializeObject<double>(response.Body);
-                //get upcoming laterbookings from database and write on firebase database
-            }
-            return distance;
-        }
-
-        //#endregion
-
-        //#region Ride started
-
-
 
         //public async Task updateGo4Module(string captainName, string userName, string deviceToken)
         //{
@@ -1089,11 +1190,6 @@ namespace Services
         //#endregion
 
         //#region Ride End
-
-        public static async Task sendFCMRideDetailPassengerAfterEndRide(string tripID, string distance, EndDriverRideModel edr, string driverID, string paymentMode, string userID, bool isWeb)
-        {
-            
-        }
 
         //public string getTripDistance(string tripPath)
         //{
@@ -1198,19 +1294,6 @@ namespace Services
 
         //#region Set Driver Busy / Free
 
-
-        public static async Task fareAlreadyPaidFreeUserAndDriver(string tripID, string userID, string driverID)
-        {
-            //delete trip node
-            await DeleteTrip(tripID);
-
-            //free driver
-            await SetDriverFree(driverID, tripID);
-
-            //free user
-            await FreePassengerFromCurrentTrip(userID, tripID);
-        }
-
         //public void freeUserFromTrip(string tripID, string userID)
         //{
         //    client = new FireSharp.FirebaseClient(config);
@@ -1302,143 +1385,6 @@ namespace Services
         //#endregion
 
         //#region	Later Booking
-
-        public static async Task AddPendingLaterBookings(string userID, string tripID, string pickupDateTime, string numberOfPerson)
-        {
-            await FirebaseIntegration.Write("PendingLaterBookings/" + tripID, new PendingLaterBooking
-            {
-                userID = userID,
-                pickupDateTime = pickupDateTime,
-                numberOfPerson = numberOfPerson
-            });
-        }
-
-        public static async Task DeletePendingLaterBooking(string tripId)
-        {
-            await FirebaseIntegration.Delete("PendingLaterBookings/" + tripId);
-        }
-
-        public static async Task WriteTripPassengerDetails(DriverBookingRequestNotification data, string passengerId)
-        {
-            await FirebaseIntegration.Write("Trips/" + data.tripID + "/" + passengerId, data);
-        }
-
-        public static async Task UpdateTripPassengerDetailsOnAccepted(PassengerRequestAcceptedNotification data, string passengerId)
-        {
-            await FirebaseIntegration.Write("Trips/" + data.TripId + "/" + passengerId, data);
-        }
-
-        public static async Task UpdateTripPassengerDetailsOnEnd(PaymentPendingPassenger data, string tripId, string passengerId)
-        {
-            await FirebaseIntegration.Write("Trips/" + tripId + "/" + passengerId, data);
-        }
-
-        public static async Task WriteTripDriverDetails(AcceptRideDriverModel data, string driverId)
-        {
-            await FirebaseIntegration.Write("Trips/" + data.tripID + "/" + driverId, data);
-        }
-
-        public static async Task UpdateTripDriverDetailsOnArrival(ArrivedDriverRideModel data, string tripID, string driverId, string earnedPoints)
-        {
-            await FirebaseIntegration.Write("Trips/" + tripID + "/" + driverId, data);
-            await UpdateDriverEarnedPoints(driverId, earnedPoints);
-        }
-
-        public static async Task UpdateTripDriverDetailsOnStart(startDriverRideModel data, string tripID, string driverId)
-        {
-            await FirebaseIntegration.Write("Trips/" + tripID + "/" + driverId, data);
-        }
-        public static async Task UpdateTripDriverDetailsOnEnd(EndDriverRideModel data, string tripID, string driverId)
-        {
-            await FirebaseIntegration.Write("Trips/" + tripID + "/" + driverId, data);
-        }
-
-        public static async Task RemoveTripDriverDetails(string tripId, string driverId)
-        {
-            await FirebaseIntegration.Delete("Trips/" + tripId + "/" + driverId);
-        }
-
-        public static async Task SetTripStatus(string tripId, string status)
-        {
-            await FirebaseIntegration.Write("Trips/" + tripId + "/TripStatus", status);
-        }
-
-        public static async Task SetTipAmount(string tripId, string tipAmount)
-        {
-            await FirebaseIntegration.Write("Trips/" + tripId + "/TipAmount", tipAmount);
-        }
-         
-        public static async Task DeleteTrip(string tripId)
-        {
-            await FirebaseIntegration.Delete("Trips/" + tripId);
-        }
-
-        public static async Task AddUpcomingLaterBooking(string driverId, UpcomingLaterBooking data)
-        {
-            await FirebaseIntegration.Write("UpcomingLaterBooking/" + driverId, data);
-        }
-        
-        public static async Task DeleteUpcomingLaterBooking(string driverId)
-        {
-            await FirebaseIntegration.Delete("UpcomingLaterBooking/" + driverId);
-        }
-
-        public static async Task SetTripCancelReasonsForPassenger(string tripId, string passengerId, Dictionary<string, dynamic> data)
-        {
-            await FirebaseIntegration.Write("Trips/" + tripId + "/" + passengerId + "/", data);
-        }
-
-        //public void getUpcomingLaterBooking(Dictionary<string, LaterBooking> dic)
-        //{
-        //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-        //    {
-        //        //Need to reconsider where clause, scenario not clear:
-        //        //select * from cte where rn =1 
-
-        //        var lstLaterBooking = context.spGetUpcomingLaterBooking(Common.getUtcDateTime().ToString(), (int)TripStatus.LaterBookingAccepted).ToList();
-        //        if (lstLaterBooking.Count > 0)
-        //        {
-        //            foreach (var laterBooking in lstLaterBooking)
-        //            {
-        //                LaterBooking lb = new LaterBooking
-        //                {
-        //                    tripID = laterBooking.TripID.ToString(),
-        //                    pickUpDateTime = Convert.ToDateTime(laterBooking.PickUpBookingDateTime).ToString(Common.dateFormat),
-        //                    seatingCapacity = Convert.ToInt32(laterBooking.Noofperson),
-        //                    pickUplatitude = laterBooking.PickupLocationLatitude,
-        //                    pickUplongitude = laterBooking.PickupLocationLongitude,
-        //                    pickUpLocation = laterBooking.PickUpLocation,
-        //                    dropOfflatitude = laterBooking.DropOffLocationLatitude,
-        //                    dropOfflongitude = laterBooking.DropOffLocationLongitude,
-        //                    dropOffLocation = laterBooking.DropOffLocation,
-        //                    passengerName = laterBooking.Name,
-        //                    isSend30MinutSendFCM = (Convert.ToDateTime(laterBooking.PickUpBookingDateTime) - Common.getUtcDateTime()).TotalMinutes <= 30 ? true : false,
-        //                    isSend20MinutSendFCM = (Convert.ToDateTime(laterBooking.PickUpBookingDateTime) - Common.getUtcDateTime()).TotalMinutes <= 20 ? true : false,
-        //                    isWeb = laterBooking.isWeb
-
-        //                };
-        //                string path = "UpcomingLaterBooking/" + laterBooking.CaptainID;
-
-        //                //if there are some later bookings on firebase
-        //                if (dic != null)
-        //                {
-        //                    //if this booking already exists on firebase then no need to update the node
-        //                    var checkOldLaterBooking = dic.Any(d => d.Value.tripID == laterBooking.TripID.ToString());
-        //                    if (!checkOldLaterBooking)
-        //                    {
-        //                        addDeleteNode(false, lb, path);
-        //                    }
-        //                }
-        //                else
-        //                {
-        //                    addDeleteNode(false, lb, path);
-        //                }
-        //            }
-        //        }
-        //    }
-        //}
-
-
         //public void addRemovePendingLaterBookings(bool isAdd, string userID, string tripID, string pickupDateTime, int numberOfPerson)
         //{
         //    client = new FireSharp.FirebaseClient(config);
@@ -1476,148 +1422,5 @@ namespace Services
         //#endregion
 
         //#region Priority Hour
-
-        public static async Task SetPriorityHourStatus(bool isActive, string priorityHourRemainingTime, string captainID, string priorityHourEndTime, string earnedPoints)
-        {
-            Dictionary<string, dynamic> dic = new Dictionary<string, dynamic>
-                {
-                    { "isPriorityHoursActive", isActive },
-                    { "priorityHourEndTime", priorityHourEndTime },
-                    { "earningPoints", earnedPoints },
-                    { "priorityHourRemainingTime", priorityHourRemainingTime }
-                };
-            await FirebaseIntegration.Update("OnlineDriver/" + captainID + "/", dic);
-        }
-
-        //#endregion
-
-
-        //#region Utilities
-
-
-
-        //public void UpdateFlags(
-        //            string iOSPassengerForceUpdate,
-        //            string iOSPassengerAppVersion,
-        //            string iOSPassengerShowAlertMessage,
-        //            string iOSPassengerAlertMessage,
-
-        //            string iOSCaptainForceUpdate,
-        //            string iOSCaptainAppVersion,
-        //            string iOSCaptainShowAlertMessage,
-        //            string iOSCaptainAlertMessage,
-
-        //            string androidPassengerForceUpdate,
-        //            string androidPassengerAppVersion,
-        //            string andriodPassengerShowAlertMessage,
-        //            string andriodPassengerAlertMessage,
-
-        //            string androidCaptainForceUpdate,
-        //            string androidCaptainAppVersion,
-        //            string andriodCaptainShowAlertMessage,
-        //            string andriodCaptainAlertMessage)
-        //{
-        //    client = new FireSharp.FirebaseClient(config);
-
-        //    #region ForceUpdate
-
-        //    if (!string.IsNullOrEmpty(androidCaptainForceUpdate))
-        //    {
-        //        client.Set("GolbalSettings/Captain/Android/ForceUpdate", androidCaptainForceUpdate.ToLower());
-        //    }
-
-        //    if (!string.IsNullOrEmpty(androidPassengerForceUpdate))
-        //    {
-        //        client.Set("GolbalSettings/Passenger/Android/ForceUpdate", androidPassengerForceUpdate.ToLower());
-        //    }
-
-        //    if (!string.IsNullOrEmpty(iOSCaptainForceUpdate))
-        //    {
-        //        client.Set("GolbalSettings/Captain/IOS/ForceUpdate", iOSCaptainForceUpdate.ToLower());
-        //    }
-
-        //    if (!string.IsNullOrEmpty(iOSPassengerForceUpdate))
-        //    {
-        //        client.Set("GolbalSettings/Passenger/IOS/ForceUpdate", iOSPassengerForceUpdate.ToLower());
-        //    }
-
-        //    #endregion
-
-        //    #region AppVersion
-
-        //    if (!string.IsNullOrEmpty(androidCaptainAppVersion))
-        //    {
-        //        client.Set("GolbalSettings/Captain/Android/AppVersion", androidCaptainAppVersion);
-        //    }
-
-        //    if (!string.IsNullOrEmpty(androidPassengerAppVersion))
-        //    {
-        //        client.Set("GolbalSettings/Passenger/Android/AppVersion", androidPassengerAppVersion);
-        //    }
-
-        //    if (!string.IsNullOrEmpty(iOSCaptainAppVersion))
-        //    {
-        //        client.Set("GolbalSettings/Captain/IOS/AppVersion", iOSCaptainAppVersion);
-        //    }
-
-        //    if (!string.IsNullOrEmpty(iOSPassengerAppVersion))
-        //    {
-        //        client.Set("GolbalSettings/Passenger/IOS/AppVersion", iOSPassengerAppVersion);
-        //    }
-
-        //    #endregion
-
-        //    #region ShowAlertMessage
-
-        //    if (!string.IsNullOrEmpty(andriodCaptainShowAlertMessage))
-        //    {
-        //        client.Set("GolbalSettings/Captain/Android/ShowAlertMessage", andriodCaptainShowAlertMessage);
-        //    }
-
-        //    if (!string.IsNullOrEmpty(andriodPassengerShowAlertMessage))
-        //    {
-        //        client.Set("GolbalSettings/Passenger/Android/ShowAlertMessage", andriodPassengerShowAlertMessage);
-        //    }
-
-        //    if (!string.IsNullOrEmpty(iOSCaptainShowAlertMessage))
-        //    {
-        //        client.Set("GolbalSettings/Captain/IOS/ShowAlertMessage", iOSCaptainShowAlertMessage);
-        //    }
-
-        //    if (!string.IsNullOrEmpty(iOSPassengerShowAlertMessage))
-        //    {
-        //        client.Set("GolbalSettings/Passenger/IOS/ShowAlertMessage", iOSPassengerShowAlertMessage);
-        //    }
-
-        //    #endregion
-
-        //    #region AlertMessage
-
-        //    if (!string.IsNullOrEmpty(andriodCaptainAlertMessage))
-        //    {
-        //        client.Set("GolbalSettings/Captain/Android/AlertMessage", andriodCaptainAlertMessage);
-        //    }
-
-        //    if (!string.IsNullOrEmpty(andriodPassengerAlertMessage))
-        //    {
-        //        client.Set("GolbalSettings/Passenger/Android/AlertMessage", andriodPassengerAlertMessage);
-        //    }
-
-        //    if (!string.IsNullOrEmpty(iOSCaptainAlertMessage))
-        //    {
-        //        client.Set("GolbalSettings/Captain/IOS/AlertMessage", iOSCaptainAlertMessage);
-        //    }
-
-        //    if (!string.IsNullOrEmpty(iOSPassengerAlertMessage))
-        //    {
-        //        client.Set("GolbalSettings/Passenger/IOS/AlertMessage", iOSPassengerAlertMessage);
-        //    }
-
-        //    #endregion
-
-        //}
-
-        //#endregion
-
     }
 }

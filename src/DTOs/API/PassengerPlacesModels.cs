@@ -75,6 +75,13 @@ namespace DTOs.API
         public string ID { get; set; } = "";
     }
 
+    public class GetPassengerPlaceRequest
+    {
+        [Required]
+        public string PassengerId { get; set; }
+    }
+
+
     public class GetRecentLocationDetails
     {
         public string DropOffLatitude { get; set; } = "";

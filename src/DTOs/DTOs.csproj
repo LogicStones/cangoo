@@ -43,10 +43,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API\AuthenticationModels.cs" />
-    <Compile Include="API\CancelReasonsModels.cs" />
+    <Compile Include="Shared\CancelReasonsModels.cs" />
     <Compile Include="API\DriverModel.cs" />
     <Compile Include="API\FareModels.cs" />
     <Compile Include="API\FirebaseModels.cs" />
+    <Compile Include="API\InvoiceModels.cs" />
     <Compile Include="API\LanguagesModel.cs" />
     <Compile Include="API\NotificationModel.cs" />
     <Compile Include="API\PassengerPlacesModels.cs" />
@@ -56,14 +57,14 @@
     <Compile Include="API\RewardPointModel.cs" />
     <Compile Include="API\TrustedConatctModel.cs" />
     <Compile Include="API\VehicleModels.cs" />
-    <Compile Include="Shared\FacilityDTOs.cs" />
+    <Compile Include="Shared\FacilityModels.cs" />
     <Compile Include="API\PushyModels.cs" />
     <Compile Include="API\ProfileModels.cs" />
     <Compile Include="API\TripModels.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="API\ResponseWrapper.cs" />
-    <Compile Include="Shared\FavoritesDTOs.cs" />
-    <Compile Include="Shared\PassengerDTOs.cs" />
+    <Compile Include="Shared\FavoritesModels.cs" />
+    <Compile Include="Shared\PassengerModels.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

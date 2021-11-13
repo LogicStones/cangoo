@@ -15,11 +15,11 @@ namespace DatabaseModel
     {
         public int MakeID { get; set; }
         public string Make { get; set; }
-        public int CategoryID { get; set; }
-        public string Category { get; set; }
         public int ModelID { get; set; }
         public string Model { get; set; }
         public Nullable<int> SeatingCapacity { get; set; }
+        public string Categories { get; set; }
+        public string Category { get; set; }
         public System.Guid VehicleID { get; set; }
         public string PlateNumber { get; set; }
         public string Color { get; set; }
