@@ -66,6 +66,7 @@ namespace Constants
         public const string fareAlreadyPaid = "amountAlreadyPaid";
         public const string invalidCouponCode = "invalidCouponCode";
         public const string couponCodeAlreadyApplied = "couponCodeAlreadyApplied";
+        public const string notEnoughBalance = "notEnoughBalance";
         #endregion
 
     }

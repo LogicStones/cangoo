@@ -1,20 +1,14 @@
-﻿using API.Filters;
-using Constants;
+﻿using Constants;
 using DTOs.API;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.Owin.Security;
 using Services;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Security.Claims;
-using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
@@ -621,7 +615,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-language")]
-        public async Task<HttpResponseMessage> UpdateLanguage( [FromBody] UpdateLanguageRequest model)
+        public async Task<HttpResponseMessage> UpdateLanguage([FromBody] UpdateLanguageRequest model)
         {
             var result = await LanguageService.UpdatePassengerLanguage(model);
 
@@ -862,7 +856,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-trip-tip-amount")]
-        public async Task<HttpResponseMessage> UpdateTripTipAmount( [FromBody] UpdateTripTipAmount model)
+        public async Task<HttpResponseMessage> UpdateTripTipAmount([FromBody] UpdateTripTipAmount model)
         {
             await FirebaseService.SetTipAmount(model.TripId, model.TipAmount);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -898,7 +892,7 @@ namespace API.Controllers
                     Message = ResponseKeys.invalidPromo,
                 });
             }
-            
+
         }
 
         [HttpGet]
@@ -922,15 +916,45 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("get-wallet")]
-        public async Task<HttpResponseMessage> GetWalletDetails(string model)
+        public async Task<HttpResponseMessage> GetWalletDetails([FromUri] GetWalletDetailsModel model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
-
             //Wallet Balance
 
             //PayPal Account
 
             //CreditCard Lists
+            var userProfile = await WalletRechargeServices.GetUserProfile(model.PassengerId);
+            if (userProfile == null)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = true,
+                    Message = ResponseKeys.userNotFound,
+                });
+            }
+            else
+            {
+                var CardsDetails = await WalletRechargeServices.GetUserCardsDetails(userProfile);
+                if (CardsDetails != null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                    {
+                        Error = false,
+                        Message = ResponseKeys.msgSuccess,
+                        Data = CardsDetails
+                    });
+                }
+                else
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                    {
+                        Error = true,
+                        Message = ResponseKeys.paymentGetwayError,
+                    });
+                }
+            }
+
+
 
             //if (string.IsNullOrEmpty(model.passengerID))
             //{
@@ -989,85 +1013,119 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("redeem-coupon-code")]
-        public async Task<HttpResponseMessage> RedeemCouponCode([FromBody] string Id)
+        public async Task<HttpResponseMessage> RedeemCouponCode([FromBody] ApplyCouponCode model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
-            //if (!string.IsNullOrEmpty(model.passengerID) && !string.IsNullOrEmpty(model.couponCode))
-            //{
-            //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //    {
-            //        var result = context.CouponsManagers.Where(co => co.Code.Equals(model.couponCode)
-            //        && co.ApplicationID.ToString().ToLower().Equals(this.ApplicationID)
-            //        ).FirstOrDefault();
-
-            //        if (result == null)
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.invalidCouponCode;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-
-            //        if (result.isUsed)
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.couponCodeAlreadyApplied;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-
-            //        WalletTransfer wallet = new WalletTransfer
-            //        {
-            //            Amount = result.Amount,
-            //            RechargeDate = DateTime.UtcNow,
-            //            WalletTransferID = Guid.NewGuid(),
-            //            Referrence = "Promo Code Applied - " + result.Code,
-            //            TransferredBy = Guid.Parse(this.ApplicationID),
-            //            TransferredTo = Guid.Parse(model.passengerID),
-            //            ApplicationID = Guid.Parse(this.ApplicationID),
-            //            ResellerID = Guid.Parse(this.ResellerID)
-            //        };
-
-            //        var profile = context.UserProfiles.Where(up => up.UserID.ToString().Equals(model.passengerID)).FirstOrDefault();
-            //        if (profile != null)
-            //        {
-            //            profile.LastRechargedAt = wallet.RechargeDate;
-            //            profile.WalletBalance = profile.WalletBalance == null ? result.Amount : profile.WalletBalance + result.Amount;
-            //        }
-
-            //        result.isUsed = true;
-            //        result.UsedOn = wallet.RechargeDate;
-            //        result.UsedBy = Guid.Parse(model.passengerID);
-
-            //        context.WalletTransfers.Add(wallet);
-            //        context.SaveChanges();
-
-            //        response.error = false;
-            //        response.data = new Dictionary<dynamic, dynamic> {
-            //                            {"walletBalance", string.Format("{0:0.00}", profile.WalletBalance) }
-            //                        };
-            //        response.message = AppMessage.msgSuccess;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
-            //}
-            //else
-            //{
-            //    response.error = true;
-            //    response.message = AppMessage.invalidParameters;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
+            var resultCoupon = await WalletRechargeServices.IsValidCouponCode(model.CouponCode);
+            if (resultCoupon == null)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = true,
+                    Message = ResponseKeys.invalidCouponCode,
+                });
+            }
+            else if (resultCoupon.isUsed)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = true,
+                    Message = ResponseKeys.couponCodeAlreadyApplied,
+                });
+            }
+            else
+            {
+                var WalletBalance = await WalletRechargeServices.AddCouponCode(model);
+                if (WalletBalance != null)
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                    {
+                        Error = false,
+                        Message = ResponseKeys.msgSuccess,
+                        Data = WalletBalance,
+                    });
+                }
+                else
+                {
+                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                    {
+                        Error = true,
+                        Message = ResponseKeys.notFound,
+                    });
+                }
+            }
         }
 
         [HttpPost]
         [Route("check-application-user")]
-        public async Task<HttpResponseMessage> CheckApplicationUser(string model)
+        public async Task<HttpResponseMessage> CheckApplicationUser([FromUri] GetApplicationUser model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var AppUser = await WalletRechargeServices.IsAppUserExist(model.TransferUserMobile);
+            if (AppUser != null)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    Data = AppUser,
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = true,
+                    Message = ResponseKeys.userNotFound,
+                });
+            }
         }
 
         [HttpPost]
         [Route("transfer-wallet-balance")]
-        public async Task<HttpResponseMessage> TransferWalletBalance(string model)
+        public async Task<HttpResponseMessage> TransferWalletBalance([FromBody] AmountTransferByMobileNo model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
+            if (int.Parse(model.Amount) > int.Parse(model.WalletBalance))
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = true,
+                    Message = ResponseKeys.notEnoughBalance,
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    Data = await WalletRechargeServices.TransferUsingMobile(model)
+                });
+
+            }
+
+        }
+
+        [HttpPost]
+        [Route("cards-wallet-recharge")]
+        public async Task<HttpResponseMessage> CardsWalletRecharge([FromBody] GetCardsWalletRecharge model)
+        {
+            var CardsWalletAmount = await WalletRechargeServices.CardsWalletRecharge(model);
+            if (CardsWalletAmount != null)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    Data = CardsWalletAmount,
+                });
+            }
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = true,
+                    Message = ResponseKeys.notFound,
+                });
+            }
         }
 
 
@@ -1516,7 +1574,7 @@ namespace API.Controllers
             }
             else
             {
-                 var result = await InvitationService.ApplyInvitation(model);
+                var result = await InvitationService.ApplyInvitation(model);
                 if (result > 0)
                 {
                     return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper

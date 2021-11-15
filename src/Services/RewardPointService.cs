@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Services
@@ -26,7 +25,7 @@ namespace Services
 
         public static async Task<PassengerEarnedRewardRespose> GetPassengerRewardPoint(string passengerId)
         {
-            using (CangooEntities dbcontext=new CangooEntities())
+            using (CangooEntities dbcontext = new CangooEntities())
             {
                 var result = dbcontext.UserProfiles.Where(x => x.UserID == passengerId).FirstOrDefault();
                 return new PassengerEarnedRewardRespose
@@ -71,7 +70,7 @@ namespace Services
 
         public static UserProfile GetUser(string passengerId)
         {
-            using (CangooEntities dbContext=new CangooEntities())
+            using (CangooEntities dbContext = new CangooEntities())
             {
                 return dbContext.UserProfiles.Where(u => u.UserID == passengerId).FirstOrDefault();
             }

@@ -74,6 +74,14 @@ namespace Services
             }
         }
         
+        public static async Task UpdateUserWalletBalance(string lastRechargeAt,string walletbalance)
+        {
+            using (var dbcontext=new CangooEntities())
+            {
+                await dbcontext.Database.ExecuteSqlCommandAsync("Update Userprofile Set LastRechargedAt = {0}, WalletBalance = {1}", lastRechargeAt, walletbalance);
+            }
+        }
+
         public static async Task UpdateNameAsync(string firstName, string lastName, string userId)
         {
             using (var dbContext = new CangooEntities())
