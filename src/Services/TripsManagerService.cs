@@ -148,7 +148,9 @@ namespace Services
                     facilities = await FacilitiesService.GetDriverFacilitiesDetailByIds(model.RequiredFacilities),
                     lstCancel = await CancelReasonsService.GetDriverCancelReasons(true, false, false),
                     discountType = "normal",
-                    discountAmount = "0.0"
+                    discountAmount = "0.0",
+                    dispatcherID = "",
+
                     //IsWeb = false,
                     //REFACTOR - Remove this flag
                     //isLaterBookingStarted = false
@@ -285,6 +287,10 @@ namespace Services
                     tp.OutBoundSurchargeAmount = 0;
                     tp.InBoundBaseFare = 0;
                     tp.OutBoundBaseFare = 0;
+
+                    tp.FareManagerID = model.InBoundRSFMId;
+                    tp.DropOffFareMangerID = Guid.Parse(model.OutBoundRSFMId);
+
 
                     //tp.InBoundDistanceInMeters = string.IsNullOrEmpty(model.InBoundDistanceInMeters) ? 0 : int.Parse(model.InBoundDistanceInMeters);
                     //tp.OutBoundDistanceInMeters = string.IsNullOrEmpty(model.OutBoundDistanceInMeters) ? 0 : int.Parse(model.OutBoundDistanceInMeters);

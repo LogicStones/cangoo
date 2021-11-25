@@ -648,7 +648,7 @@ namespace API.Controllers
             {
                 var driverCancelReasons = await CancelReasonsService.GetDriverCancelReasons(!model.isLaterBooking, model.isLaterBooking, true);
 
-                //Object to be used to populate passenger FCM object
+                //Object to be used to populate driver firebase node
                 AcceptRideDriverModel arm = new AcceptRideDriverModel
                 {
                     tripID = model.tripID,
@@ -687,9 +687,14 @@ namespace API.Controllers
                 var fd = await FirebaseService.GetOnlineDriverById(model.driverID);
                 var driverVehiclDetail = await DriverService.GetDriverVehicleDetail(model.driverID, fd == null ? "" : fd.vehicleID, detail.UserID.ToString(), model.isWeb);
 
+                await FirebaseService.WriteTripDriverDetails(arm, model.driverID);
+
+
+                //Object to be used to populate passenger FCM and firebase node data
+
                 var notificationPayLoad = new PassengerRequestAcceptedNotification
                 {
-                    TripId = detail.UserID.ToString(),
+                    TripId = model.tripID,
                     IsWeb = model.isWeb.ToString(),
                     IsLaterBooking = arm.isLaterBooking.ToString(),
                     IsDispatchedRide = arm.isDispatchedRide,
@@ -723,10 +728,6 @@ namespace API.Controllers
                     Facilities = await FacilitiesService.GetPassengerFacilitiesDetailByIds(trip.facilities)
                 };
 
-                //driver data
-                await FirebaseService.WriteTripDriverDetails(arm, model.driverID);
-
-                //passenger data
                 await FirebaseService.UpdateTripPassengerDetailsOnAccepted(notificationPayLoad, detail.UserID.ToString());
 
                 await FirebaseService.SetTripStatus(model.tripID, Enum.GetName(typeof(TripStatuses), TripStatuses.OnTheWay));
@@ -762,7 +763,6 @@ namespace API.Controllers
                 //API response data
                 dic = new Dictionary<dynamic, dynamic>
                                     {
-                                //REFACTOR - These lat long keys are no more in use. Remove these keys.
                                         { "lat", detail.PickupLocationLatitude },
                                         { "lon", detail.PickupLocationLongitude },
                                         { "passengerID", detail.UserID },
@@ -863,7 +863,7 @@ namespace API.Controllers
 
                 dic = new Dictionary<dynamic, dynamic>
                         {
-                            { "tripID", model.tripID }
+                            { "TripId", model.tripID }
                         };
 
                 //in normal booking if captain is arrived and cancels the ride then don't reroute
@@ -883,7 +883,10 @@ namespace API.Controllers
                 }
 
                 response.error = false;
-                response.data = dic;
+                response.data = new Dictionary<dynamic, dynamic>
+                        {
+                            { "tripID", model.tripID }
+                        };
                 response.message = ResponseKeys.msgSuccess;
 
                 //If later booking was over due and cancelled by cron-job (if driver app was not active)
@@ -1047,11 +1050,10 @@ namespace API.Controllers
                     trip.WaitingMinutes = waitingDur.TotalMinutes;
                     //trip.DistanceTraveled = double.Parse(model.distance);
 
-                    CheckWalletBalance(trip.UserID.ToString(), context, ref result);
+                    //CheckWalletBalance(trip.UserID.ToString(), context, ref result);
 
                     //string promotionId = await FareManagerService.IsSpecialPromotionApplicable(trip.PickupLocationLatitude, trip.PickupLocationLongitude, model.lat.ToString(), model.lon.ToString(), ApplicationID, context, ref dic);
                     string promotionId = string.Empty;
-
 
                     if (!string.IsNullOrEmpty(promotionId))
                     {
@@ -1103,26 +1105,30 @@ namespace API.Controllers
                         trip.PerKMFare = decimal.Parse(result.inBoundDistanceFare) + decimal.Parse(result.outBoundDistanceFare);
                     }
 
-                    trip.FareManagerID = string.IsNullOrEmpty(trip.FareManagerID) ? fareManag.FareManagerID.ToString() : trip.FareManagerID;
-                    trip.DropOffFareMangerID = string.IsNullOrEmpty(trip.DropOffFareMangerID.ToString()) ? dropOffAreafareManag.FareManagerID : trip.DropOffFareMangerID;
+                    //already set in booking request : Need to consider in case of destination change
 
-                    trip.InBoundDistanceInMeters = (int)(double.Parse(result.inBoundDistanceInKM) * 1000);
-                    trip.InBoundTimeInSeconds = (int)(double.Parse(result.inBoundTimeInMinutes) * 60);
-                    trip.OutBoundDistanceInMeters = (int)(double.Parse(result.outBoundDistanceInKM) * 1000);
-                    trip.OutBoundTimeInSeconds = (int)(double.Parse(result.outBoundTimeInMinutes) * 60);
+                    //trip.FareManagerID = string.IsNullOrEmpty(trip.FareManagerID) ? fareManag.FareManagerID.ToString() : trip.FareManagerID;
+                    //trip.DropOffFareMangerID = string.IsNullOrEmpty(trip.DropOffFareMangerID.ToString()) ? dropOffAreafareManag.FareManagerID : trip.DropOffFareMangerID;
 
-                    trip.InBoundBaseFare = decimal.Parse(result.inBoundBaseFare);
-                    trip.InBoundDistanceFare = decimal.Parse(result.inBoundDistanceFare);
-                    trip.InBoundTimeFare = decimal.Parse(result.inBoundTimeFare);
-                    trip.InBoundSurchargeAmount = decimal.Parse(result.inBoundSurchargeAmount);
-                    trip.OutBoundBaseFare = decimal.Parse(result.outBoundBaseFare);
-                    trip.OutBoundDistanceFare = decimal.Parse(result.outBoundDistanceFare);
-                    trip.OutBoundTimeFare = decimal.Parse(result.outBoundTimeFare);
-                    trip.OutBoundSurchargeAmount = decimal.Parse(result.outBoundSurchargeAmount);
+                    //trip.InBoundDistanceInMeters = (int)(double.Parse(result.inBoundDistanceInKM) * 1000);
+                    //trip.InBoundTimeInSeconds = (int)(double.Parse(result.inBoundTimeInMinutes) * 60);
+                    //trip.OutBoundDistanceInMeters = (int)(double.Parse(result.outBoundDistanceInKM) * 1000);
+                    //trip.OutBoundTimeInSeconds = (int)(double.Parse(result.outBoundTimeInMinutes) * 60);
 
-                    trip.DistanceTraveled = trip.InBoundDistanceInMeters + trip.OutBoundDistanceInMeters;
-                    trip.PolyLine = result.polyLine;
-                    model.distance = trip.DistanceTraveled.ToString();
+                    //trip.InBoundBaseFare = decimal.Parse(result.inBoundBaseFare);
+                    //trip.InBoundDistanceFare = decimal.Parse(result.inBoundDistanceFare);
+                    //trip.InBoundTimeFare = decimal.Parse(result.inBoundTimeFare);
+                    //trip.InBoundSurchargeAmount = decimal.Parse(result.inBoundSurchargeAmount);
+                    //trip.OutBoundBaseFare = decimal.Parse(result.outBoundBaseFare);
+                    //trip.OutBoundDistanceFare = decimal.Parse(result.outBoundDistanceFare);
+                    //trip.OutBoundTimeFare = decimal.Parse(result.outBoundTimeFare);
+                    //trip.OutBoundSurchargeAmount = decimal.Parse(result.outBoundSurchargeAmount);
+
+                    
+
+                    //trip.DistanceTraveled = trip.InBoundDistanceInMeters + trip.OutBoundDistanceInMeters;
+                    //trip.PolyLine = result.polyLine;
+                    //model.distance = trip.DistanceTraveled.ToString();
 
                     //Update earned points, priority hour and booking type check applied
 
@@ -1174,7 +1180,7 @@ namespace API.Controllers
 
                         travelCharges = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.PerKMFare.ToString()),
                         waitingCharges = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.WaitingFare.ToString()),
-                        bookingCharges = string.Format("{0:0.00}", "0.00"),
+                        bookingCharges = string.Format("{0:0.00}", trip.BookingFare.ToString()),
                         baseCharges = string.Format("{0:0.00}", trip.BaseFare.ToString()),
                         estimatedPrice = string.Format("{0:0.00}", result.estimatedPrice),
                         paymentMethod = trip.TripPaymentMode,

@@ -71,6 +71,7 @@ namespace Services.Automapper
                 .ForMember(dest => dest.VoucherAmount, opt => opt.MapFrom(src => src.voucherAmount))
                 .ForMember(dest => dest.VoucherCode, opt => opt.MapFrom(src => src.voucherCode))
                 .ForMember(dest => dest.TotalFare, opt => opt.MapFrom(src => src.estimatedPrice))
+                .ForMember(dest => dest.DispatcherId, opt => opt.MapFrom(src => src.dispatcherID))
                 .ForMember(dest => dest.Facilities, opt => opt.MapFrom(src => src.facilities))
                 .ForMember(dest => dest.CancelReasons, opt => opt.MapFrom(src => src.lstCancel));
 
@@ -84,7 +85,7 @@ namespace Services.Automapper
                 .ForMember(dest => dest.Reason, opt => opt.MapFrom(src => src.reason)).ReverseMap();
 
             //.ForMember(dest => dest.DeviceToken, opt => opt.MapFrom(src => src.deviceToken))
-            //.ForMember(dest => dest.DispatcherId, opt => opt.MapFrom(src => src.dispatcherID))
+
 
             //.ForMember(dest => dest.EstimatedPrice, opt => opt.MapFrom(src => src.estimatedPrice))
 

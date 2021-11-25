@@ -12,14 +12,14 @@ namespace Services
 {
     public class PushyService
     {
-        public static async Task UniCast(string token, dynamic msg, string messageKey)
+        public static async Task UniCast(string token, dynamic payload, string messageKey)
         {
             var notification = GetiOSNotificationObject(messageKey);
-            string json = JsonConvert.SerializeObject(msg);
+            string json = JsonConvert.SerializeObject(payload);
 
             if (messageKey.Equals(NotificationKeys.cap_rideCancel))
             {
-                if ((msg as dynamic)["isLaterBooking"])
+                if ((payload as dynamic)["isLaterBooking"])
                     notification["loc_key"] = NotificationKeys.cap_laterRideCancel;
                 else
                     notification["loc_key"] = NotificationKeys.cap_rideCancel;

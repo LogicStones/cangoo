@@ -100,8 +100,8 @@ namespace DTOs.API
 		public string discountAmount { get; set; }
 		public string discountType { get; set; }
 		public string isDispatchedRide { get; set; }
-		//public string dispatcherID { get; set; }
-		public bool isReRouteRequest { get; set; }
+		public string dispatcherID { get; set; } = "";
+        public bool isReRouteRequest { get; set; }
 		public string estimatedPrice { get; set; }
 		public string bookingMode { get; set; }
 

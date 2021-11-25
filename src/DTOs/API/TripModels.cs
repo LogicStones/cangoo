@@ -99,7 +99,7 @@ namespace DTOs.API
         [Required]
         [DefaultValue("52250")]
         public string PickUpPostalCode { get; set; }
-        
+
         [Required]
         [DefaultValue("Madni Masjid, Madni Rd, Sector Y Peoples Colony, Gujranwala, Punjab, Pakistan")]
         public string PickUpLocation { get; set; }
@@ -131,7 +131,14 @@ namespace DTOs.API
         [Required]
         [DefaultValue("Street 21, Sector Y Peoples Colony, Gujranwala, Punjab, Pakistan")]
         public string DropOffLocation { get; set; }
-        
+
+        [Required]
+        [DefaultValue("52988B66-46D5-4CFC-BF9E-6D42BEC3529C")]
+        public string InBoundRSFMId { get; set; }
+
+        [Required]
+        [DefaultValue("52988B66-46D5-4CFC-BF9E-6D42BEC3529C")]
+        public string OutBoundRSFMId { get; set; }
         [Required]
         [DefaultValue("345")]
         public string InBoundTimeInSeconds { get; set; }

@@ -19,20 +19,8 @@ namespace DTOs.API
 		public string DropOffLatitude { get; set; }
 		public string DropOffLongitude { get; set; }
 		public string DropOffLocation { get; set; }
-		//public string DriverId { get; set; }
-		//public string DriverName { get; set; }
-		//public string DriverPicture { get; set; }
-		//public string DriverRating { get; set; }
-		//public string DriverContactNumber { get; set; }
-		//public string VehicleNumber { get; set; }
-		//public string Model { get; set; }
-		//public string Make { get; set; }
-		//public string SeatingCapacity { get; set; }
-		//public string VehicleRating { get; set; }
-		//public string VehicleCategory { get; set; }
 		public string IsWeb { get; set; }
 		public string IsLaterBooking { get; set; }
-		//public string IsLaterBookingStarted { get; set; }
 		public string IsDispatchedRide { get; set; }
 		public string IsReRouteRequest { get; set; }
 		public string PickUpDateTime { get; set; }
@@ -45,19 +33,32 @@ namespace DTOs.API
 		public string IsFavorite { get; set; }
 		public string DiscountType { get; set; } = "normal";
 		public string DiscountAmount { get; set; } = "0.00";
-		//public string DispatcherId { get; set; } = "";
-		//public string EstimatedPrice { get; set; }
+		public string DispatcherId { get; set; } = "";
 		public string RequestTimeOut { get; set; }
 		public string RequiredFacilities { get; set; }
 		public string PreviousCaptainId { get; set; }
 		public string ReRouteRequestTime { get; set; }
-		//public string DeviceToken { get; set; }
 		public string BookingMode { get; set; }
 		public string BookingModeId { get; set; }
-		//public List<DriverFacilityDTO> facilities { get; set; } = new List<DriverFacilityDTO>();
-		//public List<DriverCancelReasonsDTO> lstCancel { get; set; } = new List<DriverCancelReasonsDTO>();
 		public List<PassengerCancelReasonsDTO> CancelReasons { get; set; } = new List<PassengerCancelReasonsDTO>();
 		public List<PassengerFacilityDTO> Facilities { get; set; } = new List<PassengerFacilityDTO>();
+
+
+		//public string DriverId { get; set; } = "";
+		//public string DriverName { get; set; } = "";
+		//public string DriverPicture { get; set; } = "";
+		//public string DriverRating { get; set; } = "";
+		//public string DriverContactNumber { get; set; } = "";
+		//public string VehicleNumber { get; set; } = "";
+		//public string Model { get; set; } = "";
+		//public string Make { get; set; } = "";
+		//public string SeatingCapacity { get; set; } = "";
+		//public string VehicleRating { get; set; } = "";
+		//public string VehicleCategory { get; set; } = "";
+
+		//public string IsLaterBookingStarted { get; set; } = "";
+		//public string DeviceToken { get; set; } = "";
+		//public string EstimatedPrice { get; set; } = "";
 	}
 
 	public class DriverStatus
