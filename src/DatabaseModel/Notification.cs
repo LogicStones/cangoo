@@ -14,20 +14,13 @@ namespace DatabaseModel
     
     public partial class Notification
     {
-        public int PopupID { get; set; }
-        public int ReceiverID { get; set; }
+        public System.Guid FeedID { get; set; }
         public string Title { get; set; }
-        public string RidirectURL { get; set; }
-        public string Text { get; set; }
-        public string LinkButtonText { get; set; }
-        public Nullable<System.DateTime> StartDate { get; set; }
-        public string Image { get; set; }
-        public Nullable<System.DateTime> ExpiryDate { get; set; }
-        public string ButtonText { get; set; }
-        public Nullable<System.Guid> ApplicationID { get; set; }
-        public Nullable<System.Guid> ResellerId { get; set; }
-        public Nullable<System.DateTime> CreatedAt { get; set; }
-        public Nullable<System.Guid> UserID { get; set; }
-        public bool IsActive { get; set; }
+        public string ShortDescription { get; set; }
+        public string Detail { get; set; }
+        public System.DateTime CreationDate { get; set; }
+        public System.DateTime ExpiryDate { get; set; }
+        public int ApplicationUserTypeID { get; set; }
+        public System.Guid ApplicationID { get; set; }
     }
 }

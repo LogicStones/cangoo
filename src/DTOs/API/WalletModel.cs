@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DTOs.API
 {
-    public class ApplyCouponCode
+    public class RedeemCouponCodeRequest
     {
         [Required]
         public string PassengerId { get; set; }
@@ -15,13 +15,18 @@ namespace DTOs.API
         public string CouponCode { get; set; }
     }
 
-    public class GetApplicationUser
+    public class RedeemCouponCodeResponse
     {
-        [Required]
-        public string TransferUserMobile { get; set; }
+        public string WalletBalance { get; set; }
     }
 
-    public class GetApplicationUserResponse
+    public class CheckAppUserRequest
+    {
+        [Required]
+        public string ReciverMobileNo { get; set; }
+    }
+
+    public class CheckAppUserResponse
     {
         public string PassengerId { get; set; }
         public string PhoneNumber { get; set; }
@@ -29,31 +34,27 @@ namespace DTOs.API
         public string LastName { get; set; }
     }
 
-    public class AmountTransferByMobileNo
+    public class ShareWalletBalanceRequest
     {
         [Required]
         public string SenderId { get; set; }
         [Required]
-        public string Amount { get; set; }
-        [Required]
         public string ReceiverId { get; set; }
         [Required]
-        public string WalletBalance { get; set; }
+        public string TotalWalletBalance { get; set; }
+        [Required]
+        public string ShareAmount { get; set; }
     }
 
-    public class AmountTransferByMobileResponse
+    public class ShareWalletBalanceResponse
     {
         public string TransferedAmount { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
     }
 
-    public class AddCouponCodeResponse
-    {
-        public string WalletBalance { get; set; }
-    }
 
-    public class GetCardsWalletRecharge
+    public class MobilePaymentWalletRechargeRequest
     {
         [Required]
         public string TransactionId { get; set; }
@@ -65,9 +66,23 @@ namespace DTOs.API
         public string PassengerId { get; set; }
     }
 
-    public class CardsWalletRechargeResponse
+    public class MobilePaymentWalletRechargeResponse
     {
         public string Amount { get; set; }
+    }
+
+    public class WalletDetailsRequest
+    {
+        [Required]
+        public string PassengerId { get; set; }
+    }
+
+    public class WalletDetailsResponse
+    {
+        public string PassengerId { get; set; }
+        public string TotalWalletBalance { get; set; } = "0.00";
+        public string AvailableWalletBalance { get; set; } = "0.00";
+        public List<StripeCard> CardsList { get; set; } = new List<StripeCard>();
     }
 
     public class StripeCard
@@ -79,18 +94,5 @@ namespace DTOs.API
         public string Last4Digits { get; set; }
         public string CardHolderName { get; set; }
         public string CardDescription { get; set; } //addressline1 on stripe response
-    }
-
-    public class GetWalletDetailsModel
-    {
-        [Required]
-        public string PassengerId { get; set; }
-    }
-
-    public class StripeCustomer
-    {
-        public string WalletBalance { get; set; }
-        public string PassengerId { get; set; }
-        public List<StripeCard> CardsList { get; set; }
     }
 }

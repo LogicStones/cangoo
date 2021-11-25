@@ -694,7 +694,7 @@ namespace API.Controllers
                     IsLaterBooking = arm.isLaterBooking.ToString(),
                     IsDispatchedRide = arm.isDispatchedRide,
                     IsReRouteRequest = arm.isReRouteRequest,
-                    LaterBookingPickUpDateTime = arm.laterBookingPickUpDateTime,
+                    PickUpDateTime = arm.laterBookingPickUpDateTime,
                     Description = arm.description,
                     VoucherCode = arm.voucherCode,
                     VoucherAmount = arm.voucherAmount,
@@ -718,7 +718,7 @@ namespace API.Controllers
                     Model = driverVehiclDetail.Model,// + " " + driverVehiclDetail.PlateNumber,
                     VehicleNumber = driverVehiclDetail.PlateNumber,
                     SeatingCapacity = arm.numberOfPerson,
-                    VehicleCategory = "VC STANDARD",
+                    VehicleCategory = "VC STANDARD To Be Set",
                     CancelReasons = await CancelReasonsService.GetPassengerCancelReasons(!arm.isLaterBooking, arm.isLaterBooking, false),
                     Facilities = await FacilitiesService.GetPassengerFacilitiesDetailByIds(trip.facilities)
                 };
@@ -904,7 +904,7 @@ namespace API.Controllers
 
                 //Update earned points in case of normal booking only.
                 var trip = context.spGetUpdateTripOnCaptainArrived(DateTime.UtcNow,
-                    ((double.Parse(model.distanceToPickUpLocation) <= estDist ? double.Parse(model.distanceToPickUpLocation) : estDist) / 100),
+                    (double.Parse(model.distanceToPickUpLocation) <= estDist ? double.Parse(model.distanceToPickUpLocation) : estDist) / 100,
                     model.tripID,
                     model.driverID,
                     model.isWeb).FirstOrDefault();
@@ -1024,27 +1024,7 @@ namespace API.Controllers
                     FareManager fareManag = new FareManager();
                     FareManager dropOffAreafareManag = new FareManager();
 
-                    dic = new Dictionary<dynamic, dynamic>() {
-                                { "discountType", "normal"},
-                                { "discountAmount", "0.00" }
-                            };
-
-
-                    dic.Add("pickUpFareManagerID", "0.00");
-                    dic.Add("dropOffFareMangerID", "0.00");
-                    dic.Add("inBoundDistanceInKM", "0.00");
-                    dic.Add("inBoundDistanceFare", "0.00");
-                    dic.Add("inBoundTimeInMinutes", "0.00");
-                    dic.Add("inBoundTimeFare", "0.00");
-                    dic.Add("outBoundDistanceInKM", "0.00");
-                    dic.Add("outBoundDistanceFare", "0.00");
-                    dic.Add("outBoundTimeInMinutes", "0.00");
-                    dic.Add("outBoundTimeFare", "0.00");
-                    dic.Add("inBoundSurchargeAmount", "0.00");
-                    dic.Add("outBoundSurchargeAmount", "0.00");
-                    dic.Add("inBoundBaseFare", "0.00");
-                    dic.Add("outBoundBaseFare", "0.00");
-                    dic.Add("polyLine", "");
+                    DriverEndTripResponse result = new DriverEndTripResponse();
 
 
                     //get waiting time
@@ -1067,7 +1047,7 @@ namespace API.Controllers
                     trip.WaitingMinutes = waitingDur.TotalMinutes;
                     //trip.DistanceTraveled = double.Parse(model.distance);
 
-                    CheckWalletBalance(trip.UserID.ToString(), context, ref dic);
+                    CheckWalletBalance(trip.UserID.ToString(), context, ref result);
 
                     //string promotionId = await FareManagerService.IsSpecialPromotionApplicable(trip.PickupLocationLatitude, trip.PickupLocationLongitude, model.lat.ToString(), model.lon.ToString(), ApplicationID, context, ref dic);
                     string promotionId = string.Empty;
@@ -1077,7 +1057,7 @@ namespace API.Controllers
                     {
                         //Special  promotion ID
                         trip.PromoCodeID = Guid.Parse(promotionId);
-                        dic.Add("estimatedPrice", dic["discountAmount"]);
+                        result.estimatedPrice = "0.00"; // dic["discountAmount"];
 
                         //trip.BaseFare = 0;
                         //trip.BookingFare = 0;
@@ -1091,7 +1071,8 @@ namespace API.Controllers
                          * api/user/creditCardPayment
                          */
 
-                        trip.PerKMFare = decimal.Parse(dic["discountAmount"].ToString());
+                        //trip.PerKMFare = decimal.Parse(dic["discountAmount"].ToString());
+                        trip.PerKMFare = decimal.Parse(result.discountAmount);
                         //No need to use totalFare, function is called just to calculate other required fields i.e. PolyLine, Distance, Time etc
                         totalFare = 0;
                         //totalFare = await FareManagerService.CalculateEstimatedFare((int)trip.NoOfPerson, false, true, "", bool.Parse(model.isAtDropOffLocation), true, trip.TripID, ApplicationID, trip.PickupLocationLatitude, trip.PickupLocationLongitude, model.lat.ToString(), model.lon.ToString(), ref fareManag, ref dropOffAreafareManag, ref dic);//(Convert.ToDecimal(model.distance) / 1000).ToString(), waitingDur
@@ -1101,9 +1082,10 @@ namespace API.Controllers
                         totalFare = 0;
                         //totalFare = await FareManagerService.CalculateEstimatedFare((int)trip.NoOfPerson, false, true, "", bool.Parse(model.isAtDropOffLocation), (bool)trip.isFareChangePermissionGranted, trip.TripID, ApplicationID, trip.PickupLocationLatitude, trip.PickupLocationLongitude, model.lat.ToString(), model.lon.ToString(), ref fareManag, ref dropOffAreafareManag, ref dic);//(Convert.ToDecimal(model.distance) / 1000).ToString(), waitingDur
 
-                        dic.Add("estimatedPrice", string.Format("{0:0.00}", totalFare));
+                        //dic.Add("estimatedPrice", string.Format("{0:0.00}", totalFare));
+                        result.estimatedPrice = string.Format("{0:0.00}", totalFare);
 
-                        promotionId = FareManagerService.ApplyPromoCode(ApplicationID, trip.UserID.ToString(), context, ref dic);
+                        //promotionId = FareManagerService.ApplyPromoCode(ApplicationID, trip.UserID.ToString(), ref result);
 
                         if (!string.IsNullOrEmpty(promotionId))
                         {
@@ -1115,31 +1097,31 @@ namespace API.Controllers
                         //trip.WaitingFare = fareManag.WaitingFare * Convert.ToDecimal(waitingDur.TotalMinutes);
                         //trip.PerKMFare = totalFare - fareManag.BookingFare - (fareManag.WaitingFare * Convert.ToDecimal(waitingDur.TotalMinutes));
 
-                        trip.BaseFare = decimal.Parse(dic["inBoundBaseFare"].ToString()) + decimal.Parse(dic["outBoundBaseFare"].ToString());
-                        trip.BookingFare = decimal.Parse(dic["inBoundSurchargeAmount"].ToString()) + decimal.Parse(dic["outBoundSurchargeAmount"].ToString());
-                        trip.WaitingFare = decimal.Parse(dic["inBoundTimeFare"].ToString()) + decimal.Parse(dic["outBoundTimeFare"].ToString());
-                        trip.PerKMFare = decimal.Parse(dic["inBoundDistanceFare"].ToString()) + decimal.Parse(dic["outBoundDistanceFare"].ToString());
+                        trip.BaseFare = decimal.Parse(result.inBoundBaseFare) + decimal.Parse(result.outBoundBaseFare);
+                        trip.BookingFare = decimal.Parse(result.inBoundSurchargeAmount) + decimal.Parse(result.outBoundSurchargeAmount);
+                        trip.WaitingFare = decimal.Parse(result.inBoundTimeFare) + decimal.Parse(result.outBoundTimeFare);
+                        trip.PerKMFare = decimal.Parse(result.inBoundDistanceFare) + decimal.Parse(result.outBoundDistanceFare);
                     }
 
                     trip.FareManagerID = string.IsNullOrEmpty(trip.FareManagerID) ? fareManag.FareManagerID.ToString() : trip.FareManagerID;
                     trip.DropOffFareMangerID = string.IsNullOrEmpty(trip.DropOffFareMangerID.ToString()) ? dropOffAreafareManag.FareManagerID : trip.DropOffFareMangerID;
 
-                    trip.InBoundDistanceInMeters = (int)(double.Parse(dic["inBoundDistanceInKM"].ToString()) * 1000);
-                    trip.InBoundTimeInSeconds = (int)(double.Parse(dic["inBoundTimeInMinutes"].ToString()) * 60);
-                    trip.OutBoundDistanceInMeters = (int)(double.Parse(dic["outBoundDistanceInKM"].ToString()) * 1000);
-                    trip.OutBoundTimeInSeconds = (int)(double.Parse(dic["outBoundTimeInMinutes"].ToString()) * 60);
+                    trip.InBoundDistanceInMeters = (int)(double.Parse(result.inBoundDistanceInKM) * 1000);
+                    trip.InBoundTimeInSeconds = (int)(double.Parse(result.inBoundTimeInMinutes) * 60);
+                    trip.OutBoundDistanceInMeters = (int)(double.Parse(result.outBoundDistanceInKM) * 1000);
+                    trip.OutBoundTimeInSeconds = (int)(double.Parse(result.outBoundTimeInMinutes) * 60);
 
-                    trip.InBoundBaseFare = decimal.Parse(dic["inBoundBaseFare"].ToString());
-                    trip.InBoundDistanceFare = decimal.Parse(dic["inBoundDistanceFare"].ToString());
-                    trip.InBoundTimeFare = decimal.Parse(dic["inBoundTimeFare"].ToString());
-                    trip.InBoundSurchargeAmount = decimal.Parse(dic["inBoundSurchargeAmount"].ToString());
-                    trip.OutBoundBaseFare = decimal.Parse(dic["outBoundBaseFare"].ToString());
-                    trip.OutBoundDistanceFare = decimal.Parse(dic["outBoundDistanceFare"].ToString());
-                    trip.OutBoundTimeFare = decimal.Parse(dic["outBoundTimeFare"].ToString());
-                    trip.OutBoundSurchargeAmount = decimal.Parse(dic["outBoundSurchargeAmount"].ToString());
+                    trip.InBoundBaseFare = decimal.Parse(result.inBoundBaseFare);
+                    trip.InBoundDistanceFare = decimal.Parse(result.inBoundDistanceFare);
+                    trip.InBoundTimeFare = decimal.Parse(result.inBoundTimeFare);
+                    trip.InBoundSurchargeAmount = decimal.Parse(result.inBoundSurchargeAmount);
+                    trip.OutBoundBaseFare = decimal.Parse(result.outBoundBaseFare);
+                    trip.OutBoundDistanceFare = decimal.Parse(result.outBoundDistanceFare);
+                    trip.OutBoundTimeFare = decimal.Parse(result.outBoundTimeFare);
+                    trip.OutBoundSurchargeAmount = decimal.Parse(result.outBoundSurchargeAmount);
 
                     trip.DistanceTraveled = trip.InBoundDistanceInMeters + trip.OutBoundDistanceInMeters;
-                    trip.PolyLine = dic["polyLine"].ToString();
+                    trip.PolyLine = result.polyLine;
                     model.distance = trip.DistanceTraveled.ToString();
 
                     //Update earned points, priority hour and booking type check applied
@@ -1190,31 +1172,31 @@ namespace API.Controllers
 
                         //baseCharges = string.Format("{0:0.00}", fareManag.BaseFare != null ? fareManag.BaseFare : 0),
 
-                        travelCharges = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.PerKMFare.ToString()),
-                        waitingCharges = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.WaitingFare.ToString()),
+                        travelCharges = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.PerKMFare.ToString()),
+                        waitingCharges = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.WaitingFare.ToString()),
                         bookingCharges = string.Format("{0:0.00}", "0.00"),
                         baseCharges = string.Format("{0:0.00}", trip.BaseFare.ToString()),
-                        estimatedPrice = string.Format("{0:0.00}", dic["estimatedPrice"]),
+                        estimatedPrice = string.Format("{0:0.00}", result.estimatedPrice),
                         paymentMethod = trip.TripPaymentMode,
                         distance = string.Format("{0:0.00}", trip.DistanceTraveled.ToString()),
                         duration = totalRideDuration.TotalMinutes,
                         isPaymentRequested = false,
                         isFavUser = userFav == null ? false : (userFav.IsFavByCaptain == null ? false : (bool)userFav.IsFavByCaptain),
-                        discountAmount = dic["discountAmount"],
-                        discountType = dic["discountType"],
-                        availableWalletBalance = dic["availableWalletBalance"],
-                        isWalletPreferred = dic["isWalletPreferred"].ToString(),
+                        discountAmount = result.discountAmount,
+                        discountType = result.discountType,
+                        availableWalletBalance = result.availableWalletBalance,
+                        isWalletPreferred = result.isWalletPreferred.ToString(),
                         isFareChangePermissionGranted = (bool)trip.isFareChangePermissionGranted,
-                        InBoundDistanceInMeters = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundDistanceInMeters.ToString()),
-                        InBoundTimeInSeconds = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundTimeInSeconds.ToString()),
-                        OutBoundDistanceInMeters = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundDistanceInMeters.ToString()),
-                        OutBoundTimeInSeconds = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundTimeInSeconds.ToString()),
-                        InBoundDistanceFare = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundDistanceFare.ToString()),
-                        InBoundTimeFare = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundTimeFare.ToString()),
-                        InBoundSurchargeAmount = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.InBoundSurchargeAmount.ToString()),
-                        OutBoundDistanceFare = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundDistanceFare.ToString()),
-                        OutBoundTimeFare = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundTimeFare.ToString()),
-                        OutBoundSurchargeAmount = string.Format("{0:0.00}", dic["discountType"].ToString().Equals("special") ? "0.00" : trip.OutBoundSurchargeAmount.ToString()),
+                        InBoundDistanceInMeters = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.InBoundDistanceInMeters.ToString()),
+                        InBoundTimeInSeconds = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.InBoundTimeInSeconds.ToString()),
+                        OutBoundDistanceInMeters = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.OutBoundDistanceInMeters.ToString()),
+                        OutBoundTimeInSeconds = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.OutBoundTimeInSeconds.ToString()),
+                        InBoundDistanceFare = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.InBoundDistanceFare.ToString()),
+                        InBoundTimeFare = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.InBoundTimeFare.ToString()),
+                        InBoundSurchargeAmount = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.InBoundSurchargeAmount.ToString()),
+                        OutBoundDistanceFare = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.OutBoundDistanceFare.ToString()),
+                        OutBoundTimeFare = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.OutBoundTimeFare.ToString()),
+                        OutBoundSurchargeAmount = string.Format("{0:0.00}", result.discountType.Equals("special") ? "0.00" : trip.OutBoundSurchargeAmount.ToString()),
                         //bookingMode = trip.BookingModeID == (int)TripBookingMod.Karhoo ? Enum.GetName(typeof(TripBookingMod), (int)TripBookingMod.Karhoo).ToLower() : ""
                         bookingMode = Enum.GetName(typeof(BookingModes), (int)trip.BookingModeID).ToLower()
                     };
@@ -1246,34 +1228,34 @@ namespace API.Controllers
 
                     if (pas != null)
                     {
-                        dic.Add("passengerName", pas.FirstName + " " + pas.LastName);
+                        result.passengerName = pas.FirstName + " " + pas.LastName;
                         edr.isUserProfileUpdated = !string.IsNullOrEmpty(pas.Email);
                     }
                     else
                     {
-                        dic.Add("passengerName", "");
+                        result.passengerName = "";
                         edr.isUserProfileUpdated = false;
                     }
 
-                    dic.Add("travelCharges", edr.travelCharges);
-                    dic.Add("waitingCharges", edr.waitingCharges);
-                    dic.Add("bookingCharges", edr.bookingCharges);
-                    dic.Add("baseCharges", edr.baseCharges);
+                    result.travelCharges = edr.travelCharges;
+                    result.waitingCharges = edr.waitingCharges;
+                    result.bookingCharges = edr.bookingCharges;
+                    result.baseCharges = edr.baseCharges;
 
-                    dic.Add("paymentMethod", edr.paymentMethod);
-                    dic.Add("distance", edr.distance);
+                    result.paymentMethod = edr.paymentMethod;
+                    result.distance = edr.distance;
 
-                    dic.Add("duration", edr.duration);
-                    dic.Add("isFavUser", edr.isFavUser);
+                    result.duration = edr.duration;
+                    result.isFavUser = edr.isFavUser;
 
-                    dic.Add("isVoucherApplied", edr.isVoucherApplied);
-                    dic.Add("voucherAmount", edr.voucherAmount);
-                    dic.Add("voucherCode", edr.voucherCode);
+                    result.isVoucherApplied = edr.isVoucherApplied;
+                    result.voucherAmount = edr.voucherAmount;
+                    result.voucherCode = edr.voucherCode;
 
-                    dic.Add("isUserProfileUpdated", edr.isUserProfileUpdated);
-                    dic.Add("isFareChangePermissionGranted", edr.isFareChangePermissionGranted);
-                    dic.Add("bookingMode", edr.bookingMode);
-                    dic.Add("isWeb", model.isWeb);
+                    result.isUserProfileUpdated = edr.isUserProfileUpdated;
+                    result.isFareChangePermissionGranted = edr.isFareChangePermissionGranted;
+                    result.bookingMode = edr.bookingMode;
+                    result.isWeb = model.isWeb;
 
                     //driver data
                     await FirebaseService.UpdateTripDriverDetailsOnEnd(edr, model.tripID, model.driverID);
@@ -1327,7 +1309,7 @@ namespace API.Controllers
                     {
 
                         //Quik fix to avoid application side changes.
-                        dic["bookingMode"] = "karhoo";
+                        result.bookingMode = "karhoo";
 
                         trip.isOverRided = false;
                         trip.TripStatusID = (int)TripStatuses.Completed;
@@ -1354,7 +1336,7 @@ namespace API.Controllers
 
                     response.error = false;
                     response.message = ResponseKeys.msgSuccess;
-                    response.data = dic;
+                    response.data = result;
 
                     return Request.CreateResponse(HttpStatusCode.OK, response);
                 }
@@ -2349,7 +2331,7 @@ namespace API.Controllers
         {
             using (CangooEntities context = new CangooEntities())
             {
-                var feed = context.NewsFeeds.Where(nf => nf.ApplicationUserTypeID == (int)SystemRoles.Captain
+                var feed = context.Notifications.Where(nf => nf.ApplicationUserTypeID == (int)SystemRoles.Captain
                 && nf.ExpiryDate > DateTime.UtcNow
                 && nf.ApplicationID.ToString().ToLower().Equals(ApplicationID.ToLower())).ToList().OrderByDescending(nf => nf.CreationDate);
                 if (feed != null)
@@ -2957,23 +2939,23 @@ namespace API.Controllers
             }
         }
 
-        private void CheckWalletBalance(string userID, CangooEntities context, ref Dictionary<dynamic, dynamic> dic)
+        private void CheckWalletBalance(string userID, CangooEntities context, ref DriverEndTripResponse dic)
         {
             var user = context.UserProfiles.Where(u => u.UserID.ToString().Equals(userID)).FirstOrDefault();
             //When ride was booked by some hotel / company 
             if (user != null)
             {
-                dic.Add("isWalletPreferred", user.isWalletPreferred);
+                dic.isWalletPreferred = user.isWalletPreferred;
 
                 if (user.WalletBalance != null)
-                    dic.Add("availableWalletBalance", string.Format("{0:0.00}", (decimal)user.WalletBalance));
+                    dic.availableWalletBalance = string.Format("{0:0.00}", (decimal)user.WalletBalance);
                 else
-                    dic.Add("availableWalletBalance", string.Format("{0:0.00}", 0));
+                    dic.availableWalletBalance = string.Format("{0:0.00}", 0);
             }
             else
             {
-                dic.Add("isWalletPreferred", false);
-                dic.Add("availableWalletBalance", string.Format("{0:0.00}", 0));
+                dic.isWalletPreferred = false;
+                dic.availableWalletBalance = string.Format("{0:0.00}", 0);
             }
         }
 

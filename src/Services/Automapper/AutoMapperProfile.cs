@@ -29,10 +29,8 @@ namespace Services.Automapper
         {
             CreateMap<CancelReason, PassengerCancelReasonsDTO>();
             CreateMap<CancelReason, DriverCancelReasonsDTO>();
-
-            CreateMap<Facility, PassengerFacilitiyDTO>();
-            CreateMap<Facility, DriverFacilitiyDTO>();
-
+            CreateMap<Facility, PassengerFacilityDTO>();
+            CreateMap<Facility, DriverFacilityDTO>();
             CreateMap<AspNetUser, PassengerIdentityDTO>();
             CreateMap<UserProfile, PassengerProfileDTO>();
             CreateMap<PassengerPlace, AddPassengerPlaceRequest>().ReverseMap();
@@ -40,6 +38,69 @@ namespace Services.Automapper
             CreateMap<spGetOnlineDriver_Result, DatabaseOlineDriversDTO>().ReverseMap();
             CreateMap<TripRequestLogDTO, TripRequestLog>().ReverseMap();
             CreateMap<DispatchedRideLogDTO, DispatchedRidesLog>();
+
+            //Following 3 mappings are quick fix for ride FirebaseService.SendRideRequestToOnlineDrivers
+            CreateMap<DriverBookingRequestNotification, FBPassengerBookingRequest>()
+                .ForMember(dest => dest.BookingMode, opt => opt.MapFrom(src => src.bookingMode))
+                .ForMember(dest => dest.BookingModeId, opt => opt.MapFrom(src => src.BookingModeId))
+                .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.description))
+                .ForMember(dest => dest.DiscountAmount, opt => opt.MapFrom(src => src.discountAmount))
+                .ForMember(dest => dest.DiscountType, opt => opt.MapFrom(src => src.discountType))
+                .ForMember(dest => dest.DropOffLatitude, opt => opt.MapFrom(src => src.dropOfflatitude))
+                .ForMember(dest => dest.DropOffLongitude, opt => opt.MapFrom(src => src.dropOfflongitude))
+                .ForMember(dest => dest.DropOffLocation, opt => opt.MapFrom(src => src.dropOffLocation))
+                .ForMember(dest => dest.IsDispatchedRide, opt => opt.MapFrom(src => src.isDispatchedRide.ToString()))
+                .ForMember(dest => dest.IsFavorite, opt => opt.MapFrom(src => src.fav.ToString()))
+                .ForMember(dest => dest.IsLaterBooking, opt => opt.MapFrom(src => src.isLaterBooking.ToString()))
+                .ForMember(dest => dest.IsReRouteRequest, opt => opt.MapFrom(src => src.isReRouteRequest.ToString()))
+                .ForMember(dest => dest.IsWeb, opt => opt.MapFrom(src => src.isWeb.ToString()))
+                .ForMember(dest => dest.PickUpDateTime, opt => opt.MapFrom(src => src.pickUpDateTime))
+                .ForMember(dest => dest.MidwayStop1Latitude, opt => opt.MapFrom(src => src.MidwayStop1Latitude))
+                .ForMember(dest => dest.MidwayStop1Longitude, opt => opt.MapFrom(src => src.MidwayStop1Longitude))
+                .ForMember(dest => dest.MidwayStop1Location, opt => opt.MapFrom(src => src.MidwayStop1Location))
+                .ForMember(dest => dest.PaymentMethod, opt => opt.MapFrom(src => src.paymentMethod))
+                .ForMember(dest => dest.PaymentModeId, opt => opt.MapFrom(src => src.PaymentModeId))
+                .ForMember(dest => dest.PickUpLatitude, opt => opt.MapFrom(src => src.lat))
+                .ForMember(dest => dest.PickUpLongitude, opt => opt.MapFrom(src => src.lan))
+                .ForMember(dest => dest.PickUpLocation, opt => opt.MapFrom(src => src.pickUpLocation))
+                .ForMember(dest => dest.PreviousCaptainId, opt => opt.MapFrom(src => src.previousCaptainId))
+                .ForMember(dest => dest.RequestTimeOut, opt => opt.MapFrom(src => src.requestTimeOut.ToString()))
+                .ForMember(dest => dest.RequiredFacilities, opt => opt.MapFrom(src => src.requiredFacilities))
+                .ForMember(dest => dest.ReRouteRequestTime, opt => opt.MapFrom(src => src.reRouteRequestTime))
+                .ForMember(dest => dest.TripId, opt => opt.MapFrom(src => src.tripID))
+                .ForMember(dest => dest.VoucherAmount, opt => opt.MapFrom(src => src.voucherAmount))
+                .ForMember(dest => dest.VoucherCode, opt => opt.MapFrom(src => src.voucherCode))
+                .ForMember(dest => dest.TotalFare, opt => opt.MapFrom(src => src.estimatedPrice))
+                .ForMember(dest => dest.Facilities, opt => opt.MapFrom(src => src.facilities))
+                .ForMember(dest => dest.CancelReasons, opt => opt.MapFrom(src => src.lstCancel));
+
+            CreateMap<DriverFacilityDTO, PassengerFacilityDTO>()
+                .ForMember(dest => dest.FacilityID, opt => opt.MapFrom(src => src.facilityID))
+                .ForMember(dest => dest.FacilityIcon, opt => opt.MapFrom(src => src.facilityIcon))
+                .ForMember(dest => dest.FacilityName, opt => opt.MapFrom(src => src.facilityName)).ReverseMap();
+
+            CreateMap<DriverCancelReasonsDTO, PassengerCancelReasonsDTO>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.id))
+                .ForMember(dest => dest.Reason, opt => opt.MapFrom(src => src.reason)).ReverseMap();
+
+            //.ForMember(dest => dest.DeviceToken, opt => opt.MapFrom(src => src.deviceToken))
+            //.ForMember(dest => dest.DispatcherId, opt => opt.MapFrom(src => src.dispatcherID))
+
+            //.ForMember(dest => dest.EstimatedPrice, opt => opt.MapFrom(src => src.estimatedPrice))
+
+            //.ForMember(dest => dest.IsLaterBookingStarted, opt => opt.MapFrom(src => src.isLaterBookingStarted.ToString()))
+            //.ForMember(dest => dest.DriverContactNumber, opt => opt.MapFrom(src => src.))
+            //.ForMember(dest => dest.DriverId, opt => opt.MapFrom(src => src.id))
+            //.ForMember(dest => dest.DriverName, opt => opt.MapFrom(src => src.))
+            //.ForMember(dest => dest.DriverPicture, opt => opt.MapFrom(src => src.))
+            //.ForMember(dest => dest.DriverRating, opt => opt.MapFrom(src => src.))
+            //.ForMember(dest => dest.SeatingCapacity, opt => opt.MapFrom(src => src.numberOfPerson.ToString()))
+            //.ForMember(dest => dest.Model, opt => opt.MapFrom(src => src.))
+            //.ForMember(dest => dest.Make, opt => opt.MapFrom(src => src.))
+            //.ForMember(dest => dest.VehicleCategory, opt => opt.MapFrom(src => src.))
+            //.ForMember(dest => dest.VehicleNumber, opt => opt.MapFrom(src => src.))
+            //.ForMember(dest => dest.VehicleRating, opt => opt.MapFrom(src => src.))
+
             //CreateMap<Trip, TripDTO>().ReverseMap();
 
 

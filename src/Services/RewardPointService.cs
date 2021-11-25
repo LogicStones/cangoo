@@ -35,7 +35,7 @@ namespace Services
             }
         }
 
-        public static async Task<PassengerReedemRewardResponse> ReedemPassengerPoints(PassengerReedemRewardRequsest model)
+        public static async Task<PassengerReedemRewardResponse> ReedemPassengerPoints(ReedemPassengerCangoosRequsest model)
         {
             using (CangooEntities dbContext = new CangooEntities())
             {

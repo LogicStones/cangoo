@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DTOs.API
 {
-    public class ApplyInviteCode
+    public class ApplyInviteCodeRequest
     {
         [Required]
         public string PassengerId { get; set; }

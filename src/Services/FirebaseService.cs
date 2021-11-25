@@ -2,6 +2,7 @@
 using DTOs.API;
 using Integrations;
 using Newtonsoft.Json;
+using Services.Automapper;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -143,35 +144,43 @@ namespace Services
 
         public static async Task<bool> SendRideRequestToOnlineDrivers(string tripId, string passengerId, string vehicleCategoryId, int reqSeatingCapacity, DriverBookingRequestNotification bookingRN, dynamic hotelSetting)
         {
-            //Passenger data
-            if (bookingRN.isReRouteRequest)
+            try
             {
-                if (!bookingRN.isLaterBooking)
+                //Passenger data
+                if (bookingRN.isReRouteRequest)
                 {
-                    bookingRN.reRouteRequestTime = DateTime.UtcNow.ToString(Formats.DateFormat);
-                    await WriteTripPassengerDetails(bookingRN, passengerId);
-                    await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.ReRouting));
+                    if (!bookingRN.isLaterBooking)
+                    {
+                        bookingRN.reRouteRequestTime = DateTime.UtcNow.ToString(Formats.DateFormat);
 
-                    // free captain > update user > send request 
-                    await SendReRouteNotfication(bookingRN.BookingModeId, bookingRN.reRouteRequestTime, bookingRN.requestTimeOut.ToString(), bookingRN.previousCaptainId.ToString(), tripId, bookingRN.deviceToken); //passengerId, 
+                        await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FBPassengerBookingRequest>(bookingRN), passengerId);
+                        await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.ReRouting));
+
+                        // free captain > update user > send request 
+                        await SendReRouteNotfication(bookingRN.BookingModeId, bookingRN.reRouteRequestTime, bookingRN.requestTimeOut.ToString(), bookingRN.previousCaptainId.ToString(), tripId, bookingRN.deviceToken); //passengerId, 
+                    }
+                    else
+                    {
+                        await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FBPassengerBookingRequest>(bookingRN), passengerId);
+                        await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.RequestSent));
+
+                        //UPDATE: Captain can canel inprocess later booking, so user / captain should be set free in every case.
+                        // free captain > update user > send request 
+                        await SendInProcessLaterBookingReRouteNotfication(bookingRN.BookingModeId, bookingRN.previousCaptainId.ToString(), tripId, passengerId, bookingRN.deviceToken);
+                    }
                 }
                 else
                 {
-                    await WriteTripPassengerDetails(bookingRN, passengerId);
+                    await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FBPassengerBookingRequest>(bookingRN), passengerId);
                     await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.RequestSent));
 
-                    //UPDATE: Captain can canel inprocess later booking, so user / captain should be set free in every case.
-                    // free captain > update user > send request 
-                    await SendInProcessLaterBookingReRouteNotfication(bookingRN.BookingModeId, bookingRN.previousCaptainId.ToString(), tripId, passengerId, bookingRN.deviceToken);
+                    //NEW IMPLEMENTATION
+                    await UpdateDiscountTypeAndAmount(tripId, bookingRN.discountAmount, bookingRN.discountType);
                 }
             }
-            else
+            catch (Exception ex)
             {
-                await WriteTripPassengerDetails(bookingRN, passengerId);
-                await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.RequestSent));
 
-                //NEW IMPLEMENTATION
-                await UpdateDiscountTypeAndAmount(tripId, bookingRN.discountAmount, bookingRN.discountType);
             }
 
             #region MakePreferredAndNormalDriversList
@@ -184,72 +193,70 @@ namespace Services
             string captainIDs = "";
             string preferredCaptainIDs = "";
 
-            var rawOnlineDrivers = await GetOnlineDrivers();
+            var onlineDrivers = await GetOnlineDrivers();
 
-            foreach (var od in rawOnlineDrivers)
+            foreach (var od in onlineDrivers)
             {
-                FirebaseDriver driver = JsonConvert.DeserializeObject<FirebaseDriver>(JsonConvert.SerializeObject(od.Value));
+                FirebaseDriver driver = od.Value;// JsonConvert.DeserializeObject<FirebaseDriver>(JsonConvert.SerializeObject(od.Value));
                 if (string.IsNullOrEmpty(driver.driverID) || driver.location == null) //Dirty data
                 {
                     continue;
                 }
 
-                if(!od.Value.category.Contains(vehicleCategoryId))
-                { 
+                if (!driver.categoryID.Contains(vehicleCategoryId))
+                {
                     continue;
                 }
-                else
+
+                //If user have requested some facilities then request should be sent to only eligible captains
+                if (!string.IsNullOrEmpty(bookingRN.requiredFacilities))
                 {
-                    //If user have requested some facilities then request should be sent to only eligible captains
-                    if (!string.IsNullOrEmpty(bookingRN.requiredFacilities))
+                    var reqFac = bookingRN.requiredFacilities.ToLower().Split(',');
+                    var vehFac = driver.vehicleFacilities.ToLower().Split(',');
+                    var capFac = driver.driverFacilities.ToLower().Split(',');
+
+                    var vehCheck = reqFac.Intersect(vehFac);
+                    var capCheck = reqFac.Intersect(capFac);
+
+                    //If both vehicle and captain don't have required facilities
+
+                    if (!(reqFac.SequenceEqual(vehCheck) && reqFac.SequenceEqual(capCheck)))
+                        continue;
+                }
+
+                if (driver.isPriorityHoursActive)
+                {
+                    preferredCaptainIDs = string.IsNullOrEmpty(preferredCaptainIDs) ? driver.driverID : preferredCaptainIDs + "," + driver.driverID;
+
+                    //If its later booking then send request to captains even if he is already busy
+                    if (bookingRN.isLaterBooking)
                     {
-                        var reqFac = bookingRN.requiredFacilities.ToLower().Split(',');
-                        var vehFac = driver.vehicleFacilities.ToLower().Split(',');
-                        var capFac = driver.driverFacilities.ToLower().Split(',');
-
-                        var vehCheck = reqFac.Intersect(vehFac);
-                        var capCheck = reqFac.Intersect(capFac);
-
-                        //If both vehicle and captain don't have required facilities
-
-                        if (!(reqFac.SequenceEqual(vehCheck) && reqFac.SequenceEqual(capCheck)))
-                            continue;
+                        lstPreferredCaptains.Add(driver);
                     }
-
-                    if (driver.isPriorityHoursActive)
+                    //In case of normal booking send request to free captains only
+                    else
                     {
-                        preferredCaptainIDs = string.IsNullOrEmpty(preferredCaptainIDs) ? driver.driverID : preferredCaptainIDs + "," + driver.driverID;
-
-                        //If its later booking then send request to captains even if he is already busy
-                        if (bookingRN.isLaterBooking)
+                        if (driver.isBusy.ToLower().Equals("false"))
                         {
                             lstPreferredCaptains.Add(driver);
                         }
-                        //In case of normal booking send request to free captains only
-                        else
-                        {
-                            if (driver.isBusy.ToLower().Equals("false"))
-                            {
-                                lstPreferredCaptains.Add(driver);
-                            }
-                        }
                     }
+                }
+                else
+                {
+                    captainIDs = string.IsNullOrEmpty(captainIDs) ? driver.driverID : captainIDs + "," + driver.driverID;
+
+                    //If it's later booking then send request to captains even if he is already busy
+                    if (bookingRN.isLaterBooking)
+                    {
+                        lstNormalCaptains.Add(driver);
+                    }
+                    //In case of normal booking send request to free captains only
                     else
                     {
-                        captainIDs = string.IsNullOrEmpty(captainIDs) ? driver.driverID : captainIDs + "," + driver.driverID;
-
-                        //If it's later booking then send request to captains even if he is already busy
-                        if (bookingRN.isLaterBooking)
+                        if (driver.isBusy.ToLower().Equals("false"))
                         {
                             lstNormalCaptains.Add(driver);
-                        }
-                        //In case of normal booking send request to free captains only
-                        else
-                        {
-                            if (driver.isBusy.ToLower().Equals("false"))
-                            {
-                                lstNormalCaptains.Add(driver);
-                            }
                         }
                     }
                 }
@@ -283,11 +290,13 @@ namespace Services
 
             string applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
             var applicationSettings = await ApplicationSettingService.GetApplicationSettings(applicationId);
-            var distanceInterval = applicationSettings.RequestRadiusInterval;
-            int? minDistanceRange = 0;
-            var maxDistanceRange = distanceInterval;
+
+            var distanceInterval = (int)applicationSettings.RequestRadiusInterval;
             var requestSearchRange = bookingRN.isLaterBooking ? (int)(applicationSettings.LaterBookingRequestSearchRange * 1000) : (int)(applicationSettings.RequestSearchRange * 1000);
             var captainMinRating = applicationSettings.CaptainMinRating;
+
+            int minDistanceRange = 0;
+            var maxDistanceRange = distanceInterval;
             var pickPosition = new GeoCoordinate(Convert.ToDouble(bookingRN.lat), Convert.ToDouble(bookingRN.lan));
 
             var lstPreferredCaptainsDetail = new List<DatabaseOlineDriversDTO>();
@@ -305,100 +314,42 @@ namespace Services
 
                 var lstRequestLog = new List<TripRequestLogDTO>();
 
-                foreach (var dr in lstPreferredCaptains)
-                {
-                    var capDetail = lstPreferredCaptainsDetail.Where(c => c.CaptainID.ToString().Equals(dr.driverID)).FirstOrDefault();
-                    if (capDetail != null)
-                    {
-                        if (dr.location == null)
-                            continue;
-
-                        var driverPosition = new GeoCoordinate(dr.location.l[0], dr.location.l[1]);
-                        var distance = driverPosition.GetDistanceTo(pickPosition);  //distance in meters
-
-                        if (distance <= requestSearchRange)
-                        {
-                            if (capDetail.Rating >= captainMinRating && distance >= minDistanceRange && distance <= maxDistanceRange && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-                            {
-                                lstFilteredPreferredCaptains.Add(capDetail.DeviceToken, bookingRN.isLaterBooking ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-
-                                lstRequestLog.Add(new TripRequestLogDTO
-                                {
-                                    CaptainID = Guid.Parse(dr.driverID),
-                                    RequestLogID = Guid.NewGuid(),
-                                    CaptainLocationLatitude = dr.location.l[0].ToString(),
-                                    CaptainLocationLongitude = dr.location.l[1].ToString(),
-                                    DistanceToPickUpLocation = distance,
-                                    isReRouteRequest = bookingRN.isReRouteRequest,
-                                    TimeStamp = DateTime.UtcNow,
-                                    TripID = Guid.Parse(tripId)
-                                });
-                            }
-                        }
-                    }
-                }
+                FilterDriverForRideRequest(lstPreferredCaptains, lstPreferredCaptainsDetail, lstFilteredPreferredCaptains, lstRequestLog, tripId, reqSeatingCapacity, bookingRN, requestSearchRange, captainMinRating, minDistanceRange, maxDistanceRange, pickPosition);
 
                 //if request is already accpeted then no need to save current drivers list in log, so break loop 
-                if (await IsRequestAccepted(tripId))
+                if (lstFilteredPreferredCaptains.Any())
                 {
-                    break;
-                }
-                else if (lstFilteredPreferredCaptains.Any())
-                {
-                    await PushyService.BroadCastNotification(lstFilteredPreferredCaptains, bookingRN);
-                    await TripsManagerService.LogBookRequestRecipientDrivers(lstRequestLog);
-                    Thread.Sleep(Convert.ToInt32(applicationSettings.RequestWaitingTime * 1000));
+                    if (await IsRequestAccepted(tripId))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        await SendRequestToFilteredDrivers(bookingRN, applicationSettings, lstFilteredPreferredCaptains, lstRequestLog);
+                    }
                 }
 
                 //TBD: Loop Optimization - Remove currently selected drivers from lstPreferredOnlineDriver
+                //ExcludeLoggedDriversForNextIteration(lstPreferredCaptains, lstPreferredCaptainsDetail, lstFilteredPreferredCaptains);
 
                 lstRequestLog = new List<TripRequestLogDTO>();
 
-                foreach (var dr in lstNormalCaptains)
-                {
-                    var capDetail = lstNormalCaptainsDetail.Where(c => c.CaptainID.ToString().Equals(dr.driverID)).FirstOrDefault();
-                    if (capDetail != null)
-                    {
-                        if (dr.location == null)
-                            continue;
-
-                        var driverPosition = new GeoCoordinate(dr.location.l[0], dr.location.l[1]);
-                        var distance = driverPosition.GetDistanceTo(pickPosition);  //distance in meters
-
-                        if (distance <= requestSearchRange)
-                        {
-                            if (capDetail.Rating >= captainMinRating && distance >= minDistanceRange && distance <= maxDistanceRange && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-                            {
-                                lstFilteredNormalCaptains.Add(capDetail.DeviceToken, bookingRN.isLaterBooking ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-
-                                lstRequestLog.Add(new TripRequestLogDTO
-                                {
-                                    CaptainID = Guid.Parse(dr.driverID),
-                                    RequestLogID = Guid.NewGuid(),
-                                    CaptainLocationLatitude = dr.location.l[0].ToString(),
-                                    CaptainLocationLongitude = dr.location.l[1].ToString(),
-                                    DistanceToPickUpLocation = distance,
-                                    isReRouteRequest = bookingRN.isReRouteRequest,
-                                    TimeStamp = DateTime.UtcNow,
-                                    TripID = Guid.Parse(tripId)
-                                });
-                            }
-                        }
-                    }
-                }
+                FilterDriverForRideRequest(lstNormalCaptains, lstNormalCaptainsDetail, lstFilteredNormalCaptains, lstRequestLog, tripId, reqSeatingCapacity, bookingRN, requestSearchRange, captainMinRating, minDistanceRange, maxDistanceRange, pickPosition);
 
                 //TBD: Loop Optimization - Remove currently selected drivers from lstOnlineDriver
+                //ExcludeLoggedDriversForNextIteration(lstNormalCaptains, lstNormalCaptainsDetail, lstFilteredNormalCaptains);
 
                 //if request is already accpeted then no need to save current drivers list in log, so break loop 
-                if (await IsRequestAccepted(tripId))
+                if (lstFilteredNormalCaptains.Any())
                 {
-                    break;
-                }
-                else if (lstFilteredNormalCaptains.Any())
-                {
-                    await PushyService.BroadCastNotification(lstFilteredNormalCaptains, bookingRN);
-                    await TripsManagerService.LogBookRequestRecipientDrivers(lstRequestLog);
-                    Thread.Sleep(Convert.ToInt32(applicationSettings.RequestWaitingTime * 1000));
+                    if (await IsRequestAccepted(tripId))
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        await SendRequestToFilteredDrivers(bookingRN, applicationSettings, lstFilteredNormalCaptains, lstRequestLog);
+                    }
                 }
 
                 minDistanceRange = maxDistanceRange;
@@ -407,292 +358,55 @@ namespace Services
             } while (!await IsRequestAccepted(tripId) && minDistanceRange < requestSearchRange);
 
             return true; //Ride is accepted
+        }
 
-            #region ApplicationSettingsFiltersBeforeSendingRideRequest
+        private static async Task SendRequestToFilteredDrivers(DriverBookingRequestNotification bookingRN, DatabaseModel.ApplicationSetting applicationSettings, Dictionary<string, string> lstFilteredCaptains, List<TripRequestLogDTO> lstRequestLog)
+        {
+            await PushyService.BroadCastNotification(lstFilteredCaptains, bookingRN);
+            await TripsManagerService.LogBookRequestRecipientDrivers(lstRequestLog);
+            Thread.Sleep(Convert.ToInt32(applicationSettings.RequestWaitingTime * 1000));
+        }
 
-            //using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //{
-            //    //Get preferred captain details from db - device token and ringtone .
-            //    var lstPreferredCaptains = new List<spGetOnlineDriver_Result>();
-            //    if (!string.IsNullOrEmpty(preferredCaptainIDs))
-            //        lstPreferredCaptains = context.spGetOnlineDriver(preferredCaptainIDs).ToList();
+        private static void ExcludeLoggedDriversForNextIteration(List<FirebaseDriver> lstCaptains, List<DatabaseOlineDriversDTO> lstCaptainsDetail, Dictionary<string, string> lstFilteredCaptains)
+        {
+            var lstUsedPreferredCaptains = lstCaptainsDetail.Where(pcd => lstFilteredCaptains.Any(fpc => fpc.Key.Equals(pcd.DeviceToken)));
+            lstCaptains.RemoveAll(pc => lstUsedPreferredCaptains.Any(upc => upc.CaptainID.Equals(pc.driverID)));
+        }
 
-            //    Dictionary<string, string> lstPrefer1OnlineDriverPreferred = new Dictionary<string, string>();
-            //    Dictionary<string, string> lstPrefer2OnlineDriverPreferred = new Dictionary<string, string>();
-            //    Dictionary<string, string> lstPrefer3OnlineDriverPreferred = new Dictionary<string, string>();
-            //    Dictionary<string, string> lstWithOutPreferOnlineDriverPreferred = new Dictionary<string, string>();
+        private static void FilterDriverForRideRequest(List<FirebaseDriver> lstCaptains, List<DatabaseOlineDriversDTO> lstCaptainsDetail, Dictionary<string, string> lstFilteredCaptains, List<TripRequestLogDTO> lstRequestLog, string tripId, int reqSeatingCapacity, DriverBookingRequestNotification bookingRN, int requestSearchRange, double? captainMinRating, int? minDistanceRange, int? maxDistanceRange, GeoCoordinate pickPosition)
+        {
+            foreach (var dr in lstCaptains)
+            {
+                var capDetail = lstCaptainsDetail.Where(c => c.CaptainID.ToString().Equals(dr.driverID)).FirstOrDefault();
+                if (capDetail != null)
+                {
+                    if (dr.location == null)
+                        continue;
 
-            //    //Get captain details from db - device token and ringtone .
-            //    var lstcaptains = new List<spGetOnlineDriver_Result>();
-            //    if (!string.IsNullOrEmpty(captainIDs))
-            //        lstcaptains = context.spGetOnlineDriver(captainIDs).ToList();
+                    var driverPosition = new GeoCoordinate(dr.location.l[0], dr.location.l[1]);
+                    var distance = driverPosition.GetDistanceTo(pickPosition);  //distance in meters
 
-            //    Dictionary<string, string> lstPrefer1OnlineDriver = new Dictionary<string, string>();
-            //    Dictionary<string, string> lstPrefer2OnlineDriver = new Dictionary<string, string>();
-            //    Dictionary<string, string> lstPrefer3OnlineDriver = new Dictionary<string, string>();
-            //    Dictionary<string, string> lstWithOutPreferOnlineDriver = new Dictionary<string, string>();
+                    if (distance <= requestSearchRange)
+                    {
+                        if (capDetail.Rating >= captainMinRating && distance >= minDistanceRange && distance <= maxDistanceRange && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
+                        {
+                            lstFilteredCaptains.Add(capDetail.DeviceToken, bookingRN.isLaterBooking ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
 
-            //    var applicationSettings = context.ApplicationSettings.Where(a => a.ApplicationID.ToString().Equals(applicationID)).FirstOrDefault();
-
-            //    var distanceRange1 = applicationSettings.Preference1Distance.Split(';');
-            //    var distanceRange2 = applicationSettings.Preference2Distance.Split(';');
-            //    var distanceRange3 = applicationSettings.Preference3Distance.Split(';');
-
-            //    //List of drivers who have active priority hours
-            //    if (lstPreferredOnlineDriver.Count > 0)
-            //    {
-            //        foreach (var dr in lstPreferredOnlineDriver)
-            //        {
-            //            var capDetail = lstPreferredCaptains.Where(c => c.CaptainID.ToString().Equals(dr.driverID)).FirstOrDefault();
-            //            if (capDetail != null)
-            //            {
-            //                //find distance
-            //                var driverPosition = new GeoCoordinate(dr.location.l[0], dr.location.l[1]);
-            //                var pickPosition = new GeoCoordinate(Convert.ToDouble(tp.PickupLocationLatitude), Convert.ToDouble(tp.PickupLocationLongitude));
-            //                var distance = driverPosition.GetDistanceTo(pickPosition) / 1000;
-
-            //                if (distance <= applicationSettings.RequestSearchRange)
-            //                {
-            //                    //If priority hour is active but not in priority area range then add in last preference of priority drivers
-            //                    if (distance <= applicationSettings.PriorityAreaRange)
-            //                    {
-            //                        if (hotelSetting == null)
-            //                        {
-            //                            //check preference1
-            //                            if (capDetail.Rating >= applicationSettings.Preference1Rating && dr.makeID == applicationSettings.Preference1Make && distance >= Convert.ToDouble(distanceRange1[0]) && distance <= Convert.ToDouble(distanceRange1[1]) && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                            {
-            //                                lstPrefer1OnlineDriverPreferred.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                            }
-            //                            //check preference2
-            //                            else if (capDetail.Rating >= applicationSettings.Preference2Rating && dr.makeID == applicationSettings.Preference2Make && distance >= Convert.ToDouble(distanceRange2[0]) && distance <= Convert.ToDouble(distanceRange2[1]) && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                            {
-            //                                lstPrefer2OnlineDriverPreferred.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                            }
-            //                            //check preference3
-            //                            else if (capDetail.Rating >= applicationSettings.Preference3Rating && dr.makeID == applicationSettings.Preference3Make && distance >= Convert.ToDouble(distanceRange3[0]) && distance <= Convert.ToDouble(distanceRange3[1]) && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                            {
-            //                                lstPrefer3OnlineDriverPreferred.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                            }
-            //                            //add in without preference
-            //                            else if (Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                            {
-            //                                lstWithOutPreferOnlineDriverPreferred.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                            }
-            //                        }
-            //                        else
-            //                        {
-            //                            //check preference1
-            //                            if (capDetail.Rating >= hotelSetting.HotelPreference1Rating && dr.makeID == hotelSetting.HotelPreference1Make && distance >= Convert.ToDouble(distanceRange1[0]) && distance <= Convert.ToDouble(distanceRange1[1]) && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                            {
-            //                                lstPrefer1OnlineDriverPreferred.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                            }
-            //                            //check preference2
-            //                            else if (capDetail.Rating >= hotelSetting.HotelPreference2Rating && dr.makeID == hotelSetting.HotelPreference2Make && distance >= Convert.ToDouble(distanceRange2[0]) && distance <= Convert.ToDouble(distanceRange2[1]) && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                            {
-            //                                lstPrefer2OnlineDriverPreferred.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                            }
-            //                            //check preference3
-            //                            else if (capDetail.Rating >= hotelSetting.HotelPreference3Rating && dr.makeID == hotelSetting.HotelPreference3Make && distance >= Convert.ToDouble(distanceRange3[0]) && distance <= Convert.ToDouble(distanceRange3[1]) && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                            {
-            //                                lstPrefer3OnlineDriverPreferred.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                            }
-            //                            //add in without preference
-            //                            else if (Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                            {
-            //                                lstWithOutPreferOnlineDriverPreferred.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                            }
-            //                        }
-            //                    }
-            //                    else
-            //                    {
-            //                        lstWithOutPreferOnlineDriverPreferred.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-
-            //    //List of drivers whose priority hour is not active
-            //    if (lstOnlineDriver.Count > 0)
-            //    {
-            //        foreach (var dr in lstOnlineDriver)
-            //        {
-            //            var capDetail = lstcaptains.Where(c => c.CaptainID.ToString().Equals(dr.driverID)).FirstOrDefault();
-            //            if (capDetail != null)
-            //            {
-            //                //find distance
-            //                var driverPosition = new GeoCoordinate(dr.location.l[0], dr.location.l[1]);
-            //                var pickPosition = new GeoCoordinate(Convert.ToDouble(tp.PickupLocationLatitude), Convert.ToDouble(tp.PickupLocationLongitude));
-            //                var distance = driverPosition.GetDistanceTo(pickPosition) / 1000;
-
-            //                if (distance <= applicationSettings.RequestSearchRange)
-            //                {
-            //                    if (hotelSetting == null)
-            //                    {
-            //                        //check preference1
-            //                        if (capDetail.Rating >= applicationSettings.Preference1Rating && dr.makeID == applicationSettings.Preference1Make && distance >= Convert.ToDouble(distanceRange1[0]) && distance <= Convert.ToDouble(distanceRange1[1]) && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                        {
-            //                            lstPrefer1OnlineDriver.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                        }
-            //                        //check preference2
-            //                        else if (capDetail.Rating >= applicationSettings.Preference2Rating && dr.makeID == applicationSettings.Preference2Make && distance >= Convert.ToDouble(distanceRange2[0]) && distance <= Convert.ToDouble(distanceRange2[1]) && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                        {
-            //                            lstPrefer2OnlineDriver.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                        }
-            //                        //check preference3
-            //                        else if (capDetail.Rating >= applicationSettings.Preference3Rating && dr.makeID == applicationSettings.Preference3Make && distance >= Convert.ToDouble(distanceRange3[0]) && distance <= Convert.ToDouble(distanceRange3[1]) && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                        {
-            //                            lstPrefer3OnlineDriver.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                        }
-            //                        //add in without preference
-            //                        else if (Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                        {
-            //                            lstWithOutPreferOnlineDriver.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                        }
-            //                    }
-            //                    else
-            //                    {
-            //                        //check preference1
-            //                        if (capDetail.Rating >= hotelSetting.HotelPreference1Rating && dr.makeID == hotelSetting.HotelPreference1Make && distance >= Convert.ToDouble(distanceRange1[0]) && distance <= Convert.ToDouble(distanceRange1[1]) && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                        {
-            //                            lstPrefer1OnlineDriver.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                        }
-            //                        //check preference2
-            //                        else if (capDetail.Rating >= hotelSetting.HotelPreference2Rating && dr.makeID == hotelSetting.HotelPreference2Make && distance >= Convert.ToDouble(distanceRange2[0]) && distance <= Convert.ToDouble(distanceRange2[1]) && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                        {
-            //                            lstPrefer2OnlineDriver.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                        }
-            //                        //check preference3
-            //                        else if (capDetail.Rating >= hotelSetting.HotelPreference3Rating && dr.makeID == hotelSetting.HotelPreference3Make && distance >= Convert.ToDouble(distanceRange3[0]) && distance <= Convert.ToDouble(distanceRange3[1]) && Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                        {
-            //                            lstPrefer3OnlineDriver.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                        }
-            //                        //add in without preference
-            //                        else if (Convert.ToInt32(dr.seatingCapacity) >= reqSeatingCapacity)
-            //                        {
-            //                            lstWithOutPreferOnlineDriver.Add(capDetail.DeviceToken, Convert.ToBoolean(tp.isLaterBooking) ? capDetail.LaterBookingNotificationTone : capDetail.NormalBookingNotificationTone);
-            //                        }
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-
-            //    //Final data to be sent to drivers in FCM
-            //    RequestResponse response = new RequestResponse
-            //    {
-            //        tripID = tp.TripID.ToString(),
-            //        lat = tp.PickupLocationLatitude,
-            //        lan = tp.PickupLocationLongitude,
-            //        dropOfflatitude = tp.DropOffLocationLatitude,
-            //        dropOfflongitude = tp.DropOffLocationLongitude,
-            //        pickUpLocation = tp.PickUpLocation,
-            //        dropOffLocation = tp.DropOffLocation,
-            //        numberOfPerson = Convert.ToInt32(tp.NoOfPerson),
-            //        paymentMethod = tp.TripPaymentMode,
-            //        isLaterBooking = Convert.ToBoolean(pr.isLaterBooking),
-            //        pickUpDateTime = pr.pickUpDateTime.ToString(Common.dateFormat),
-            //        isWeb = pr.isWeb,
-            //        requiredFacilities = pr.requiredFacilities,
-            //        facilities = pr.facilities,
-            //        discountType = pr.discountType,
-            //        discountAmount = pr.discountAmount,
-            //        isReRouteRequest = pr.isReRouteRequest,
-            //        isDispatchedRide = "false",
-            //        description = "",
-            //        fav = fav
-            //    };
-
-            //    int counter = 0;
-
-            //    await updateDiscountTypeAndAmount(false, path, response.tripID, response.discountAmount ?? "", response.discountType ?? "", response.isDispatchedRide ?? "");
-
-            //    //var task = Task.Run(async () =>
-            //    //{
-            //    //	await updateDiscountTypeAndAmount(false, path, response.tripID, response.discountAmount ?? "", response.discountType ?? "", response.isDispatchedRide ?? "");
-            //    //});
-
-            //    //Send priority based FCMs
-            //    do
-            //    {
-            //        if (counter == 0)
-            //        {
-            //            if (lstPrefer1OnlineDriverPreferred.Count > 0)
-            //            {
-            //                NotifyAsync(lstPrefer1OnlineDriverPreferred, response);
-            //                Thread.Sleep(Convert.ToInt32(applicationSettings.RequestWaitingTime * 1000));
-            //            }
-            //            counter++;
-            //        }
-            //        else if (counter == 1 && !Enumration.isRequestAccepted)
-            //        {
-            //            if (lstPrefer2OnlineDriverPreferred.Count > 0)
-            //            {
-            //                NotifyAsync(lstPrefer2OnlineDriverPreferred, response);
-            //                Thread.Sleep(Convert.ToInt32(applicationSettings.RequestWaitingTime * 1000));
-            //            }
-            //            counter++;
-            //        }
-            //        else if (counter == 2 && !Enumration.isRequestAccepted)
-            //        {
-            //            if (lstPrefer3OnlineDriverPreferred.Count > 0)
-            //            {
-            //                NotifyAsync(lstPrefer3OnlineDriverPreferred, response);
-            //                Thread.Sleep(Convert.ToInt32(applicationSettings.RequestWaitingTime * 1000));
-            //            }
-            //            counter++;
-            //        }
-            //        else if (counter == 3 && !Enumration.isRequestAccepted)
-            //        {
-            //            if (lstWithOutPreferOnlineDriverPreferred.Count > 0)
-            //            {
-            //                NotifyAsync(lstWithOutPreferOnlineDriverPreferred, response);
-            //                Thread.Sleep(Convert.ToInt32(applicationSettings.RequestWaitingTime * 1000));
-            //            }
-            //            counter++;
-            //        }
-            //        else if (counter == 4 && !Enumration.isRequestAccepted)
-            //        {
-            //            if (lstPrefer1OnlineDriver.Count > 0)
-            //            {
-            //                NotifyAsync(lstPrefer1OnlineDriver, response);
-            //                Thread.Sleep(Convert.ToInt32(applicationSettings.RequestWaitingTime * 1000));
-            //            }
-            //            counter++;
-            //        }
-            //        else if (counter == 5 && !Enumration.isRequestAccepted)
-            //        {
-            //            if (lstPrefer2OnlineDriver.Count > 0)
-            //            {
-            //                NotifyAsync(lstPrefer2OnlineDriver, response);
-            //                Thread.Sleep(Convert.ToInt32(applicationSettings.RequestWaitingTime * 1000));
-            //            }
-            //            counter++;
-            //        }
-            //        else if (counter == 6 && !Enumration.isRequestAccepted)
-            //        {
-            //            if (lstPrefer3OnlineDriver.Count > 0)
-            //            {
-            //                NotifyAsync(lstPrefer3OnlineDriver, response);
-            //                Thread.Sleep(Convert.ToInt32(applicationSettings.RequestWaitingTime * 1000));
-            //            }
-            //            counter++;
-            //        }
-            //        else
-            //        {
-            //            if (lstWithOutPreferOnlineDriver.Count > 0)
-            //            {
-            //                NotifyAsync(lstWithOutPreferOnlineDriver, response);
-            //            }
-            //            Enumration.isRequestAccepted = true;
-            //        }
-
-            //    } while (!Enumration.isRequestAccepted);
-
-            //    return true; //Ride is accepted
-            //}
-
-            #endregion
+                            lstRequestLog.Add(new TripRequestLogDTO
+                            {
+                                CaptainID = Guid.Parse(dr.driverID),
+                                RequestLogID = Guid.NewGuid(),
+                                CaptainLocationLatitude = dr.location.l[0].ToString(),
+                                CaptainLocationLongitude = dr.location.l[1].ToString(),
+                                DistanceToPickUpLocation = distance,
+                                isReRouteRequest = bookingRN.isReRouteRequest,
+                                TimeStamp = DateTime.UtcNow,
+                                TripID = Guid.Parse(tripId)
+                            });
+                        }
+                    }
+                }
+            }
         }
 
         private static async Task<bool> IsRequestAccepted(string tripId)
@@ -941,9 +655,9 @@ namespace Services
             await FreePassengerFromCurrentTrip(userID, tripID);
         }
 
-        public static async Task WriteTripPassengerDetails(DriverBookingRequestNotification data, string passengerId)
+        public static async Task WriteTripPassengerDetails(FBPassengerBookingRequest data, string passengerId)
         {
-            await FirebaseIntegration.Write("Trips/" + data.tripID + "/" + passengerId, data);
+            await FirebaseIntegration.Write("Trips/" + data.TripId + "/" + passengerId, data);
         }
 
         public static async Task UpdateTripPassengerDetailsOnAccepted(PassengerRequestAcceptedNotification data, string passengerId)

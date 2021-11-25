@@ -10,16 +10,16 @@
 namespace DatabaseModel
 {
     using System;
-    using System.Collections.Generic;
     
-    public partial class RideServicesFareRanx
+    public partial class FetchPopUp_Result
     {
-        public System.Guid RangeID { get; set; }
-        public string Range { get; set; }
-        public Nullable<decimal> Charges { get; set; }
-        public Nullable<System.Guid> RSFMID { get; set; }
-        public Nullable<System.Guid> ApplicationID { get; set; }
-        public Nullable<int> ShiftID { get; set; }
-        public Nullable<System.Guid> ResellerId { get; set; }
+        public Nullable<long> RowNo { get; set; }
+        public Nullable<int> Total { get; set; }
+        public string PopupID { get; set; }
+        public string Title { get; set; }
+        public string Name { get; set; }
+        public string StartDate { get; set; }
+        public string ExpiryDate { get; set; }
+        public bool IsActive { get; set; }
     }
 }

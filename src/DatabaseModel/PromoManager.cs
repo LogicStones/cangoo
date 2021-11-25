@@ -28,5 +28,6 @@ namespace DatabaseModel
         public System.Guid ApplicationID { get; set; }
         public int Repetition { get; set; }
         public Nullable<bool> IsActive { get; set; }
+        public Nullable<decimal> WishCarAmount { get; set; }
     }
 }

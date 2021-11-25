@@ -399,7 +399,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-name")]
-        public async Task<HttpResponseMessage> UpdateName(UpdatePassengerNameRequest model)
+        public async Task<HttpResponseMessage> UpdateName([FromBody] UpdatePassengerNameRequest model)
         {
             await UserService.UpdateNameAsync(model.FirstName, model.LastName, model.PassengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -431,7 +431,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-email")]
-        public async Task<HttpResponseMessage> UpdateEmail(UpdatePassengerEmailRequest model)
+        public async Task<HttpResponseMessage> UpdateEmail([FromBody] UpdatePassengerEmailRequest model)
         {
             await UserService.UpdateEmailAsync(model.Email, model.PassengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -462,7 +462,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-phone-number")]
-        public async Task<HttpResponseMessage> UpdatePhoneNumber(UpdatePassengerPhoneNumberRequest model)
+        public async Task<HttpResponseMessage> UpdatePhoneNumber([FromBody] UpdatePassengerPhoneNumberRequest model)
         {
             var user = await UserService.GetByUserNameAsync(model.PhoneNumber);
 
@@ -548,7 +548,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("search-drivers")]
-        public async Task<HttpResponseMessage> SearchDrivers(SearchDriversRequest model)
+        public async Task<HttpResponseMessage> SearchDrivers([FromBody] SearchDriversRequest model)
         {
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
@@ -560,7 +560,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("add-fav-driver")]
-        public async Task<HttpResponseMessage> AddFavCaptain(AddFavoriteDriverRequest model)
+        public async Task<HttpResponseMessage> AddFavCaptain([FromBody] AddFavoriteDriverRequest model)
         {
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
@@ -572,7 +572,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("del-fav-driver")]
-        public async Task<HttpResponseMessage> DelFavCaptain(DeleteFavoriteDriverRequest model)
+        public async Task<HttpResponseMessage> DelFavCaptain([FromBody] DeleteFavoriteDriverRequest model)
         {
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
@@ -584,7 +584,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("get-fav-drivers")]
-        public async Task<HttpResponseMessage> GetFavCaptains(FavoriteDriversListRequest model)
+        public async Task<HttpResponseMessage> GetFavCaptains([FromBody] FavoriteDriversListRequest model)
         {
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
@@ -642,7 +642,7 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("get-trusted-contact")]
-        public async Task<HttpResponseMessage> GetTrustedContact([FromUri] GetTrustedContacts model)
+        public async Task<HttpResponseMessage> GetTrustedContact([FromUri] GetTrustedContactRequest model)
         {
             var lstTrustedContact = await TrustedContactManagerService.GetTrustedContact(model.PassengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -692,7 +692,7 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("passenger-earned-reward-points")]
-        public async Task<HttpResponseMessage> PassengerEarnedRewardPoints([FromUri] GetPassengerEanedRewardPoints model)
+        public async Task<HttpResponseMessage> PassengerEarnedRewardPoints([FromUri] GetPassengerCangoosRequest model)
         {
             var result = await RewardPointService.GetPassengerRewardPoint(model.PassengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -708,7 +708,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("redeem-reward-points")]
-        public async Task<HttpResponseMessage> RedeemRewardPoints([FromBody] PassengerReedemRewardRequsest model)
+        public async Task<HttpResponseMessage> RedeemRewardPoints([FromBody] ReedemPassengerCangoosRequsest model)
         {
             var result = await RewardPointService.ReedemPassengerPoints(model);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -810,7 +810,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("update-trip-payment-method")]
-        public async Task<HttpResponseMessage> UpdateTripPaymentMethod([FromBody] UpdateTripPaymentMethod model)
+        public async Task<HttpResponseMessage> UpdateTripPaymentMethod([FromBody] UpdateTripPaymentMethodRequest model)
         {
             var result = await TripsManagerService.UpdateTripPaymentMode(model);
 
@@ -832,10 +832,58 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Route("update-trip-promo-code")]
-        public async Task<HttpResponseMessage> UpdateTripPromoCode([FromBody] UpdateTripPromoCode model)
+        [Route("update-trip-tip-amount")]
+        public async Task<HttpResponseMessage> UpdateTripTipAmount([FromBody] UpdateTripTipAmountRequest model)
         {
-            var result = await TripsManagerService.UpdateTripPromo(model);
+            await FirebaseService.SetTipAmount(model.TripId, model.TipAmount);
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess
+            });
+        }
+
+        #endregion
+
+        #region Promotions (Promo Codes)
+
+        [HttpPost]
+        [Route("add-promo-code")]
+        public async Task<HttpResponseMessage> AddPromoCode([FromBody] AddPromoCodeRequest model)
+        {
+            var response = await PromoCodeService.AddUserPromoCode(model);
+
+            if (response.Message.Equals(ResponseKeys.invalidPromo))
+                return Request.CreateResponse(HttpStatusCode.NotFound, response);
+
+            else if (response.Message.Equals(ResponseKeys.promoExpired))
+                return Request.CreateResponse(HttpStatusCode.NoContent, response);
+
+            else if (response.Message.Equals(ResponseKeys.promoLimitExceeded))
+                return Request.CreateResponse(HttpStatusCode.NoContent, response);
+
+            return Request.CreateResponse(HttpStatusCode.OK, response);
+        }
+
+        [HttpGet]
+        [Route("get-promo-codes")]
+        public async Task<HttpResponseMessage> GetPromoCodesList([FromUri] GetPassengerPromoRequest model)
+        {
+            var lstPromoCodes = await PromoCodeService.GetPromoCodes(model.PassengerId);
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = lstPromoCodes
+            });
+
+        }
+
+        [HttpPost]
+        [Route("apply-trip-promo-code")]
+        public async Task<HttpResponseMessage> ApplyTripPromoCode([FromBody] ApplyPromoCodeRequest model)
+        {
+            var result = await PromoCodeService.UpdateTripPromo(model.PromoCodeId, model.TripId, model.PassengerId);
 
             if (result == 0)
             {
@@ -854,60 +902,6 @@ namespace API.Controllers
             }
         }
 
-        [HttpPost]
-        [Route("update-trip-tip-amount")]
-        public async Task<HttpResponseMessage> UpdateTripTipAmount([FromBody] UpdateTripTipAmount model)
-        {
-            await FirebaseService.SetTipAmount(model.TripId, model.TipAmount);
-            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-            {
-                Error = false,
-                Message = ResponseKeys.msgSuccess
-            });
-        }
-
-        #endregion
-
-        #region Promotions
-
-        [HttpPost]
-        [Route("add-promo-code")]
-        public async Task<HttpResponseMessage> AddPromoCode([FromBody] AddPromoCode model)
-        {
-            var AddPromoResponse = await PromoCodeService.AddUserPromoCode(model);
-            if (AddPromoResponse != null)
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                    Data = AddPromoResponse
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = true,
-                    Message = ResponseKeys.invalidPromo,
-                });
-            }
-
-        }
-
-        [HttpGet]
-        [Route("get-promo-codes")]
-        public async Task<HttpResponseMessage> GetPromoCodesList([FromUri] GetPassengerPromo model)
-        {
-            var lstPromoCodes = await PromoCodeService.GetPromoCodes(model.PassengerId);
-            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-            {
-                Error = false,
-                Message = ResponseKeys.msgSuccess,
-                Data = lstPromoCodes
-            });
-
-        }
         #endregion
 
         #region Payment Methods
@@ -916,104 +910,19 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("get-wallet")]
-        public async Task<HttpResponseMessage> GetWalletDetails([FromUri] GetWalletDetailsModel model)
+        public async Task<HttpResponseMessage> GetWalletDetails([FromUri] WalletDetailsRequest model)
         {
-            //Wallet Balance
+            var response = await WalletRechargeServices.GetUserWalletDetails(model.PassengerId, ApplicationID, ResellerID);
 
-            //PayPal Account
+            if (response.Message.Equals(ResponseKeys.paymentGetwayError))
+                return Request.CreateResponse(HttpStatusCode.NoContent, response);
 
-            //CreditCard Lists
-            var userProfile = await WalletRechargeServices.GetUserProfile(model.PassengerId);
-            if (userProfile == null)
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = true,
-                    Message = ResponseKeys.userNotFound,
-                });
-            }
-            else
-            {
-                var CardsDetails = await WalletRechargeServices.GetUserCardsDetails(userProfile);
-                if (CardsDetails != null)
-                {
-                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                    {
-                        Error = false,
-                        Message = ResponseKeys.msgSuccess,
-                        Data = CardsDetails
-                    });
-                }
-                else
-                {
-                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                    {
-                        Error = true,
-                        Message = ResponseKeys.paymentGetwayError,
-                    });
-                }
-            }
-
-
-
-            //if (string.IsNullOrEmpty(model.passengerID))
-            //{
-            //    response.error = true;
-            //    response.message = AppMessage.invalidParameters;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
-
-            //using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //{
-            //    var user = context.UserProfiles.Where(u => u.UserID == model.passengerID).FirstOrDefault();
-            //    if (user == null)
-            //    {
-            //        response.error = true;
-            //        response.message = AppMessage.userNotFound;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
-
-            //    if (!string.IsNullOrEmpty(user.CreditCardCustomerID))
-            //    {
-            //        var customer = StripeIntegration.GetCustomer(user.CreditCardCustomerID);
-
-            //        if (string.IsNullOrEmpty(customer.Id))
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.paymentGetwayError;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-
-            //        StripeCustomer cust = new StripeCustomer()
-            //        {
-            //            cardsList = StripeIntegration.GetCardsList(customer.Id),
-            //            customerId = customer.Id,
-            //            defaultSourceId = customer.InvoiceSettings.DefaultPaymentMethodId
-            //        };
-
-            //        dic = new Dictionary<dynamic, dynamic>
-            //                    {
-            //                        { "creditCardDetails", cust }
-            //                    };
-            //        response.data = dic;
-            //    }
-            //    else
-            //    {
-            //        dic = new Dictionary<dynamic, dynamic>
-            //                    {
-            //                        { "creditCardDetails", null }
-            //                    };
-            //        response.data = dic;
-            //    }
-            //    response.error = false;
-            //    response.message = AppMessage.msgSuccess;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
+            return Request.CreateResponse(HttpStatusCode.OK, response);
         }
 
         [HttpPost]
         [Route("redeem-coupon-code")]
-        public async Task<HttpResponseMessage> RedeemCouponCode([FromBody] ApplyCouponCode model)
+        public async Task<HttpResponseMessage> RedeemCouponCode([FromBody] RedeemCouponCodeRequest model)
         {
             var resultCoupon = await WalletRechargeServices.IsValidCouponCode(model.CouponCode);
             if (resultCoupon == null)
@@ -1057,9 +966,9 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("check-application-user")]
-        public async Task<HttpResponseMessage> CheckApplicationUser([FromUri] GetApplicationUser model)
+        public async Task<HttpResponseMessage> CheckApplicationUser([FromBody] CheckAppUserRequest model)
         {
-            var AppUser = await WalletRechargeServices.IsAppUserExist(model.TransferUserMobile);
+            var AppUser = await WalletRechargeServices.IsAppUserExist(model.ReciverMobileNo);
             if (AppUser != null)
             {
                 return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -1081,9 +990,9 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("transfer-wallet-balance")]
-        public async Task<HttpResponseMessage> TransferWalletBalance([FromBody] AmountTransferByMobileNo model)
+        public async Task<HttpResponseMessage> TransferWalletBalance([FromBody] ShareWalletBalanceRequest model)
         {
-            if (int.Parse(model.Amount) > int.Parse(model.WalletBalance))
+            if (int.Parse(model.ShareAmount) > int.Parse(model.TotalWalletBalance))
             {
                 return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
                 {
@@ -1105,8 +1014,8 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Route("cards-wallet-recharge")]
-        public async Task<HttpResponseMessage> CardsWalletRecharge([FromBody] GetCardsWalletRecharge model)
+        [Route("mobile-payment-wallet-recharge")]
+        public async Task<HttpResponseMessage> CardsWalletRecharge([FromBody] MobilePaymentWalletRechargeRequest model)
         {
             var CardsWalletAmount = await WalletRechargeServices.CardsWalletRecharge(model);
             if (CardsWalletAmount != null)
@@ -1127,7 +1036,6 @@ namespace API.Controllers
                 });
             }
         }
-
 
         //Recharge using Card | Apple Pay | Google Pay
 
@@ -1524,7 +1432,7 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("notifications-list")]
-        public async Task<HttpResponseMessage> GetNotificationsList([FromUri] GetNotificationListModel model)
+        public async Task<HttpResponseMessage> GetNotificationsList([FromUri] NotificationListRequest model)
         {
             var lstNotifications = await NotificationServices.GetNotifications(model.ReceiverId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -1537,7 +1445,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("read-notification")]
-        public async Task<HttpResponseMessage> ReadNotification([FromUri] GetReadNotification model)
+        public async Task<HttpResponseMessage> ReadNotification([FromBody] ReadNotificationRequest model)
         {
             var FullNotifications = await NotificationServices.GetFullReadNotification(model.FeedId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -1554,7 +1462,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("apply-invite-code")]
-        public async Task<HttpResponseMessage> ApplyInviteCode([FromBody] ApplyInviteCode model)
+        public async Task<HttpResponseMessage> ApplyInviteCode([FromBody] ApplyInviteCodeRequest model)
         {
             if (InvitationService.IsUserInviteCodeApplicable(model.PassengerId))
             {
@@ -1600,7 +1508,7 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("recent-locations")]
-        public async Task<HttpResponseMessage> GetRecentLocations([FromUri] GetRecentLocationList model)
+        public async Task<HttpResponseMessage> GetRecentLocations([FromUri] RecentLocationsListRequest model)
         {
             if (model.PassengerId != string.Empty)
             {
@@ -1678,7 +1586,7 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("cancel-trip")]
-        public async Task<HttpResponseMessage> CancelTrip(CancelTripRequest model)
+        public async Task<HttpResponseMessage> CancelTrip([FromBody] CancelTripRequest model)
         {
             return Request.CreateResponse(HttpStatusCode.OK, await TripsManagerService.CancelTripByPassenger(model.TripId, model.PassengerId, model.DistanceTravelled, model.CancelID, model.IsLaterBooking));
         }

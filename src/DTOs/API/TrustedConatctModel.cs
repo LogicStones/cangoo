@@ -34,7 +34,7 @@ namespace DTOs.API
         
     }
 
-    public class GetTrustedContacts
+    public class GetTrustedContactRequest
     {
         [Required]
         public string PassengerId { get; set; }

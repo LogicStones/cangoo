@@ -79,7 +79,7 @@ namespace DTOs.API
         public string Make { get; set; } = "";
         public string Model { get; set; } = "";
         public string PlateNumber { get; set; } = "";
-        public List<PassengerFacilitiyDTO> FacilitiesList { get; set; }
+        public List<PassengerFacilityDTO> FacilitiesList { get; set; }
     }
 
     public class BookTripRequest : FareBreakDownDTO
@@ -279,17 +279,17 @@ namespace DTOs.API
         public string IsLaterBooking { get; set; } = "";
     }
 
-    public class UpdateTripPromoCode
+    public class ApplyPromoCodeRequest
     {
         [Required]
-        public string TripId { get; set; } = "";
+        public string TripId { get; set; }
         [Required]
-        public string PassengerId { get; set; } = "";
+        public string PassengerId { get; set; }
         [Required]
-        public string PromoCodeId { get; set; } = "";
+        public string PromoCodeId { get; set; }
     }
 
-    public class UpdateTripPaymentMethod
+    public class UpdateTripPaymentMethodRequest
     {
         [Required]
         public string PaymentModeId { get; set; } = "";
@@ -299,7 +299,7 @@ namespace DTOs.API
         public string PassengerId { get; set; } = "";
     }
 
-    public class UpdateTripTipAmount
+    public class UpdateTripTipAmountRequest
     {
         [Required]
         public string TripId { get; set; } = "";

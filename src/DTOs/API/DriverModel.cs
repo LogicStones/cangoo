@@ -337,6 +337,65 @@ namespace DTOs.API
         public bool isLaterBooking { get; set; }
     }
 
+    public class DriverEndTripResponse
+    {
+        public string discountType { get; set; } = "normal";
+        public string discountAmount { get; set; } = "0.00";
+        public string pickUpFareManagerID { get; set; } = "0.00";
+        public string dropOffFareMangerID { get; set; } = "0.00";
+        public string inBoundDistanceInKM { get; set; } = "0.00";
+        public string inBoundDistanceFare { get; set; } = "0.00";
+        public string inBoundTimeInMinutes { get; set; } = "0.00";
+        public string inBoundTimeFare { get; set; } = "0.00";
+        public string outBoundDistanceInKM { get; set; } = "0.00";
+        public string outBoundDistanceFare { get; set; } = "0.00";
+        public string outBoundTimeInMinutes { get; set; } = "0.00";
+        public string outBoundTimeFare { get; set; } = "0.00";
+        public string inBoundSurchargeAmount { get; set; } = "0.00";
+        public string outBoundSurchargeAmount { get; set; } = "0.00";
+        public string inBoundBaseFare { get; set; } = "0.00";
+        public string outBoundBaseFare { get; set; } = "0.00";
+        public string polyLine { get; set; } = "";
+        public string estimatedPrice { get; set; } = "0.00";
+        public string passengerName { get; set; } = "";
+
+        public string travelCharges { get; set; } = "0.00";
+        public string waitingCharges { get; set; } = "0.00";
+        public string bookingCharges { get; set; } = "0.00";
+        public string baseCharges { get; set; } = "0.00";
+
+        public string paymentMethod { get; set; } =  "";
+        public string distance { get; set; } =  "0.00";
+        
+        public double? duration { get; set; } =  0;
+        public bool isFavUser { get; set; } =  false;
+        
+        public string isVoucherApplied { get; set; } =  "false";
+        public string voucherAmount { get; set; } = "0.00";
+        public string voucherCode { get; set; } = "";
+
+        public bool isUserProfileUpdated { get; set; } = true;
+        public bool isFareChangePermissionGranted { get; set; } =  false;
+        public string bookingMode { get; set; } =  "";
+        public bool isWeb { get; set; } =  false;
+
+        //public bool isPaymentRequested { get; set; }
+        public string availableWalletBalance { get; set; } = "0.00";
+        public bool? isWalletPreferred { get; set; } = false;
+
+        //public string InBoundDistanceInMeters { get; set; }
+        //public string InBoundTimeInSeconds { get; set; }
+        //public string OutBoundDistanceInMeters { get; set; }
+        //public string OutBoundTimeInSeconds { get; set; }
+        //public string OutBoundTimeFare { get; set; }
+        //public string OutBoundDistanceFare { get; set; }
+        //public string InBoundTimeFare { get; set; }
+        //public string InBoundDistanceFare { get; set; }
+        //public string InBoundSurchargeAmount { get; set; }
+        //public string OutBoundSurchargeAmount { get; set; }
+
+    }
+
     public class CollectPaymentRequest
     {
         [Required]
@@ -443,7 +502,7 @@ namespace DTOs.API
         public string model { get; set; }
         public string make { get; set; }
         public string paymentMode { get; set; }
-        public List<DriverFacilitiyDTO> facilities { get; set; }
+        public List<DriverFacilityDTO> facilities { get; set; }
     }
 
     public class CaptainProfileResponse
@@ -452,12 +511,12 @@ namespace DTOs.API
         public string email { get; set; }
         public string phone { get; set; }
         public string shareCode { get; set; }
-        public List<DriverFacilitiyDTO> captainFacilitiesList { get; set; }
+        public List<DriverFacilityDTO> captainFacilitiesList { get; set; }
         public string make { get; set; }
         public string model { get; set; }
         public string number { get; set; }
         public string seatingCapacity { get; set; }
-        public List<DriverFacilitiyDTO> vehicleFacilitiesList { get; set; }
+        public List<DriverFacilityDTO> vehicleFacilitiesList { get; set; }
     }
 
     public class CaptainStatsResponse
@@ -546,7 +605,7 @@ namespace DTOs.API
         public bool isFav { get; set; }
         public string estimatedDistance { get; set; }
         public string isWeb { get; set; }
-        public List<DriverFacilitiyDTO> facilities { get; set; }
+        public List<DriverFacilityDTO> facilities { get; set; }
         public string discountType { get; set; }
         public string discountAmount { get; set; }
         public double remainingTime { get; set; }

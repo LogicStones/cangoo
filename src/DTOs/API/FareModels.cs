@@ -75,7 +75,7 @@ namespace DTOs.API
     public class EstimateFareResponse : PolyLineDetails
     {
         public CourierFareEstimate Courier { get; set; }
-        public List<PassengerFacilitiyDTO> Facilities { get; set; }
+        public List<PassengerFacilityDTO> Facilities { get; set; }
         public List<VehicleCategoryFareEstimate> Categories { get; set; }
         public string DiscountType { get; set; } = "normal";
         public string DiscountAmount { get; set; } = "0.00";

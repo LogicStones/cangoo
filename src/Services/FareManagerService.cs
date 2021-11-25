@@ -48,47 +48,47 @@ namespace Services
             }
         }
 
-        public static string ApplyPromoCode(string applicationID, string userID, CangooEntities context, ref Dictionary<dynamic, dynamic> dic)
+        public static string ApplyPromoCode(string applicationID, string userID, ref DriverEndTripResponse result)
         {
-            DateTime dt = DateTime.UtcNow;
-            var availablePromoCodes = context.PromoManagers.Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == false && p.StartDate <= dt && p.ExpiryDate >= dt).OrderBy(p => p.StartDate).ToList();
-
-            string promoCodeID = "";
-
-            if (availablePromoCodes.Any())
+            using (var dbContext = new CangooEntities())
             {
-                var appliedPromoCode = context.UserPromos.Where(up => up.UserID == userID && up.isActive == true).FirstOrDefault();
-                if (appliedPromoCode != null)
+                DateTime dt = DateTime.UtcNow;
+                var availablePromoCodes = dbContext.PromoManagers.Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == false && p.StartDate <= dt && p.ExpiryDate >= dt).OrderBy(p => p.StartDate).ToList();
+
+                string promoCodeID = "";
+
+                if (availablePromoCodes.Any())
                 {
-                    //Business Rule: Only one promo can be applied 
-                    if (availablePromoCodes.Exists(p => p.PromoID == appliedPromoCode.PromoID))
+                    var appliedPromoCode = dbContext.UserPromos.Where(up => up.UserID == userID && up.isActive == true).FirstOrDefault();
+                    if (appliedPromoCode != null)
                     {
-                        var promo = availablePromoCodes.Find(p => p.PromoID == appliedPromoCode.PromoID);
-
-                        if (appliedPromoCode.NoOfUsage < promo.Repetition)
+                        //Business Rule: Only one promo can be applied 
+                        if (availablePromoCodes.Exists(p => p.PromoID == appliedPromoCode.PromoID))
                         {
+                            var promo = availablePromoCodes.Find(p => p.PromoID == appliedPromoCode.PromoID);
 
-                            if (promo.isFixed == true)
+                            if (appliedPromoCode.NoOfUsage < promo.Repetition)
                             {
-                                dic["discountType"] = "fixed";
-                                dic["discountAmount"] = string.Format("{0:0.00}", (decimal)promo.Amount);
+
+                                if (promo.isFixed == true)
+                                {
+                                    result.discountType = "fixed";
+                                    result.discountAmount = string.Format("{0:0.00}", (decimal)promo.Amount);
+                                }
+                                else
+                                {
+                                    result.discountType = "percentage";
+                                    result.discountAmount = string.Format("{0:0.00}", (decimal)promo.Amount);
+                                }
+                                promoCodeID = promo.PromoID.ToString();
                             }
-                            else
-                            {
-                                dic["discountType"] = "percentage";
-                                dic["discountAmount"] = string.Format("{0:0.00}", (decimal)promo.Amount);
-                            }
-                            promoCodeID = promo.PromoID.ToString();
                         }
                     }
                 }
+                return promoCodeID;
             }
-            return promoCodeID;
         }
 
-
-
-        //TBD : ETA & Special Promotion
         public static async Task<EstimateFareResponse> GetFareEstimate(
             string pickUpPostalCode, string pickUpLatitude, string pickUpLongitude,
             string midwayStop1PostalCode, string midwayStop1Latitude, string midwayStop1Longitude,
@@ -99,6 +99,7 @@ namespace Services
             var result = await PrepareResponseObject(polyLine, inBoundTimeInSeconds, inBoundDistanceInMeters, outBoundTimeInSeconds, outBoundDistanceInMeters);
 
             var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
+
             using (CangooEntities dbContext = new CangooEntities())
             {
                 var areasCategoryFareList = await GetApplicationRideServicesAreaCategoryFareList(applicationId);
@@ -156,6 +157,9 @@ namespace Services
                     }
 
                     #endregion
+
+                    //TBD : Special Promotion
+                    //TBD : If a category is not added in an area
 
                     //If all cases fails then it means either request area doesn't exist in system or algorithm failed to identify
 
@@ -449,7 +453,7 @@ namespace Services
                 var result = new DistanceAndTimeFareDTO();
 
                 //distance ranges are saved in kilo meters
-                var lstFareDistanceRange = await dbContext.RideServicesFareRanges
+                var lstFareDistanceRange = await dbContext.RideServicesDistanceRanges
                     .Where(f => f.ShiftID == shiftId && f.RSFMID.ToString().Equals(rideServicesID))
                     .OrderBy(f => f.Range)
                     .ToListAsync();

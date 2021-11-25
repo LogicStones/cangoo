@@ -26,7 +26,7 @@ namespace Services
                 {
                     foreach (var item in result)
                     {
-                        if (DateTime.Compare(DateTime.Parse((Convert.ToDateTime(item.ExpiryDate).ToString())), DateTime.Parse(getUtcDateTime().ToString())) > 0)
+                        if (DateTime.Compare(DateTime.Parse((Convert.ToDateTime(item.ExpiryDate).ToString())), DateTime.Parse(DateTime.UtcNow.ToString())) > 0)
                         {
                             lstPromoCodeDetails.Add(new PromoCodeDetails
                             {
@@ -47,69 +47,98 @@ namespace Services
             }
         }
 
-        public static async Task<AddUserPromoResponse> AddUserPromoCode(AddPromoCode model)
+        public static async Task<ResponseWrapper> AddUserPromoCode(AddPromoCodeRequest model)
         {
             using (CangooEntities dbcontext = new CangooEntities())
             {
-                var promo = dbcontext.PromoManagers.Where(x => x.PromoCode == model.PromoCode && x.IsActive == true).FirstOrDefault();
-                if (promo != null)
+                var promo = dbcontext.PromoManagers.Where(x => x.PromoCode.Equals(model.PromoCode) && x.IsActive == true).FirstOrDefault();
+                if (promo == null)
                 {
-                    if (DateTime.Compare(DateTime.Parse((Convert.ToDateTime(promo.ExpiryDate).ToString())), DateTime.Parse(getUtcDateTime().ToString())) > 0)
+                    return new ResponseWrapper
                     {
-                        var AppID = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString());
-                        var userpromos = dbcontext.UserPromos.Where(x => x.UserID.ToLower().Equals(model.PassengerId.ToLower())).ToList();
-                        var alreadyApplied = userpromos.Where(up => up.PromoID == promo.PromoID).FirstOrDefault();
-                        if (alreadyApplied != null)
-                        {
-                            if (alreadyApplied.NoOfUsage < promo.Repetition)
-                            {
-                                return new AddUserPromoResponse
-                                {
-                                    Amount = string.Format("{0:0.00}", promo.Amount),
-                                    PromoType = (bool)promo.isFixed ? "Fixed" : "Percentage",
-                                    PromoCode = model.PromoCode,
-                                    ExpiryDate = ((DateTime)promo.ExpiryDate).ToString(),
-                                    AllowedRepition = promo.Repetition.ToString(),
-                                    NoOfUsage = alreadyApplied.NoOfUsage.ToString(),
-                                };
-                            }
-                        }
-                        else
-                        {
-                            var promodata = new UserPromo
-                            {
-                                ID = Guid.NewGuid(),
-                                isActive = true,
-                                UserID = model.PassengerId,
-                                PromoID = promo.PromoID,
-                                ApplicationID = AppID,
-                                NoOfUsage = 0
-                            };
-
-                            dbcontext.UserPromos.Add(promodata);
-                            await dbcontext.SaveChangesAsync();
-                            
-                            return new AddUserPromoResponse
-                            {
-                                Amount = string.Format("{0:0.00}", promo.Amount),
-                                PromoType = (bool)promo.isFixed ? "Fixed" : "Percentage",
-                                PromoCode = model.PromoCode,
-                                ExpiryDate = ((DateTime)promo.ExpiryDate).ToString(),
-                                AllowedRepition = promo.Repetition.ToString(),
-                                NoOfUsage = promodata.NoOfUsage.ToString()
-                            };
-                        }
-                    }
+                        Message = ResponseKeys.invalidPromo,
+                    };
                 }
 
-                return null;
+                if (DateTime.Compare(DateTime.Parse(Convert.ToDateTime(promo.ExpiryDate).ToString()), DateTime.Parse(DateTime.UtcNow.ToString())) < 0)
+                {
+                    return new ResponseWrapper
+                    {
+                        Message = ResponseKeys.promoExpired,
+                    };
+                }
+
+                var AppID = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString());
+                var userpromos = dbcontext.UserPromos.Where(x => x.UserID.ToLower().Equals(model.PassengerId.ToLower())).ToList();
+                var alreadyApplied = userpromos.Where(up => up.PromoID == promo.PromoID).FirstOrDefault();
+
+                if (alreadyApplied == null)
+                {
+                    var promodata = new UserPromo
+                    {
+                        ID = Guid.NewGuid(),
+                        isActive = true,
+                        UserID = model.PassengerId,
+                        PromoID = promo.PromoID,
+                        ApplicationID = AppID,
+                        NoOfUsage = 0
+                    };
+
+                    dbcontext.UserPromos.Add(promodata);
+                    await dbcontext.SaveChangesAsync();
+
+                    return new ResponseWrapper
+                    {
+                        Error = false,
+                        Message = ResponseKeys.msgSuccess,
+                        Data = new AddUserPromoResponse
+                        {
+                            Amount = string.Format("{0:0.00}", promo.Amount),
+                            PromoType = (bool)promo.isFixed ? "Fixed" : "Percentage",
+                            PromoCode = model.PromoCode,
+                            ExpiryDate = ((DateTime)promo.ExpiryDate).ToString(),
+                            AllowedRepition = promo.Repetition.ToString(),
+                            NoOfUsage = promodata.NoOfUsage.ToString()
+                        }
+                    };
+                }
+
+                if (alreadyApplied.NoOfUsage >= promo.Repetition)
+                {
+                    return new ResponseWrapper
+                    {
+                        Message = ResponseKeys.promoLimitExceeded
+                    };
+                }
+                else
+                {
+                    return new ResponseWrapper
+                    {
+                        Error = false,
+                        Message = ResponseKeys.msgSuccess,
+                        Data = new AddUserPromoResponse
+                        {
+                            Amount = string.Format("{0:0.00}", promo.Amount),
+                            PromoType = (bool)promo.isFixed ? "Fixed" : "Percentage",
+                            PromoCode = model.PromoCode,
+                            ExpiryDate = ((DateTime)promo.ExpiryDate).ToString(),
+                            AllowedRepition = promo.Repetition.ToString(),
+                            NoOfUsage = alreadyApplied.NoOfUsage.ToString(),
+                        }
+                    };
+                }
             }
         }
-        
 
-        public static DateTime getUtcDateTime()
+        public static async Task<int> UpdateTripPromo(string promoCodeId, string tripId, string passengerId)
         {
-            return DateTime.UtcNow;
+            using (CangooEntities dbcontext = new CangooEntities())
+            {
+                return await dbcontext.Database.ExecuteSqlCommandAsync("UPDATE Trips SET PromoCodeID = @promocodeid WHERE TripID = @tripId AND UserID = @passengerId",
+                                                                                      new SqlParameter("@promocodeid", promoCodeId),
+                                                                                      new SqlParameter("@tripId", tripId),
+                                                                                      new SqlParameter("@passengerId", passengerId));
+            }
         }
     }
 }

@@ -702,7 +702,7 @@
           <Property Name="ModuleName" Type="nvarchar" MaxLength="200" Nullable="false" />
           <Property Name="ModulePrice" Type="money" />
         </EntityType>
-        <EntityType Name="NewsFeed">
+        <EntityType Name="Notifications">
           <Key>
             <PropertyRef Name="FeedID" />
           </Key>
@@ -714,26 +714,6 @@
           <Property Name="ExpiryDate" Type="datetime" Nullable="false" />
           <Property Name="ApplicationUserTypeID" Type="int" Nullable="false" />
           <Property Name="ApplicationID" Type="uniqueidentifier" Nullable="false" />
-        </EntityType>
-        <EntityType Name="Notifications">
-          <Key>
-            <PropertyRef Name="PopupID" />
-          </Key>
-          <Property Name="PopupID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
-          <Property Name="ReceiverID" Type="int" Nullable="false" />
-          <Property Name="Title" Type="varchar(max)" />
-          <Property Name="RidirectURL" Type="varchar(max)" />
-          <Property Name="Text" Type="varchar(max)" />
-          <Property Name="LinkButtonText" Type="varchar" MaxLength="50" />
-          <Property Name="StartDate" Type="datetime" />
-          <Property Name="Image" Type="varchar" MaxLength="200" />
-          <Property Name="ExpiryDate" Type="datetime" />
-          <Property Name="ButtonText" Type="varchar" MaxLength="50" />
-          <Property Name="ApplicationID" Type="uniqueidentifier" />
-          <Property Name="ResellerId" Type="uniqueidentifier" />
-          <Property Name="CreatedAt" Type="datetime" />
-          <Property Name="UserID" Type="uniqueidentifier" />
-          <Property Name="IsActive" Type="bit" Nullable="false" />
         </EntityType>
         <EntityType Name="PassengerPlaces">
           <Key>
@@ -780,6 +760,26 @@
           <Property Name="ApplicationId" Type="uniqueidentifier" />
           <Property Name="ResellerId" Type="uniqueidentifier" />
         </EntityType>
+        <EntityType Name="Popups">
+          <Key>
+            <PropertyRef Name="PopupID" />
+          </Key>
+          <Property Name="PopupID" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ReceiverID" Type="int" Nullable="false" />
+          <Property Name="Title" Type="varchar(max)" />
+          <Property Name="RidirectURL" Type="varchar(max)" />
+          <Property Name="Text" Type="varchar(max)" />
+          <Property Name="LinkButtonText" Type="varchar" MaxLength="50" />
+          <Property Name="StartDate" Type="datetime" />
+          <Property Name="Image" Type="varchar" MaxLength="200" />
+          <Property Name="ExpiryDate" Type="datetime" />
+          <Property Name="ButtonText" Type="varchar" MaxLength="50" />
+          <Property Name="ApplicationID" Type="uniqueidentifier" />
+          <Property Name="ResellerId" Type="uniqueidentifier" />
+          <Property Name="CreatedAt" Type="datetime" />
+          <Property Name="UserID" Type="uniqueidentifier" />
+          <Property Name="IsActive" Type="bit" Nullable="false" />
+        </EntityType>
         <EntityType Name="PriorityHourLog">
           <Key>
             <PropertyRef Name="PriorityHourLogID" />
@@ -808,6 +808,7 @@
           <Property Name="ApplicationID" Type="uniqueidentifier" Nullable="false" />
           <Property Name="Repetition" Type="int" Nullable="false" />
           <Property Name="IsActive" Type="bit" />
+          <Property Name="WishCarAmount" Type="money" />
         </EntityType>
         <EntityType Name="PublicHolidays">
           <Key>
@@ -976,18 +977,6 @@
           <Property Name="WeekendIsFixed" Type="bit" Nullable="false" />
           <Property Name="MorningIsFixed" Type="bit" Nullable="false" />
           <Property Name="EveningIsFixed" Type="bit" Nullable="false" />
-        </EntityType>
-        <EntityType Name="RideServicesFareRanges">
-          <Key>
-            <PropertyRef Name="RangeID" />
-          </Key>
-          <Property Name="RangeID" Type="uniqueidentifier" Nullable="false" />
-          <Property Name="Range" Type="varchar" MaxLength="50" />
-          <Property Name="Charges" Type="money" />
-          <Property Name="RSFMID" Type="uniqueidentifier" />
-          <Property Name="ApplicationID" Type="uniqueidentifier" />
-          <Property Name="ShiftID" Type="int" />
-          <Property Name="ResellerId" Type="uniqueidentifier" />
         </EntityType>
         <EntityType Name="RideServicesShift">
           <Key>
@@ -1921,7 +1910,7 @@
           <Parameter Name="HotelId" Type="uniqueidentifier" Mode="In" />
           <Parameter Name="VehicleId" Type="uniqueidentifier" Mode="In" />
         </Function>
-        <Function Name="FetchNewsFeed" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+        <Function Name="FetchNotification" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="DisplayLength" Type="int" Mode="In" />
           <Parameter Name="DisplayStart" Type="int" Mode="In" />
           <Parameter Name="SortCol" Type="int" Mode="In" />
@@ -1959,7 +1948,7 @@
           <Parameter Name="Search" Type="nvarchar" Mode="In" />
           <Parameter Name="applicationID" Type="uniqueidentifier" Mode="In" />
         </Function>
-        <Function Name="FetchPopUpNotification" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+        <Function Name="FetchPopUp" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="DisplayLength" Type="int" Mode="In" />
           <Parameter Name="DisplayStart" Type="int" Mode="In" />
           <Parameter Name="SortCol" Type="int" Mode="In" />
@@ -2641,13 +2630,13 @@
           <EntitySet Name="Languages" EntityType="Self.Languages" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="LogCaptainOnlineVehicle" EntityType="Self.LogCaptainOnlineVehicle" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Modules" EntityType="Self.Modules" Schema="dbo" store:Type="Tables" />
-          <EntitySet Name="NewsFeed" EntityType="Self.NewsFeed" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Notifications" EntityType="Self.Notifications" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PassengerPlaces" EntityType="Self.PassengerPlaces" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PaymentModes" EntityType="Self.PaymentModes" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PaymentStatus" EntityType="Self.PaymentStatus" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PaymentTypes" EntityType="Self.PaymentTypes" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PlacesType" EntityType="Self.PlacesType" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Popups" EntityType="Self.Popups" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PriorityHourLog" EntityType="Self.PriorityHourLog" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PromoManager" EntityType="Self.PromoManager" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="PublicHolidays" EntityType="Self.PublicHolidays" Schema="dbo" store:Type="Tables" />
@@ -2659,7 +2648,6 @@
           <EntitySet Name="RideServicesAreaCategoryFare" EntityType="Self.RideServicesAreaCategoryFare" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesDistanceRanges" EntityType="Self.RideServicesDistanceRanges" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesFareManager" EntityType="Self.RideServicesFareManager" Schema="dbo" store:Type="Tables" />
-          <EntitySet Name="RideServicesFareRanges" EntityType="Self.RideServicesFareRanges" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesShift" EntityType="Self.RideServicesShift" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="RideServicesTimeRanges" EntityType="Self.RideServicesTimeRanges" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Settings" EntityType="Self.Settings" Schema="dbo" store:Type="Tables" />
@@ -3846,6 +3834,22 @@
             <Parameter Name="LogIndateTime" Mode="In" Type="DateTime" />
             <Parameter Name="status" Mode="In" Type="Boolean" />
           </FunctionImport>
+          <FunctionImport Name="FetchNotification" ReturnType="Collection(CangooModel.FetchNotification_Result)">
+            <Parameter Name="DisplayLength" Mode="In" Type="Int32" />
+            <Parameter Name="DisplayStart" Mode="In" Type="Int32" />
+            <Parameter Name="SortCol" Mode="In" Type="Int32" />
+            <Parameter Name="SortOrder" Mode="In" Type="String" />
+            <Parameter Name="Search" Mode="In" Type="String" />
+            <Parameter Name="ApplicationID" Mode="In" Type="Guid" />
+          </FunctionImport>
+          <FunctionImport Name="FetchPopUp" ReturnType="Collection(CangooModel.FetchPopUp_Result)">
+            <Parameter Name="DisplayLength" Mode="In" Type="Int32" />
+            <Parameter Name="DisplayStart" Mode="In" Type="Int32" />
+            <Parameter Name="SortCol" Mode="In" Type="Int32" />
+            <Parameter Name="SortOrder" Mode="In" Type="String" />
+            <Parameter Name="Search" Mode="In" Type="String" />
+            <Parameter Name="applicationID" Mode="In" Type="Guid" />
+          </FunctionImport>
           <EntitySet Name="Agreements" EntityType="CangooModel.Agreement" />
           <EntitySet Name="AgreementTypes" EntityType="CangooModel.AgreementType" />
           <EntitySet Name="Applications" EntityType="CangooModel.Application" />
@@ -3886,13 +3890,13 @@
           <EntitySet Name="Languages" EntityType="CangooModel.Language" />
           <EntitySet Name="LogCaptainOnlineVehicles" EntityType="CangooModel.LogCaptainOnlineVehicle" />
           <EntitySet Name="Modules" EntityType="CangooModel.Module" />
-          <EntitySet Name="NewsFeeds" EntityType="CangooModel.NewsFeed" />
           <EntitySet Name="Notifications" EntityType="CangooModel.Notification" />
           <EntitySet Name="PassengerPlaces" EntityType="CangooModel.PassengerPlace" />
           <EntitySet Name="PaymentModes" EntityType="CangooModel.PaymentMode" />
           <EntitySet Name="PaymentStatus" EntityType="CangooModel.PaymentStatu" />
           <EntitySet Name="PaymentTypes" EntityType="CangooModel.PaymentType" />
           <EntitySet Name="PlacesTypes" EntityType="CangooModel.PlacesType" />
+          <EntitySet Name="Popups" EntityType="CangooModel.Popup" />
           <EntitySet Name="PriorityHourLogs" EntityType="CangooModel.PriorityHourLog" />
           <EntitySet Name="PromoManagers" EntityType="CangooModel.PromoManager" />
           <EntitySet Name="PublicHolidays" EntityType="CangooModel.PublicHoliday" />
@@ -3904,7 +3908,6 @@
           <EntitySet Name="RideServicesAreaCategoryFares" EntityType="CangooModel.RideServicesAreaCategoryFare" />
           <EntitySet Name="RideServicesDistanceRanges" EntityType="CangooModel.RideServicesDistanceRanx" />
           <EntitySet Name="RideServicesFareManagers" EntityType="CangooModel.RideServicesFareManager" />
-          <EntitySet Name="RideServicesFareRanges" EntityType="CangooModel.RideServicesFareRanx" />
           <EntitySet Name="RideServicesShifts" EntityType="CangooModel.RideServicesShift" />
           <EntitySet Name="RideServicesTimeRanges" EntityType="CangooModel.RideServicesTimeRanx" />
           <EntitySet Name="Settings" EntityType="CangooModel.Setting" />
@@ -6093,6 +6096,29 @@
           <Property Type="String" Name="RegistrationYear" Nullable="true" MaxLength="10" />
           <Property Type="Guid" Name="CompanyID" Nullable="true" />
         </ComplexType>
+        <ComplexType Name="FetchNotification_Result">
+          <Property Type="Int64" Name="RowNo" Nullable="true" />
+          <Property Type="Int32" Name="Total" Nullable="true" />
+          <Property Type="Guid" Name="FeedID" Nullable="false" />
+          <Property Type="Guid" Name="ApplicationID" Nullable="false" />
+          <Property Type="String" Name="CreationDate" Nullable="true" MaxLength="30" />
+          <Property Type="String" Name="Detail" Nullable="false" />
+          <Property Type="String" Name="ExpiryDate" Nullable="true" MaxLength="30" />
+          <Property Type="String" Name="ShortDescription" Nullable="false" MaxLength="500" />
+          <Property Type="String" Name="Title" Nullable="false" MaxLength="100" />
+          <Property Type="Int32" Name="ApplicationUserTypeID" Nullable="false" />
+          <Property Type="String" Name="UserType" Nullable="true" MaxLength="9" />
+        </ComplexType>
+        <ComplexType Name="FetchPopUp_Result">
+          <Property Type="Int64" Name="RowNo" Nullable="true" />
+          <Property Type="Int32" Name="Total" Nullable="true" />
+          <Property Type="String" Name="PopupID" Nullable="true" MaxLength="128" />
+          <Property Type="String" Name="Title" Nullable="true" />
+          <Property Type="String" Name="Name" Nullable="false" MaxLength="256" />
+          <Property Type="String" Name="StartDate" Nullable="true" MaxLength="10" />
+          <Property Type="String" Name="ExpiryDate" Nullable="true" MaxLength="10" />
+          <Property Type="Boolean" Name="IsActive" Nullable="false" />
+        </ComplexType>
         <EntityType Name="Agreement">
           <Key>
             <PropertyRef Name="AgreementID" />
@@ -6788,7 +6814,7 @@
           <Property Name="ModuleName" Type="String" Nullable="false" MaxLength="200" FixedLength="false" Unicode="true" />
           <Property Name="ModulePrice" Type="Decimal" Precision="19" Scale="4" />
         </EntityType>
-        <EntityType Name="NewsFeed">
+        <EntityType Name="Notification">
           <Key>
             <PropertyRef Name="FeedID" />
           </Key>
@@ -6800,26 +6826,6 @@
           <Property Name="ExpiryDate" Type="DateTime" Nullable="false" Precision="3" />
           <Property Name="ApplicationUserTypeID" Type="Int32" Nullable="false" />
           <Property Name="ApplicationID" Type="Guid" Nullable="false" />
-        </EntityType>
-        <EntityType Name="Notification">
-          <Key>
-            <PropertyRef Name="PopupID" />
-          </Key>
-          <Property Name="PopupID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
-          <Property Name="ReceiverID" Type="Int32" Nullable="false" />
-          <Property Name="Title" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
-          <Property Name="RidirectURL" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
-          <Property Name="Text" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
-          <Property Name="LinkButtonText" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="StartDate" Type="DateTime" Precision="3" />
-          <Property Name="Image" Type="String" MaxLength="200" FixedLength="false" Unicode="false" />
-          <Property Name="ExpiryDate" Type="DateTime" Precision="3" />
-          <Property Name="ButtonText" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="ApplicationID" Type="Guid" />
-          <Property Name="ResellerId" Type="Guid" />
-          <Property Name="CreatedAt" Type="DateTime" Precision="3" />
-          <Property Name="UserID" Type="Guid" />
-          <Property Name="IsActive" Type="Boolean" Nullable="false" />
         </EntityType>
         <EntityType Name="PassengerPlace">
           <Key>
@@ -6866,6 +6872,26 @@
           <Property Name="ApplicationId" Type="Guid" />
           <Property Name="ResellerId" Type="Guid" />
         </EntityType>
+        <EntityType Name="Popup">
+          <Key>
+            <PropertyRef Name="PopupID" />
+          </Key>
+          <Property Name="PopupID" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ReceiverID" Type="Int32" Nullable="false" />
+          <Property Name="Title" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="RidirectURL" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="Text" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="LinkButtonText" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="StartDate" Type="DateTime" Precision="3" />
+          <Property Name="Image" Type="String" MaxLength="200" FixedLength="false" Unicode="false" />
+          <Property Name="ExpiryDate" Type="DateTime" Precision="3" />
+          <Property Name="ButtonText" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="ApplicationID" Type="Guid" />
+          <Property Name="ResellerId" Type="Guid" />
+          <Property Name="CreatedAt" Type="DateTime" Precision="3" />
+          <Property Name="UserID" Type="Guid" />
+          <Property Name="IsActive" Type="Boolean" Nullable="false" />
+        </EntityType>
         <EntityType Name="PriorityHourLog">
           <Key>
             <PropertyRef Name="PriorityHourLogID" />
@@ -6894,6 +6920,7 @@
           <Property Name="ApplicationID" Type="Guid" Nullable="false" />
           <Property Name="Repetition" Type="Int32" Nullable="false" />
           <Property Name="IsActive" Type="Boolean" />
+          <Property Name="WishCarAmount" Type="Decimal" Precision="19" Scale="4" />
         </EntityType>
         <EntityType Name="PublicHoliday">
           <Key>
@@ -7062,18 +7089,6 @@
           <Property Name="WeekendIsFixed" Type="Boolean" Nullable="false" />
           <Property Name="MorningIsFixed" Type="Boolean" Nullable="false" />
           <Property Name="EveningIsFixed" Type="Boolean" Nullable="false" />
-        </EntityType>
-        <EntityType Name="RideServicesFareRanx">
-          <Key>
-            <PropertyRef Name="RangeID" />
-          </Key>
-          <Property Name="RangeID" Type="Guid" Nullable="false" />
-          <Property Name="Range" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="Charges" Type="Decimal" Precision="19" Scale="4" />
-          <Property Name="RSFMID" Type="Guid" />
-          <Property Name="ApplicationID" Type="Guid" />
-          <Property Name="ShiftID" Type="Int32" />
-          <Property Name="ResellerId" Type="Guid" />
         </EntityType>
         <EntityType Name="RideServicesShift">
           <Key>
@@ -8543,23 +8558,6 @@
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>
-          <FunctionImportMapping FunctionImportName="FetchNewsFeed" FunctionName="CangooModel.Store.FetchNewsFeed">
-            <ResultMapping>
-              <ComplexTypeMapping TypeName="CangooModel.FetchNewsFeed_Result">
-                <ScalarProperty Name="RowNo" ColumnName="RowNo" />
-                <ScalarProperty Name="Total" ColumnName="Total" />
-                <ScalarProperty Name="FeedID" ColumnName="FeedID" />
-                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
-                <ScalarProperty Name="CreationDate" ColumnName="CreationDate" />
-                <ScalarProperty Name="Detail" ColumnName="Detail" />
-                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
-                <ScalarProperty Name="ShortDescription" ColumnName="ShortDescription" />
-                <ScalarProperty Name="Title" ColumnName="Title" />
-                <ScalarProperty Name="ApplicationUserTypeID" ColumnName="ApplicationUserTypeID" />
-                <ScalarProperty Name="UserType" ColumnName="UserType" />
-              </ComplexTypeMapping>
-            </ResultMapping>
-          </FunctionImportMapping>
           <FunctionImportMapping FunctionImportName="FetchPassengerAnnualSpendingAndRides" FunctionName="CangooModel.Store.FetchPassengerAnnualSpendingAndRides">
             <ResultMapping>
               <ComplexTypeMapping TypeName="CangooModel.FetchPassengerAnnualSpendingAndRides_Result">
@@ -9965,19 +9963,6 @@
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>
-          <FunctionImportMapping FunctionImportName="FetchPopUpNotification" FunctionName="CangooModel.Store.FetchPopUpNotification">
-            <ResultMapping>
-              <ComplexTypeMapping TypeName="CangooModel.FetchPopUpNotification_Result">
-                <ScalarProperty Name="RowNo" ColumnName="RowNo" />
-                <ScalarProperty Name="Total" ColumnName="Total" />
-                <ScalarProperty Name="PopupID" ColumnName="PopupID" />
-                <ScalarProperty Name="Title" ColumnName="Title" />
-                <ScalarProperty Name="Name" ColumnName="Name" />
-                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
-                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
-              </ComplexTypeMapping>
-            </ResultMapping>
-          </FunctionImportMapping>
           <FunctionImportMapping FunctionImportName="FetchRideServiceArea" FunctionName="CangooModel.Store.FetchRideServiceArea">
             <ResultMapping>
               <ComplexTypeMapping TypeName="CangooModel.FetchRideServiceArea_Result">
@@ -10233,6 +10218,37 @@
                 <ScalarProperty Name="Facilities" ColumnName="Facilities" />
                 <ScalarProperty Name="RegistrationYear" ColumnName="RegistrationYear" />
                 <ScalarProperty Name="CompanyID" ColumnName="CompanyID" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="FetchNotification" FunctionName="CangooModel.Store.FetchNotification">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CangooModel.FetchNotification_Result">
+                <ScalarProperty Name="RowNo" ColumnName="RowNo" />
+                <ScalarProperty Name="Total" ColumnName="Total" />
+                <ScalarProperty Name="FeedID" ColumnName="FeedID" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="CreationDate" ColumnName="CreationDate" />
+                <ScalarProperty Name="Detail" ColumnName="Detail" />
+                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
+                <ScalarProperty Name="ShortDescription" ColumnName="ShortDescription" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="ApplicationUserTypeID" ColumnName="ApplicationUserTypeID" />
+                <ScalarProperty Name="UserType" ColumnName="UserType" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="FetchPopUp" FunctionName="CangooModel.Store.FetchPopUp">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CangooModel.FetchPopUp_Result">
+                <ScalarProperty Name="RowNo" ColumnName="RowNo" />
+                <ScalarProperty Name="Total" ColumnName="Total" />
+                <ScalarProperty Name="PopupID" ColumnName="PopupID" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
+                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>
@@ -10963,9 +10979,9 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="NewsFeeds">
-            <EntityTypeMapping TypeName="CangooModel.NewsFeed">
-              <MappingFragment StoreEntitySet="NewsFeed">
+          <EntitySetMapping Name="Notifications">
+            <EntityTypeMapping TypeName="CangooModel.Notification">
+              <MappingFragment StoreEntitySet="Notifications">
                 <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
                 <ScalarProperty Name="ApplicationUserTypeID" ColumnName="ApplicationUserTypeID" />
                 <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
@@ -10974,27 +10990,6 @@
                 <ScalarProperty Name="ShortDescription" ColumnName="ShortDescription" />
                 <ScalarProperty Name="Title" ColumnName="Title" />
                 <ScalarProperty Name="FeedID" ColumnName="FeedID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="Notifications">
-            <EntityTypeMapping TypeName="CangooModel.Notification">
-              <MappingFragment StoreEntitySet="Notifications">
-                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
-                <ScalarProperty Name="UserID" ColumnName="UserID" />
-                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
-                <ScalarProperty Name="ResellerId" ColumnName="ResellerId" />
-                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
-                <ScalarProperty Name="ButtonText" ColumnName="ButtonText" />
-                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
-                <ScalarProperty Name="Image" ColumnName="Image" />
-                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
-                <ScalarProperty Name="LinkButtonText" ColumnName="LinkButtonText" />
-                <ScalarProperty Name="Text" ColumnName="Text" />
-                <ScalarProperty Name="RidirectURL" ColumnName="RidirectURL" />
-                <ScalarProperty Name="Title" ColumnName="Title" />
-                <ScalarProperty Name="ReceiverID" ColumnName="ReceiverID" />
-                <ScalarProperty Name="PopupID" ColumnName="PopupID" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
@@ -11048,6 +11043,27 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
+          <EntitySetMapping Name="Popups">
+            <EntityTypeMapping TypeName="CangooModel.Popup">
+              <MappingFragment StoreEntitySet="Popups">
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="CreatedAt" ColumnName="CreatedAt" />
+                <ScalarProperty Name="ResellerId" ColumnName="ResellerId" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="ButtonText" ColumnName="ButtonText" />
+                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
+                <ScalarProperty Name="Image" ColumnName="Image" />
+                <ScalarProperty Name="StartDate" ColumnName="StartDate" />
+                <ScalarProperty Name="LinkButtonText" ColumnName="LinkButtonText" />
+                <ScalarProperty Name="Text" ColumnName="Text" />
+                <ScalarProperty Name="RidirectURL" ColumnName="RidirectURL" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="ReceiverID" ColumnName="ReceiverID" />
+                <ScalarProperty Name="PopupID" ColumnName="PopupID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           <EntitySetMapping Name="PriorityHourLogs">
             <EntityTypeMapping TypeName="CangooModel.PriorityHourLog">
               <MappingFragment StoreEntitySet="PriorityHourLog">
@@ -11062,6 +11078,7 @@
           <EntitySetMapping Name="PromoManagers">
             <EntityTypeMapping TypeName="CangooModel.PromoManager">
               <MappingFragment StoreEntitySet="PromoManager">
+                <ScalarProperty Name="WishCarAmount" ColumnName="WishCarAmount" />
                 <ScalarProperty Name="IsActive" ColumnName="IsActive" />
                 <ScalarProperty Name="Repetition" ColumnName="Repetition" />
                 <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
@@ -11253,19 +11270,6 @@
                 <ScalarProperty Name="BookingFare" ColumnName="BookingFare" />
                 <ScalarProperty Name="BaseFare" ColumnName="BaseFare" />
                 <ScalarProperty Name="RSFMID" ColumnName="RSFMID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="RideServicesFareRanges">
-            <EntityTypeMapping TypeName="CangooModel.RideServicesFareRanx">
-              <MappingFragment StoreEntitySet="RideServicesFareRanges">
-                <ScalarProperty Name="ResellerId" ColumnName="ResellerId" />
-                <ScalarProperty Name="ShiftID" ColumnName="ShiftID" />
-                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
-                <ScalarProperty Name="RSFMID" ColumnName="RSFMID" />
-                <ScalarProperty Name="Charges" ColumnName="Charges" />
-                <ScalarProperty Name="Range" ColumnName="Range" />
-                <ScalarProperty Name="RangeID" ColumnName="RangeID" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>

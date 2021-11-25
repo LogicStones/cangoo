@@ -21,13 +21,13 @@ namespace DTOs.API
 
     }
 
-    public class GetPassengerPromo
+    public class GetPassengerPromoRequest
     {
         [Required]
         public string PassengerId { get; set; }
     }
 
-    public class AddPromoCode
+    public class AddPromoCodeRequest
     {
         [Required]
         public string PromoCode { get; set; }

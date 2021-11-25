@@ -37,9 +37,9 @@ namespace Services
             await PushyAPI.SendPush(push);
         }
 
-        public static async Task BroadCastNotification(Dictionary<string, string> lstToken, DriverBookingRequestNotification response)
+        public static async Task BroadCastNotification(Dictionary<string, string> lstTokenWithTone, DriverBookingRequestNotification response)
         {
-            foreach (var item in lstToken)
+            foreach (var item in lstTokenWithTone)
             {
                 string messageKey = NotificationKeys.cap_rideRequest;
                 var notification = GetiOSNotificationObject(messageKey, item.Value);

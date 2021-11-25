@@ -10,17 +10,19 @@
 namespace DatabaseModel
 {
     using System;
-    using System.Collections.Generic;
     
-    public partial class NewsFeed
+    public partial class FetchNotification_Result
     {
+        public Nullable<long> RowNo { get; set; }
+        public Nullable<int> Total { get; set; }
         public System.Guid FeedID { get; set; }
-        public string Title { get; set; }
-        public string ShortDescription { get; set; }
-        public string Detail { get; set; }
-        public System.DateTime CreationDate { get; set; }
-        public System.DateTime ExpiryDate { get; set; }
-        public int ApplicationUserTypeID { get; set; }
         public System.Guid ApplicationID { get; set; }
+        public string CreationDate { get; set; }
+        public string Detail { get; set; }
+        public string ExpiryDate { get; set; }
+        public string ShortDescription { get; set; }
+        public string Title { get; set; }
+        public int ApplicationUserTypeID { get; set; }
+        public string UserType { get; set; }
     }
 }

@@ -1,4 +1,5 @@
-﻿using DatabaseModel;
+﻿using Constants;
+using DatabaseModel;
 using DTOs.API;
 using DTOs.Shared;
 using Integrations;
@@ -11,7 +12,7 @@ namespace Services
 {
     public class WalletRechargeServices
     {
-        public static async Task<AddCouponCodeResponse> AddCouponCode(ApplyCouponCode model)
+        public static async Task<RedeemCouponCodeResponse> AddCouponCode(RedeemCouponCodeRequest model)
         {
             using (CangooEntities dbcontext = new CangooEntities())
             {
@@ -48,7 +49,7 @@ namespace Services
 
                 dbcontext.WalletTransfers.Add(wallet);
                 await dbcontext.SaveChangesAsync();
-                return new AddCouponCodeResponse
+                return new RedeemCouponCodeResponse
                 {
                     WalletBalance = userProfile.WalletBalance.ToString(),
                 };
@@ -63,7 +64,7 @@ namespace Services
             }
         }
 
-        public static async Task<GetApplicationUserResponse> IsAppUserExist(string TransferUserMobile)
+        public static async Task<CheckAppUserResponse> IsAppUserExist(string TransferUserMobile)
         {
             using (CangooEntities dbcontext = new CangooEntities())
             {
@@ -76,7 +77,7 @@ namespace Services
 
                 if (result != null)
                 {
-                    return new GetApplicationUserResponse
+                    return new CheckAppUserResponse
                     {
                         PassengerId = result.Id,
                         FirstName = result.FirstName,
@@ -91,7 +92,7 @@ namespace Services
             }
         }
 
-        public static async Task<AmountTransferByMobileResponse> TransferUsingMobile(AmountTransferByMobileNo model)
+        public static async Task<ShareWalletBalanceResponse> TransferUsingMobile(ShareWalletBalanceRequest model)
         {
             using (CangooEntities dbcontext = new CangooEntities())
             {
@@ -105,7 +106,7 @@ namespace Services
                     {
                         WalletTransfer wallet = new WalletTransfer
                         {
-                            Amount = decimal.Parse(model.Amount),
+                            Amount = decimal.Parse(model.ShareAmount),
                             RechargeDate = DateTime.UtcNow,
                             WalletTransferID = Guid.NewGuid(),
                             Referrence = "In App Wallet Transfer Using Mobile No",
@@ -120,7 +121,7 @@ namespace Services
                         {
                             if (sendingProfile.WalletBalance > 0)
                             {
-                                sendingProfile.WalletBalance -= decimal.Parse(model.Amount);
+                                sendingProfile.WalletBalance -= decimal.Parse(model.ShareAmount);
                             }
                             else
                             {
@@ -138,7 +139,7 @@ namespace Services
                             if (transferProfile.WalletBalance > 0)
                             {
                                 transferProfile.LastRechargedAt = wallet.RechargeDate;
-                                transferProfile.WalletBalance += decimal.Parse(model.Amount);
+                                transferProfile.WalletBalance += decimal.Parse(model.ShareAmount);
                             }
 
                         }
@@ -149,7 +150,7 @@ namespace Services
                         dbcontext.WalletTransfers.Add(wallet);
                         await dbcontext.SaveChangesAsync();
 
-                        return new AmountTransferByMobileResponse
+                        return new ShareWalletBalanceResponse
                         {
                             FirstName = transferProfile.FirstName,
                             LastName = transferProfile.LastName,
@@ -168,7 +169,7 @@ namespace Services
             }
         }
 
-        public static async Task<CardsWalletRechargeResponse> CardsWalletRecharge(GetCardsWalletRecharge model)
+        public static async Task<MobilePaymentWalletRechargeResponse> CardsWalletRecharge(MobilePaymentWalletRechargeRequest model)
         {
             using (CangooEntities dbcontext = new CangooEntities())
             {
@@ -193,7 +194,7 @@ namespace Services
                     dbcontext.WalletTransfers.Add(wallet);
                     await dbcontext.SaveChangesAsync();
 
-                    return new CardsWalletRechargeResponse
+                    return new MobilePaymentWalletRechargeResponse
                     {
                         Amount = wallet.Amount.ToString()
                     };
@@ -207,38 +208,57 @@ namespace Services
 
         }
 
-        public static async Task<PassengerProfileDTO> GetUserProfile(string passengerId)
+        public static async Task<ResponseWrapper> GetUserWalletDetails(string passengerId, string applicationId, string resellerId)
         {
-            var ApplicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
-            var ResellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
-            return await UserService.GetProfileAsync(passengerId, ApplicationId, ResellerId);
-        }
-
-        public static async Task<StripeCustomer> GetUserCardsDetails(PassengerProfileDTO model)
-        {
-            using (CangooEntities dbcontext=new CangooEntities())
+            using (CangooEntities dbcontext = new CangooEntities())
             {
-                if (!string.IsNullOrEmpty(model.CreditCardCustomerID))
+                var profile = await UserService.GetProfileAsync(passengerId, applicationId, resellerId);
+
+                if (!string.IsNullOrEmpty(profile.CreditCardCustomerID))
                 {
-                    var customer= StripeIntegration.GetCustomer(model.CreditCardCustomerID);
+                    var customer = StripeIntegration.GetCustomer(profile.CreditCardCustomerID);
                     if (!string.IsNullOrEmpty(customer.Id))
                     {
-                        StripeCustomer cust = new StripeCustomer()
+                        return new ResponseWrapper
                         {
-                            WalletBalance = model.WalletBalance.ToString(),
-                            CardsList = StripeIntegration.GetCardsList(customer.Id),
-                            PassengerId = customer.Id,
+                            Error = false,
+                            Message = ResponseKeys.msgSuccess,
+                            Data = new WalletDetailsResponse()
+                            {
+                                PassengerId = customer.Id,
+                                TotalWalletBalance = profile.WalletBalance.ToString(),
+                                AvailableWalletBalance = "0.00",
+                                CardsList = StripeIntegration.GetCardsList(customer.Id)
+                            }
                         };
-                        return cust;
                     }
                     else
                     {
-                        return null;
+                        return new ResponseWrapper
+                        {
+                            Message = ResponseKeys.paymentGetwayError,
+                            Data = new WalletDetailsResponse()
+                            {
+                                PassengerId = customer.Id,
+                                AvailableWalletBalance = "0.00",
+                                TotalWalletBalance = profile.WalletBalance.ToString()
+                            }
+                        };
                     }
                 }
                 else
                 {
-                    return null;
+                    return new ResponseWrapper
+                    {
+                        Error = false,
+                        Message = ResponseKeys.msgSuccess,
+                        Data = new WalletDetailsResponse()
+                        {
+                            PassengerId = passengerId,
+                            AvailableWalletBalance = "0.00",
+                            TotalWalletBalance = profile.WalletBalance.ToString(),
+                        }
+                    };
                 }
             }
         }

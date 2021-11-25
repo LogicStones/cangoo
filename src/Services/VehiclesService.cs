@@ -20,9 +20,9 @@ namespace Services
     {
         public static string GetETAByCategoryId(Dictionary<string, FirebaseDriver> onlineDrivers, string categoryId, string pickUpLatitude, string pickUpLongitude)
         {
-            string ETA = string.Empty;
+            double minDistance = 0;
             var pickUpPosition = new GeoCoordinate(double.Parse(pickUpLatitude), double.Parse(pickUpLongitude));
-            
+
             foreach (var driver in onlineDrivers)
             {
                 if (!bool.Parse(driver.Value.isBusy) && driver.Value.categoryID.Contains(categoryId))
@@ -30,18 +30,23 @@ namespace Services
                     var driverPosition = new GeoCoordinate(driver.Value.location.l[0], driver.Value.location.l[1]);
                     var distance = driverPosition.GetDistanceTo(pickUpPosition);
 
-                    if (string.IsNullOrEmpty(ETA))
+                    if (minDistance == 0)
                     {
-                        ETA = distance.ToString();
+                        minDistance = distance;
                     }
                     else
                     {
-                        if (distance < double.Parse(ETA))
-                            ETA = distance.ToString();
+                        if (distance < minDistance)
+                            minDistance = distance;
                     }
                 }
             }
-            return ETA;
+
+            //every 400 meters = 1 min
+            //time = distance / 400;
+            //time = ceil(time);
+
+            return Math.Ceiling(minDistance / 400).ToString("00");
         }
     }
 }

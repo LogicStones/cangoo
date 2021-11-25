@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
@@ -36,10 +37,15 @@ namespace DTOs.API
 	public class PassengerLoginRequest
 	{
 		[Required]
+		[DefaultValue("+923117803648")]
 		public string PhoneNumber { get; set; }
+
 		[Required]
+		[DefaultValue("12345")]
 		public string Password { get; set; }
+
 		[Required]
+		[DefaultValue("asdsadadsadasdasdasdads")]
 		public string DeviceToken { get; set; }
 	}
 

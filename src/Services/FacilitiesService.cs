@@ -14,7 +14,7 @@ namespace Services
 {
     public class FacilitiesService
     {
-        public static async Task<List<PassengerFacilitiyDTO>> GetPassengerFacilitiesList()
+        public static async Task<List<PassengerFacilityDTO>> GetPassengerFacilitiesList()
         {
             using (var context = new CangooEntities())
             {
@@ -24,11 +24,11 @@ namespace Services
                 var facilities = await context.Facilities.Where(f => f.ResellerID.ToString().Equals(resellerId) 
                 && f.ApplicationID.ToString().Equals(applicationId) 
                 && f.isActive == true).ToListAsync();
-                return AutoMapperConfig._mapper.Map<List<Facility>, List<PassengerFacilitiyDTO>>(facilities);
+                return AutoMapperConfig._mapper.Map<List<Facility>, List<PassengerFacilityDTO>>(facilities);
             }
         }
 
-        public static async Task<List<PassengerFacilitiyDTO>> GetPassengerFacilitiesDetailByIds(string subscribedFacilities)
+        public static async Task<List<PassengerFacilityDTO>> GetPassengerFacilitiesDetailByIds(string subscribedFacilities)
         {
 
             using (var context = new CangooEntities())
@@ -42,11 +42,11 @@ namespace Services
                     && f.FacilityID.ToString().Contains(subscribedFacilities)
                     && f.isActive == true).ToListAsync();
 
-                return AutoMapperConfig._mapper.Map<List<Facility>, List<PassengerFacilitiyDTO>>(facilities);
+                return AutoMapperConfig._mapper.Map<List<Facility>, List<PassengerFacilityDTO>>(facilities);
             }
         }
 
-        public static async Task<List<DriverFacilitiyDTO>> GetDriverFacilitiesList()
+        public static async Task<List<DriverFacilityDTO>> GetDriverFacilitiesList()
         {
             using (var context = new CangooEntities())
             {
@@ -56,11 +56,11 @@ namespace Services
                 var facilities = await context.Facilities.Where(f => f.ResellerID.ToString().Equals(resellerId)
                 && f.ApplicationID.ToString().Equals(applicationId)
                 && f.isActive == true).ToListAsync();
-                return AutoMapperConfig._mapper.Map<List<Facility>, List<DriverFacilitiyDTO>>(facilities);
+                return AutoMapperConfig._mapper.Map<List<Facility>, List<DriverFacilityDTO>>(facilities);
             }
         }
 
-        public static async Task<List<DriverFacilitiyDTO>> GetDriverFacilitiesDetailByIds(string subscribedFacilities)
+        public static async Task<List<DriverFacilityDTO>> GetDriverFacilitiesDetailByIds(string subscribedFacilities)
         {
 
             using (var context = new CangooEntities())
@@ -74,7 +74,7 @@ namespace Services
                     && f.FacilityID.ToString().Contains(subscribedFacilities)
                     && f.isActive == true).ToListAsync();
 
-                return AutoMapperConfig._mapper.Map<List<Facility>, List<DriverFacilitiyDTO>>(facilities);
+                return AutoMapperConfig._mapper.Map<List<Facility>, List<DriverFacilityDTO>>(facilities);
             }
         }
     }

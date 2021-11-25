@@ -11,7 +11,7 @@ namespace Services
 {
     public class InvitationService
     {
-        public static async Task<int> ApplyInvitation(ApplyInviteCode model)
+        public static async Task<int> ApplyInvitation(ApplyInviteCodeRequest model)
         {
             using (CangooEntities dbcontext = new CangooEntities())
             {

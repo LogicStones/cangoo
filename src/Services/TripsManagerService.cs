@@ -65,18 +65,7 @@ namespace Services
             }
         }
 
-        public static async Task<int> UpdateTripPromo(UpdateTripPromoCode model)
-        {
-            using (CangooEntities dbcontext=new CangooEntities())
-            {
-                return (await dbcontext.Database.ExecuteSqlCommandAsync("UPDATE Trips SET PromoCodeID = @promocodeid WHERE TripID = @tripId AND UserID = @passengerId",
-                                                                                      new SqlParameter("@promocodeid", model.PromoCodeId),
-                                                                                      new SqlParameter("@tripId", model.TripId),
-                                                                                      new SqlParameter("@passengerId", model.PassengerId)));
-            }
-        }
-
-        public static async Task<int> UpdateTripPaymentMode(UpdateTripPaymentMethod model)
+        public static async Task<int> UpdateTripPaymentMode(UpdateTripPaymentMethodRequest model)
         {
             using (CangooEntities dbcontext=new CangooEntities())
             {

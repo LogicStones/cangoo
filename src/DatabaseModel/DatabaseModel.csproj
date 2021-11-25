@@ -362,6 +362,9 @@
     <Compile Include="FetchNewsFeed_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="FetchNotification_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="FetchPassengerAnnualSpendingAndRides_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
@@ -375,6 +378,9 @@
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="FetchPopUpNotification_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="FetchPopUp_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="FetchPromoCodes_Result.cs">
@@ -491,9 +497,6 @@
     <Compile Include="Module.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
-    <Compile Include="NewsFeed.cs">
-      <DependentUpon>CangooEntities.tt</DependentUpon>
-    </Compile>
     <Compile Include="Notification.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
@@ -510,6 +513,9 @@
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="PlacesType.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Popup.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="PriorityHourLog.cs">
@@ -544,9 +550,6 @@
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="RideServicesFareManager.cs">
-      <DependentUpon>CangooEntities.tt</DependentUpon>
-    </Compile>
-    <Compile Include="RideServicesFareRanx.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
     <Compile Include="RideServicesShift.cs">

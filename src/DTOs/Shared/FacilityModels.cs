@@ -6,14 +6,14 @@ using System.Threading.Tasks;
 
 namespace DTOs.Shared
 {
-    public class PassengerFacilitiyDTO
+    public class PassengerFacilityDTO
     {
         public string FacilityID { get; set; }
         public string FacilityName { get; set; }
         public string FacilityIcon { get; set; }
     }
 
-    public class DriverFacilitiyDTO
+    public class DriverFacilityDTO
     {
         public string facilityID { get; set; }
         public string facilityName { get; set; }

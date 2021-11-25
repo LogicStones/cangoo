@@ -25,13 +25,13 @@ namespace DTOs.API
         public string CreationDate { get; set; } = "";
     }
 
-    public class GetNotificationListModel
+    public class NotificationListRequest
     {
         [Required]
         public string ReceiverId { get; set; }
     }
 
-    public class GetReadNotification
+    public class ReadNotificationRequest
     {
         [Required]
         public string FeedId { get; set; }

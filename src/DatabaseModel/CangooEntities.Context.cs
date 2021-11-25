@@ -67,13 +67,13 @@ namespace DatabaseModel
         public virtual DbSet<Language> Languages { get; set; }
         public virtual DbSet<LogCaptainOnlineVehicle> LogCaptainOnlineVehicles { get; set; }
         public virtual DbSet<Module> Modules { get; set; }
-        public virtual DbSet<NewsFeed> NewsFeeds { get; set; }
         public virtual DbSet<Notification> Notifications { get; set; }
         public virtual DbSet<PassengerPlace> PassengerPlaces { get; set; }
         public virtual DbSet<PaymentMode> PaymentModes { get; set; }
         public virtual DbSet<PaymentStatu> PaymentStatus { get; set; }
         public virtual DbSet<PaymentType> PaymentTypes { get; set; }
         public virtual DbSet<PlacesType> PlacesTypes { get; set; }
+        public virtual DbSet<Popup> Popups { get; set; }
         public virtual DbSet<PriorityHourLog> PriorityHourLogs { get; set; }
         public virtual DbSet<PromoManager> PromoManagers { get; set; }
         public virtual DbSet<PublicHoliday> PublicHolidays { get; set; }
@@ -85,7 +85,6 @@ namespace DatabaseModel
         public virtual DbSet<RideServicesAreaCategoryFare> RideServicesAreaCategoryFares { get; set; }
         public virtual DbSet<RideServicesDistanceRanx> RideServicesDistanceRanges { get; set; }
         public virtual DbSet<RideServicesFareManager> RideServicesFareManagers { get; set; }
-        public virtual DbSet<RideServicesFareRanx> RideServicesFareRanges { get; set; }
         public virtual DbSet<RideServicesShift> RideServicesShifts { get; set; }
         public virtual DbSet<RideServicesTimeRanx> RideServicesTimeRanges { get; set; }
         public virtual DbSet<Setting> Settings { get; set; }
@@ -4189,6 +4188,64 @@ namespace DatabaseModel
                 new ObjectParameter("status", typeof(bool));
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spVehicleBookedUnBooked_Result>("spVehicleBookedUnBooked", captainIDParameter, deviceTokenParameter, vehicleIDParameter, logIndateTimeParameter, statusParameter);
+        }
+    
+        public virtual ObjectResult<FetchNotification_Result> FetchNotification(Nullable<int> displayLength, Nullable<int> displayStart, Nullable<int> sortCol, string sortOrder, string search, Nullable<System.Guid> applicationID)
+        {
+            var displayLengthParameter = displayLength.HasValue ?
+                new ObjectParameter("DisplayLength", displayLength) :
+                new ObjectParameter("DisplayLength", typeof(int));
+    
+            var displayStartParameter = displayStart.HasValue ?
+                new ObjectParameter("DisplayStart", displayStart) :
+                new ObjectParameter("DisplayStart", typeof(int));
+    
+            var sortColParameter = sortCol.HasValue ?
+                new ObjectParameter("SortCol", sortCol) :
+                new ObjectParameter("SortCol", typeof(int));
+    
+            var sortOrderParameter = sortOrder != null ?
+                new ObjectParameter("SortOrder", sortOrder) :
+                new ObjectParameter("SortOrder", typeof(string));
+    
+            var searchParameter = search != null ?
+                new ObjectParameter("Search", search) :
+                new ObjectParameter("Search", typeof(string));
+    
+            var applicationIDParameter = applicationID.HasValue ?
+                new ObjectParameter("ApplicationID", applicationID) :
+                new ObjectParameter("ApplicationID", typeof(System.Guid));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<FetchNotification_Result>("FetchNotification", displayLengthParameter, displayStartParameter, sortColParameter, sortOrderParameter, searchParameter, applicationIDParameter);
+        }
+    
+        public virtual ObjectResult<FetchPopUp_Result> FetchPopUp(Nullable<int> displayLength, Nullable<int> displayStart, Nullable<int> sortCol, string sortOrder, string search, Nullable<System.Guid> applicationID)
+        {
+            var displayLengthParameter = displayLength.HasValue ?
+                new ObjectParameter("DisplayLength", displayLength) :
+                new ObjectParameter("DisplayLength", typeof(int));
+    
+            var displayStartParameter = displayStart.HasValue ?
+                new ObjectParameter("DisplayStart", displayStart) :
+                new ObjectParameter("DisplayStart", typeof(int));
+    
+            var sortColParameter = sortCol.HasValue ?
+                new ObjectParameter("SortCol", sortCol) :
+                new ObjectParameter("SortCol", typeof(int));
+    
+            var sortOrderParameter = sortOrder != null ?
+                new ObjectParameter("SortOrder", sortOrder) :
+                new ObjectParameter("SortOrder", typeof(string));
+    
+            var searchParameter = search != null ?
+                new ObjectParameter("Search", search) :
+                new ObjectParameter("Search", typeof(string));
+    
+            var applicationIDParameter = applicationID.HasValue ?
+                new ObjectParameter("applicationID", applicationID) :
+                new ObjectParameter("applicationID", typeof(System.Guid));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<FetchPopUp_Result>("FetchPopUp", displayLengthParameter, displayStartParameter, sortColParameter, sortOrderParameter, searchParameter, applicationIDParameter);
         }
     }
 }
