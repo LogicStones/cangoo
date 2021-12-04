@@ -82,6 +82,13 @@ namespace DTOs.API
 		public string TotalFare { get; set; }
 	}
 
+	public class CreditCardPaymentNotification
+	{
+		public string tripID { get; set; }
+		public string tip { get; set; }
+		public string amount { get; set; }
+	}
+
 
 	public class DriverBookingRequestNotification //: DiscountTypeDTO
 	{

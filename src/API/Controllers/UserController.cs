@@ -912,7 +912,7 @@ namespace API.Controllers
         [Route("get-wallet")]
         public async Task<HttpResponseMessage> GetWalletDetails([FromUri] WalletDetailsRequest model)
         {
-            var response = await WalletRechargeServices.GetUserWalletDetails(model.PassengerId, ApplicationID, ResellerID);
+            var response = await WalletServices.GetUserWalletDetails(model.PassengerId, ApplicationID, ResellerID);
 
             if (response.Message.Equals(ResponseKeys.paymentGetwayError))
                 return Request.CreateResponse(HttpStatusCode.NoContent, response);
@@ -924,7 +924,7 @@ namespace API.Controllers
         [Route("redeem-coupon-code")]
         public async Task<HttpResponseMessage> RedeemCouponCode([FromBody] RedeemCouponCodeRequest model)
         {
-            var resultCoupon = await WalletRechargeServices.IsValidCouponCode(model.CouponCode);
+            var resultCoupon = await WalletServices.IsValidCouponCode(model.CouponCode);
             if (resultCoupon == null)
             {
                 return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -943,7 +943,7 @@ namespace API.Controllers
             }
             else
             {
-                var WalletBalance = await WalletRechargeServices.AddCouponCode(model);
+                var WalletBalance = await WalletServices.AddCouponCode(model);
                 if (WalletBalance != null)
                 {
                     return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -968,7 +968,7 @@ namespace API.Controllers
         [Route("check-application-user")]
         public async Task<HttpResponseMessage> CheckApplicationUser([FromBody] CheckAppUserRequest model)
         {
-            var AppUser = await WalletRechargeServices.IsAppUserExist(model.ReciverMobileNo);
+            var AppUser = await WalletServices.IsAppUserExist(model.ReciverMobileNo);
             if (AppUser != null)
             {
                 return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -1006,7 +1006,7 @@ namespace API.Controllers
                 {
                     Error = false,
                     Message = ResponseKeys.msgSuccess,
-                    Data = await WalletRechargeServices.TransferUsingMobile(model)
+                    Data = await WalletServices.TransferUsingMobile(model)
                 });
 
             }
@@ -1017,7 +1017,7 @@ namespace API.Controllers
         [Route("mobile-payment-wallet-recharge")]
         public async Task<HttpResponseMessage> CardsWalletRecharge([FromBody] MobilePaymentWalletRechargeRequest model)
         {
-            var CardsWalletAmount = await WalletRechargeServices.CardsWalletRecharge(model);
+            var CardsWalletAmount = await WalletServices.CardsWalletRecharge(model);
             if (CardsWalletAmount != null)
             {
                 return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -1047,254 +1047,91 @@ namespace API.Controllers
 
         [HttpGet]   //To Add credit card on client side
         [Route("get-setup-intent-client-secret")]
-        public async Task<HttpResponseMessage> GetStripeSetupIntentClientSecret(string pID, string email, string customerID)
+        public async Task<HttpResponseMessage> GetStripeSetupIntentClientSecret([FromUri] StripeClientSecretRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
-            //try
-            //{
-            //    response.data = new Dictionary<dynamic, dynamic>() {
-            //            { "clientSecret", StripeIntegration.GetSetupIntentClientSecret(customerID, email, pID) }
-            //        };
-            //    response.error = false;
-            //    response.message = AppMessage.msgSuccess;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
-            //catch (Exception ex)
-            //{
-            //    response.error = true;
-            //    Logger.WriteLog(ex);
-            //    response.message = AppMessage.serverError;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new StripeClientSecretResponse
+                {
+
+                    ClientSecret = await WalletServices.GetSetupIntentSecret(model.CustomerId, model.Email, model.PassengerId)
+                }
+            });
         }
 
-        [HttpPost]
-        [Route("update-default-credit-card")]
-        public async Task<HttpResponseMessage> UpdateDefaultCreditCard([FromBody] string model)
-        {
-            return Request.CreateResponse(HttpStatusCode.OK);
-            //if (!string.IsNullOrEmpty(model.cardToken) && !string.IsNullOrEmpty(model.customerID))
-            //{
-            //    var cust = StripeIntegration.UpdateDefaultPaymentMethod(model.cardToken, model.customerID);
-
-            //    if (!string.IsNullOrEmpty(cust.Id))
-            //    {
-            //        StripeCustomer customer = new StripeCustomer
-            //        {
-            //            customerId = cust.Id,
-            //            defaultSourceId = cust.InvoiceSettings.DefaultPaymentMethodId,
-            //            cardsList = StripeIntegration.GetCardsList(cust.Id)
-            //        };
-
-            //        dic = new Dictionary<dynamic, dynamic>
-            //                {
-            //                    { "creditCardDetails", customer }
-            //                };
-
-            //        response.error = false;
-            //        response.message = AppMessage.msgSuccess;
-            //        response.data = dic;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
-            //    else
-            //    {
-            //        response.error = true;
-            //        response.message = AppMessage.paymentGetwayError;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
-            //}
-            //else
-            //{
-            //    response.error = true;
-            //    response.message = AppMessage.invalidParameters;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
-        }
+        //[HttpPost]
+        //[Route("update-default-credit-card")]
+        //public async Task<HttpResponseMessage> UpdateDefaultCreditCard([FromBody] UpdateDefaultCreditCardRequest model)
+        //{
+        //    return Request.CreateResponse(HttpStatusCode.OK, await WalletServices.UpdateDefaultCreditCard(model.CardToken, model.CustomerId));
+        //}
 
         [HttpPost]
         [Route("delete-credit-card")]
-        public async Task<HttpResponseMessage> DeleteCreditCard([FromBody] string model)
+        public async Task<HttpResponseMessage> DeleteCreditCard([FromBody] DeleteCreditCardRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
-            //if (!string.IsNullOrEmpty(model.cardToken) && !string.IsNullOrEmpty(model.customerID))
-            //{
-            //    var card = StripeIntegration.DeleteCard(model.cardToken, model.customerID);
-
-            //    if (!string.IsNullOrEmpty(card.Id))
-            //    {
-            //        var cust = StripeIntegration.GetCustomer(model.customerID);
-            //        if (!string.IsNullOrEmpty(cust.Id))
-            //        {
-            //            StripeCustomer customer = new StripeCustomer
-            //            {
-            //                customerId = cust.Id,
-            //                defaultSourceId = cust.InvoiceSettings.DefaultPaymentMethodId,
-            //                cardsList = StripeIntegration.GetCardsList(cust.Id)
-            //            };
-
-            //            dic = new Dictionary<dynamic, dynamic>
-            //                    {
-            //                        { "creditCardDetails", customer }
-            //                    };
-
-            //            response.error = false;
-            //            response.message = AppMessage.msgSuccess;
-            //            response.data = dic;
-
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-            //        else
-            //        {
-            //            response.error = true;
-            //            response.message = AppMessage.paymentGetwayError;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        response.error = true;
-            //        response.message = AppMessage.paymentGetwayError;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
-            //}
-            //else
-            //{
-            //    response.error = true;
-            //    response.message = AppMessage.invalidParameters;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
+            return Request.CreateResponse(HttpStatusCode.OK, WalletServices.DeleteCreditCard(model.CardToken, model.CustomerId)) ;
+            
+            
         }
 
-        [HttpPost]  //Save payment details after successful completion on client side
-        [Route("credit-card-payment")]
-        public async Task<HttpResponseMessage> CreditCardPayment([FromBody] string model)
+        [AllowAnonymous]
+        [HttpPost]
+        [Route("authorize-credit-card-payment")]
+        public async Task<HttpResponseMessage> AuthorizeCreditCardPayment([FromBody] AuthorizeCreditCardPaymentRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK);
-            //if (!string.IsNullOrEmpty(model.currency) && !string.IsNullOrEmpty(model.customerID) && !string.IsNullOrEmpty(model.isPaidClientSide) &&
-            //    (Convert.ToDouble(model.paymentTip) >= 0) && !string.IsNullOrEmpty(model.passengerID) &&
-            //    !string.IsNullOrEmpty(model.tripID) && !string.IsNullOrEmpty(model.isOverride) && !string.IsNullOrEmpty(model.fleetID) &&
-            //    !string.IsNullOrEmpty(model.promoDiscountAmount) && !string.IsNullOrEmpty(model.walletUsedAmount.ToString())
-            //    )
-            //{
+            var details = await WalletServices.AuthoizeCreditCardPayment(model.CustomerId, model.CardId, model.FareAmount);
 
-            //    bool isAlreadyPaid = CheckIfAlreadyPaid(model.tripID);
+            if (details.Status.Equals("requires_capture"))
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Error = false,
+                    Data = details,
+                    Message = ResponseKeys.msgSuccess
+                });
+            else
+            {
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+                {
+                    Data = details,
+                    Message = ResponseKeys.paymentGetwayError
+                });
+            }
+        }
 
-            //    //model.amount = TripFare + Tip
-            //    double payment = Convert.ToDouble(model.amount);
-            //    PaymentIntent paymentDetails = new PaymentIntent();
+        [AllowAnonymous]
+        [HttpPost]  
+        [Route("cancel-authorized-payment")]
+        public async Task<HttpResponseMessage> CancelAuthorizedPayment([FromBody] CancelAuthorizedCreditCardPaymentRequest model)
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, await WalletServices.CancelAuthorizedPayment(model.PaymentIntentId));
+        }
 
-            //    if (!isAlreadyPaid)
-            //    {
-            //        StripeIntegration sc = new StripeIntegration();
-            //        //1 euro is equivalent to 100 cents https://stripe.com/docs/currencies#zero-decimal
+        //[AllowAnonymous]
+        //[HttpPost]
+        //[Route("update-authorized-payment")]
+        //public async Task<HttpResponseMessage> UpdateAuthorizedPayment([FromBody] UpdateCreditCardPaymentRequest model)
+        //{
+        //    return Request.CreateResponse(HttpStatusCode.OK, await WalletServices.UpdateAuthorizedPayment(model.PaymentIntentId, model.FareAmount));
+        //}
 
-            //        if (payment > 0)
-            //        {
-            //            if (model.isPaidClientSide.ToLower().Equals("true"))
-            //            {
-            //                paymentDetails.Id = model.paymentID;
-            //                paymentDetails.Status = "succeeded";
-            //            }
-            //            else
-            //                paymentDetails = StripeIntegration.CreatePaymentIntent(model.tripID, model.customerID, (long)(float.Parse(model.amount) * 100));
-            //        }
-            //    }
 
-            //    if (isAlreadyPaid || payment == 0 || (payment > 0 && paymentDetails.Status.Equals("succeeded")))//!string.IsNullOrEmpty(paymentDetails.Id)))
-            //    {
-            //        using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-            //        {
-            //            var stripeTransactionId = payment > 0 ? "Trip CreditCard payment received. Stripe transactionId = " + paymentDetails.Id : "Trip creditcard payment. Zero payment.";
+        [AllowAnonymous]
+        [HttpPost]  
+        [Route("capture-authorized-payment-partially")]
+        public async Task<HttpResponseMessage> CaptureAuthorizedPaymentPartially([FromBody] AdjustCreditCardPaymentRequest model)
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, await WalletServices.CaptureAuthorizedPaymentPartially(model.PaymentIntentId, model.FareAmount));
+        }
 
-            //            //If already paid, trip will not update the trip data but returns required info.
-
-            //            var trip = context.spAfterMobilePayment(false,//Convert.ToBoolean(model.isOverride), 
-            //                model.tripID,
-            //                stripeTransactionId,
-            //                (int)App_Start.TripStatus.Completed,
-            //                model.passengerID,
-            //                this.ApplicationID,
-            //                (Convert.ToDouble(model.amount) - Convert.ToDouble(model.paymentTip)).ToString(),
-            //                "0.00",
-            //                model.promoDiscountAmount,
-            //                model.walletUsedAmount,
-            //                model.paymentTip.ToString(),
-            //                Common.getUtcDateTime(),
-            //                (int)App_Start.PaymentMode.CreditCard,
-            //                (int)App_Start.ResellerPaymentStatus.Paid,
-            //                model.fleetID).FirstOrDefault();
-
-            //            dic = new Dictionary<dynamic, dynamic>
-            //            {
-            //                { "tripID", model.tripID },
-            //                { "tip", model.paymentTip },
-            //                { "amount", string.Format("{0:0.00}", Convert.ToDouble(model.amount) - Convert.ToDouble(model.paymentTip) + Convert.ToDouble(model.walletUsedAmount) + Convert.ToDouble(model.promoDiscountAmount)) }
-            //            };
-
-            //            FireBaseController fc = new FireBaseController();
-            //            var task = Task.Run(async () =>
-            //            {
-            //                if (!isAlreadyPaid)
-            //                    await fc.sentSingleFCM(trip.DeviceToken, dic, "cap_paymentSuccess");
-
-            //                await fc.delTripNode(model.tripID);
-            //            });
-
-            //            fc.updateDriverStatus(trip.CaptainID.ToString(), "false", model.tripID);
-            //            //to avoid login on another device during trip
-            //            fc.addDeleteNode(true, "", "CustomerTrips/" + model.passengerID);
-
-            //            if (!isAlreadyPaid)
-            //                SendInvoice(new InvoiceModel
-            //                {
-            //                    CustomerEmail = trip.CustomerEmail,// context.AspNetUsers.Where(u => u.Id.Equals(model.passengerID)).FirstOrDefault().Email,
-            //                    TotalAmount = (Convert.ToDouble(model.amount) + Convert.ToDouble(model.walletUsedAmount) + Convert.ToDouble(model.promoDiscountAmount)).ToString(),
-            //                    WalletUsedAmount = model.walletUsedAmount,
-            //                    PromoDiscountAmount = model.promoDiscountAmount,
-            //                    CashAmount = "0",
-            //                    CaptainName = trip.CaptainName,
-            //                    CustomerName = trip.CustomerName,
-            //                    TripDate = trip.TripDate,
-            //                    InvoiceNumber = trip.InvoiceNumber,
-            //                    FleetName = trip.FleetName,
-            //                    ATUNumber = trip.FleetATUNumber,
-            //                    Street = trip.FleetAddress,
-            //                    BuildingNumber = trip.FleetBuildingNumber,
-            //                    PostCode = trip.FleetPostalCode,
-            //                    City = trip.FleetCity,
-            //                    PickUpAddress = trip.PickUpLocation,
-            //                    DropOffAddress = trip.DropOffLocation,
-            //                    CaptainUserName = trip.CaptainUserName,
-            //                    Distance = trip.DistanceInKM.ToString("0.00"),
-            //                    VehicleNumber = trip.PlateNumber,
-            //                    FleetEmail = trip.FleetEmail
-            //                });
-
-            //            response.error = false;
-            //            response.message = AppMessage.msgSuccess;
-            //            return Request.CreateResponse(HttpStatusCode.OK, response);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        response.error = true;
-            //        response.message = AppMessage.paymentGetwayError;
-            //        var dic = new Dictionary<dynamic, dynamic>
-            //        {
-            //            { "Status", paymentDetails.Status },
-            //            { "ClientSecret", paymentDetails.ClientSecret },
-            //            { "FailureMessage", paymentDetails.Description }
-            //        };
-            //        response.data = dic;
-            //        return Request.CreateResponse(HttpStatusCode.OK, response);
-            //    }
-            //}
-            //else
-            //{
-            //    response.message = AppMessage.invalidParameters;
-            //    response.error = true;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
+        [AllowAnonymous]
+        [HttpPost]  
+        [Route("capture-credit-card-payment")]
+        public async Task<HttpResponseMessage> CaptureCreditCardPayment([FromBody] CaptureCreditCardPaymentRequest model)
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, await WalletServices.CaptureAuthorizedPayment(model.PaymentIntentId));
         }
 
         #endregion

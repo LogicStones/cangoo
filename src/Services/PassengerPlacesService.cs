@@ -24,7 +24,7 @@ namespace Services
                 //    "MidwayStop1Latitude,MidwayStop1Longitude, MidwayStop1Location, MidwayStop1PostalCode " +
                 //    "FROM Trips WHERE UserID=@passengerId AND TripStatusID = @tripStatus ORDER BY ArrivalDateTime DESC",
 
-                var query = dbContext.Database.SqlQuery<PlaceDetails>("SELECT TOP(5) 'Recent PickUpLocation' Name, PickupLocationLatitude Latitude,PickupLocationLongitude Longitutde,PickUpLocation Address,PickupLocationPostalCode PostalCode " +
+                var query = dbContext.Database.SqlQuery<PlaceDetails>("SELECT TOP(5) '' Name, PickupLocationLatitude Latitude,PickupLocationLongitude Longitutde,PickUpLocation Address,PickupLocationPostalCode PostalCode " +
                     "FROM Trips WHERE UserID=@passengerId AND TripStatusID = @tripStatus ORDER BY ArrivalDateTime DESC",
                                                                                                                     new SqlParameter("@passengerId", passengerId),
                                                                                                                     new SqlParameter("@tripStatus", TripStatuses.Completed));

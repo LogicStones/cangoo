@@ -111,7 +111,7 @@
     <Compile Include="UserService.cs" />
     <Compile Include="VehiclesService.cs" />
     <Compile Include="VoucherService.cs" />
-    <Compile Include="WalletRechargeServices.cs" />
+    <Compile Include="WalletServices.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Constants\Constants.csproj">
