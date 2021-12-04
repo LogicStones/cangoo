@@ -24,10 +24,11 @@ namespace Services
                 //    "MidwayStop1Latitude,MidwayStop1Longitude, MidwayStop1Location, MidwayStop1PostalCode " +
                 //    "FROM Trips WHERE UserID=@passengerId AND TripStatusID = @tripStatus ORDER BY ArrivalDateTime DESC",
 
-                var query = dbContext.Database.SqlQuery<PlaceDetails>("SELECT TOP(5) '' Name, PickupLocationLatitude Latitude,PickupLocationLongitude Longitutde,PickUpLocation Address,PickupLocationPostalCode PostalCode " +
-                    "FROM Trips WHERE UserID=@passengerId AND TripStatusID = @tripStatus ORDER BY ArrivalDateTime DESC",
-                                                                                                                    new SqlParameter("@passengerId", passengerId),
-                                                                                                                    new SqlParameter("@tripStatus", TripStatuses.Completed));
+                var query = dbContext.Database.SqlQuery<PlaceDetails>(@"select Distinct Top(5) a.Name, a.Address, a.Latitude, a.Longitutde, a.PostalCode
+From (SELECT TOP(100) '' Name, PickupLocationLatitude Latitude,PickupLocationLongitude Longitutde,PickUpLocation Address,PickupLocationPostalCode PostalCode 
+FROM Trips WHERE UserID=@passengerId AND TripStatusID = 1 
+ORDER BY ArrivalDateTime DESC) a;", new SqlParameter("@passengerId", passengerId));
+
                 return await query.ToListAsync();
             }
         }
