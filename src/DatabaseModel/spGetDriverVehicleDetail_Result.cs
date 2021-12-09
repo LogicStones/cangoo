@@ -19,8 +19,11 @@ namespace DatabaseModel
         public string ContactNumber { get; set; }
         public string PlateNumber { get; set; }
         public Nullable<double> vehicleRating { get; set; }
+        public string Color { get; set; }
         public string Make { get; set; }
         public string Model { get; set; }
         public string DeviceToken { get; set; }
+        public string FleetAddress { get; set; }
+        public string FleetName { get; set; }
     }
 }

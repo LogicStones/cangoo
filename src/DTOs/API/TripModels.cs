@@ -1,4 +1,5 @@
-﻿using DTOs.Shared;
+﻿using Constants;
+using DTOs.Shared;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -159,13 +160,8 @@ namespace DTOs.API
         [DefaultValue("4")]
         public string SeatingCapacity { get; set; }
         
-        //[Required]
-        //[DefaultValue("Cash")]
-        //public string SelectedPaymentMethod { get; set; }
-        
         [Required]
         [DefaultValue("1")]
-        //public string SelectedPaymentMethodId { get; set; }
         public string PaymentModeId { get; set; }
 
         [Required]
@@ -220,13 +216,37 @@ namespace DTOs.API
         
         [DefaultValue("")]
         public string DriverId { get; set; }
-        
 
         [DefaultValue("")]
         public string RequiredFacilities { get; set; }
         
         [DefaultValue("")]
         public string DeviceToken { get; set; }
+
+        [DefaultValue("0.00")]
+        public string WalletBalance { get; set; }
+
+        //credit card payment related
+
+        [DefaultValue("cus_Ki0HplO99Pjr5L")]
+        public string CustomerId { get; set; }
+        
+        [DefaultValue("card_1K2g2vJeFP4nLZjMXR3F3fDr")]
+        public string CardId { get; set; }
+
+        [DefaultValue("Visa")]
+        public string Brand { get; set; }
+
+        [DefaultValue("4242")]
+        public string Last4Digits { get; set; }        
+
+        [DefaultValue("EUR")]
+        public string Currency { get; set; }
+
+        [DefaultValue("False")]
+        public string IsPaidClientSide { get; set; }
+
+        public string PaymentId { get; set; }
     }
 
     public class BookTripResponse : DiscountTypeDTO
@@ -234,6 +254,7 @@ namespace DTOs.API
         public string RequestTime { get; set; } = "";
         public string TripId { get; set; } = "";
         public string IsLaterBooking { get; set; } = "";
+        public CreditCardPaymentInent CreditCardPaymentDetils { get; set; } = new CreditCardPaymentInent();
     }
 
     public class TripRequestLogDTO

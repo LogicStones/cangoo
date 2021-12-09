@@ -104,5 +104,7 @@ namespace DatabaseModel
         public string PickupLocationPostalCode { get; set; }
         public string DropOffLocationPostalCode { get; set; }
         public string MidwayStop1PostalCode { get; set; }
+        public string CreditCardPaymentIntent { get; set; }
+        public Nullable<bool> isSpecialPromotionApplied { get; set; }
     }
 }

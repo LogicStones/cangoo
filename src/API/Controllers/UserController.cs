@@ -883,9 +883,7 @@ namespace API.Controllers
         [Route("apply-trip-promo-code")]
         public async Task<HttpResponseMessage> ApplyTripPromoCode([FromBody] ApplyPromoCodeRequest model)
         {
-            var result = await PromoCodeService.UpdateTripPromo(model.PromoCodeId, model.TripId, model.PassengerId);
-
-            if (result == 0)
+            if (await PromoCodeService.UpdateTripPromo(model.PromoCodeId, model.TripId, model.PassengerId) == 0)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper
                 {
@@ -924,51 +922,14 @@ namespace API.Controllers
         [Route("redeem-coupon-code")]
         public async Task<HttpResponseMessage> RedeemCouponCode([FromBody] RedeemCouponCodeRequest model)
         {
-            var resultCoupon = await WalletServices.IsValidCouponCode(model.CouponCode);
-            if (resultCoupon == null)
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = true,
-                    Message = ResponseKeys.invalidCouponCode,
-                });
-            }
-            else if (resultCoupon.isUsed)
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = true,
-                    Message = ResponseKeys.couponCodeAlreadyApplied,
-                });
-            }
-            else
-            {
-                var WalletBalance = await WalletServices.AddCouponCode(model);
-                if (WalletBalance != null)
-                {
-                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                    {
-                        Error = false,
-                        Message = ResponseKeys.msgSuccess,
-                        Data = WalletBalance,
-                    });
-                }
-                else
-                {
-                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                    {
-                        Error = true,
-                        Message = ResponseKeys.notFound,
-                    });
-                }
-            }
+            return Request.CreateResponse(HttpStatusCode.OK, await WalletServices.AddCouponCode(model.PassengerId, model.CouponCode));
         }
 
         [HttpPost]
         [Route("check-application-user")]
         public async Task<HttpResponseMessage> CheckApplicationUser([FromBody] CheckAppUserRequest model)
         {
-            var AppUser = await WalletServices.IsAppUserExist(model.ReciverMobileNo);
+            var AppUser = await WalletServices.IsAppUserExist(model.ReceiverMobileNo);
             if (AppUser != null)
             {
                 return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -992,25 +953,12 @@ namespace API.Controllers
         [Route("transfer-wallet-balance")]
         public async Task<HttpResponseMessage> TransferWalletBalance([FromBody] ShareWalletBalanceRequest model)
         {
-            if (int.Parse(model.ShareAmount) > int.Parse(model.TotalWalletBalance))
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = true,
-                    Message = ResponseKeys.notEnoughBalance,
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                    Data = await WalletServices.TransferUsingMobile(model)
-                });
-
-            }
-
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = await WalletServices.TransferUsingMobile(model)
+            });
         }
 
         [HttpPost]
@@ -1394,12 +1342,16 @@ namespace API.Controllers
         [Route("book-trip")]
         public async Task<HttpResponseMessage> BookTrip([FromBody] BookTripRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-            {
-                Error = false,
-                Data = await TripsManagerService.BookNewTrip(model),
-                Message = ResponseKeys.msgSuccess,
-            });
+            var response = await TripsManagerService.BookNewTrip(model);
+
+            if (response.Message.Equals(ResponseKeys.invalidParameters))
+                return Request.CreateResponse(HttpStatusCode.Forbidden, response);
+
+            else if (response.Message.Equals(ResponseKeys.invalidParameters))
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+
+            else
+                return Request.CreateResponse(HttpStatusCode.OK, response);
         }
 
         [HttpPost]  //Cancel normal booking which is not accepted yet

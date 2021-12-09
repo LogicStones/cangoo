@@ -1,4 +1,5 @@
-﻿using DTOs.Shared;
+﻿using Constants;
+using DTOs.Shared;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DTOs.API
 {
-	public class FBPassengerBookingRequest //: DiscountTypeDTO
+	public class FirebasePassenger //: DiscountTypeDTO
 	{
 		public string TripId { get; set; }
 		public string PickUpLatitude { get; set; }
@@ -31,7 +32,7 @@ namespace DTOs.API
 		public string PaymentModeId { get; set; }
 		public string PaymentMethod { get; set; }
 		public string IsFavorite { get; set; }
-		public string DiscountType { get; set; } = "normal";
+		public string DiscountType { get; set; } = Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Normal).ToLower();
 		public string DiscountAmount { get; set; } = "0.00";
 		public string DispatcherId { get; set; } = "";
 		public string RequestTimeOut { get; set; }
@@ -40,6 +41,11 @@ namespace DTOs.API
 		public string ReRouteRequestTime { get; set; }
 		public string BookingMode { get; set; }
 		public string BookingModeId { get; set; }
+		public string CustomerId { get; set; }
+		public string CardId { get; set; }
+		public string Brand { get; set; }
+		public string Last4Digits { get; set; }
+		public string WalletBalance { get; set; }
 		public List<PassengerCancelReasonsDTO> CancelReasons { get; set; } = new List<PassengerCancelReasonsDTO>();
 		public List<PassengerFacilityDTO> Facilities { get; set; } = new List<PassengerFacilityDTO>();
 
@@ -88,7 +94,7 @@ namespace DTOs.API
 		public bool isSend20MinutSendFCM { get; set; } = false;
 		public string isWeb { get; set; } = "";
 	}
-
+	
 	public class FirebaseDriver : DriverStatus
 	{
 		public string driverID { get; set; }
@@ -143,10 +149,15 @@ namespace DTOs.API
 	{
 		public string pickupLocationLatitude { get; set; }
 		public string pickupLocationLongitude { get; set; }
+		public string pickUpLocation { get; set; }
 		public string midwayStop1LocationLatitude { get; set; }
 		public string midwayStop1LocationLongitude { get; set; }
+		public string midwayStop1Location { get; set; }
 		public string dropOffLocationLatitude { get; set; }
 		public string dropOffLocationLongitude { get; set; }
+		public string dropOffLocation { get; set; }
+		public string vehicleCategory { get; set; }
+		public string totalFare { get; set; }
 		public string passengerID { get; set; }
 		public string passengerName { get; set; }
 		public int? minDistance { get; set; }
@@ -193,6 +204,7 @@ namespace DTOs.API
 		public string bookingCharges { get; set; }
 		public string travelCharges { get; set; }
 		public string paymentMethod { get; set; }
+		public string paymentModeId { get; set; }
 		public string distance { get; set; }
 		public double? duration { get; set; }
 		public bool isPaymentRequested { get; set; }

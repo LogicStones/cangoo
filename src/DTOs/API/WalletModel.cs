@@ -18,13 +18,14 @@ namespace DTOs.API
 
     public class RedeemCouponCodeResponse
     {
+        public string RechargedAmount { get; set; }
         public string WalletBalance { get; set; }
     }
 
     public class CheckAppUserRequest
     {
         [Required]
-        public string ReciverMobileNo { get; set; }
+        public string ReceiverMobileNo { get; set; }
     }
 
     public class CheckAppUserResponse
@@ -49,6 +50,7 @@ namespace DTOs.API
 
     public class ShareWalletBalanceResponse
     {
+        public string WalletBalance { get; set; }
         public string TransferedAmount { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
@@ -166,7 +168,6 @@ namespace DTOs.API
     {
         [Required]
         [DefaultValue("pi_3K2y80JeFP4nLZjM1OzIRdrY")]
-
         public string PaymentIntentId { get; set; }
     }
 
@@ -174,7 +175,6 @@ namespace DTOs.API
     {
         [Required]
         [DefaultValue("pi_3K2y80JeFP4nLZjM1OzIRdrY")]
-
         public string PaymentIntentId { get; set; }
 
         [Required]
@@ -198,7 +198,6 @@ namespace DTOs.API
     {
         [Required]
         [DefaultValue("pi_3K2y80JeFP4nLZjM1OzIRdrY")]
-
         public string PaymentIntentId { get; set; }
     }
 
@@ -228,7 +227,6 @@ namespace DTOs.API
     //    public string WalletUsedAmount { get; set; }
     //    [Required]
     //    public string PaymentId { get; set; }
-        
     //}
 
     public class CreditCardPaymentInent

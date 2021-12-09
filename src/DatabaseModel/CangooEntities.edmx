@@ -425,6 +425,8 @@
           <Property Name="UsedOn" Type="datetime" />
           <Property Name="UsedBy" Type="uniqueidentifier" />
           <Property Name="ApplicationID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="IsActive" Type="bit" />
+          <Property Name="ResellerId" Type="uniqueidentifier" />
         </EntityType>
         <EntityType Name="CourierServicesDistrict">
           <Key>
@@ -1192,6 +1194,8 @@
           <Property Name="PickupLocationPostalCode" Type="varchar" MaxLength="100" />
           <Property Name="DropOffLocationPostalCode" Type="varchar" MaxLength="100" />
           <Property Name="MidwayStop1PostalCode" Type="varchar" MaxLength="100" />
+          <Property Name="CreditCardPaymentIntent" Type="varchar(max)" />
+          <Property Name="isSpecialPromotionApplied" Type="bit" />
         </EntityType>
         <EntityType Name="TripStatus">
           <Key>
@@ -1518,6 +1522,14 @@
           <Parameter Name="SortOrder" Type="nvarchar" Mode="In" />
           <Parameter Name="Search" Type="nvarchar" Mode="In" />
           <Parameter Name="superAdminId" Type="uniqueidentifier" Mode="In" />
+        </Function>
+        <Function Name="FetchAllCoupons" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
+          <Parameter Name="DisplayLength" Type="int" Mode="In" />
+          <Parameter Name="DisplayStart" Type="int" Mode="In" />
+          <Parameter Name="SortCol" Type="int" Mode="In" />
+          <Parameter Name="SortOrder" Type="nvarchar" Mode="In" />
+          <Parameter Name="Search" Type="nvarchar" Mode="In" />
+          <Parameter Name="applicationID" Type="uniqueidentifier" Mode="In" />
         </Function>
         <Function Name="FetchApplicationAnnualEarningAndProfit" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="date" Type="datetime" Mode="In" />
@@ -2192,6 +2204,9 @@
         <Function Name="fnGetTripMobilePayment" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="decimal">
           <Parameter Name="tripID" Type="varchar(max)" Mode="In" />
         </Function>
+        <Function Name="fnGetVehicleCategory" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="varchar(max)">
+          <Parameter Name="categoryId" Type="int" Mode="In" />
+        </Function>
         <Function Name="fnGetVehicleCategoryName" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="varchar(max)">
           <Parameter Name="CategoryIDs" Type="varchar(max)" Mode="In" />
         </Function>
@@ -2404,7 +2419,6 @@
           <Parameter Name="driverID" Type="varchar" Mode="In" />
           <Parameter Name="tripStatusID" Type="int" Mode="In" />
           <Parameter Name="vehicleID" Type="varchar" Mode="In" />
-          <Parameter Name="oldBookingStatus" Type="int" Mode="In" />
           <Parameter Name="isLaterBooking" Type="int" Mode="In" />
           <Parameter Name="pickUpDateTime" Type="datetime" Mode="In" />
         </Function>
@@ -3515,12 +3529,6 @@
           <FunctionImport Name="spGetDriverUserDeviceTokens" ReturnType="Collection(CangooModel.spGetDriverUserDeviceTokens_Result)">
           <Parameter Name="tripID" Mode="In" Type="String" />
           </FunctionImport>
-          <FunctionImport Name="spGetDriverVehicleDetail" ReturnType="Collection(CangooModel.spGetDriverVehicleDetail_Result)">
-            <Parameter Name="driverID" Mode="In" Type="String" />
-            <Parameter Name="vehicleID" Mode="In" Type="String" />
-            <Parameter Name="userID" Mode="In" Type="String" />
-            <Parameter Name="ishotel" Mode="In" Type="Boolean" />
-          </FunctionImport>
           <FunctionImport Name="spGetFleetMonthlyInvoice" ReturnType="Collection(CangooModel.spGetFleetMonthlyInvoice_Result)">
             <Parameter Name="FleetId" Mode="In" Type="String" />
             <Parameter Name="dateFrom" Mode="In" Type="DateTime" />
@@ -3563,15 +3571,6 @@
             <Parameter Name="driverID" Mode="In" Type="String" />
             <Parameter Name="currentDateTime" Mode="In" Type="String" />
             <Parameter Name="tripStatusID" Mode="In" Type="Int32" />
-          </FunctionImport>
-          <FunctionImport Name="spGetUpdateTripDataOnAcceptRide" ReturnType="Collection(CangooModel.spGetUpdateTripDataOnAcceptRide_Result)">
-            <Parameter Name="tripID" Mode="In" Type="String" />
-            <Parameter Name="driverID" Mode="In" Type="String" />
-            <Parameter Name="tripStatusID" Mode="In" Type="Int32" />
-            <Parameter Name="vehicleID" Mode="In" Type="String" />
-            <Parameter Name="oldBookingStatus" Mode="In" Type="Int32" />
-            <Parameter Name="isLaterBooking" Mode="In" Type="Int32" />
-            <Parameter Name="pickUpDateTime" Mode="In" Type="DateTime" />
           </FunctionImport>
           <FunctionImport Name="spGetUpdateTripOnCaptainArrived" ReturnType="Collection(CangooModel.spGetUpdateTripOnCaptainArrived_Result)">
             <Parameter Name="arrivalDateTime" Mode="In" Type="DateTime" />
@@ -3850,6 +3849,22 @@
             <Parameter Name="Search" Mode="In" Type="String" />
             <Parameter Name="applicationID" Mode="In" Type="Guid" />
           </FunctionImport>
+          <FunctionImport Name="FetchAllCoupons" ReturnType="Collection(CangooModel.FetchAllCoupons_Result)">
+            <Parameter Name="DisplayLength" Mode="In" Type="Int32" />
+            <Parameter Name="DisplayStart" Mode="In" Type="Int32" />
+            <Parameter Name="SortCol" Mode="In" Type="Int32" />
+            <Parameter Name="SortOrder" Mode="In" Type="String" />
+            <Parameter Name="Search" Mode="In" Type="String" />
+            <Parameter Name="applicationID" Mode="In" Type="Guid" />
+          </FunctionImport>
+          <FunctionImport Name="spGetUpdateTripDataOnAcceptRide" ReturnType="Collection(CangooModel.spGetUpdateTripDataOnAcceptRide_Result)">
+            <Parameter Name="tripID" Mode="In" Type="String" />
+            <Parameter Name="driverID" Mode="In" Type="String" />
+            <Parameter Name="tripStatusID" Mode="In" Type="Int32" />
+            <Parameter Name="vehicleID" Mode="In" Type="String" />
+            <Parameter Name="isLaterBooking" Mode="In" Type="Int32" />
+            <Parameter Name="pickUpDateTime" Mode="In" Type="DateTime" />
+          </FunctionImport>
           <EntitySet Name="Agreements" EntityType="CangooModel.Agreement" />
           <EntitySet Name="AgreementTypes" EntityType="CangooModel.AgreementType" />
           <EntitySet Name="Applications" EntityType="CangooModel.Application" />
@@ -3942,6 +3957,12 @@
             <End Role="AspNetRole" EntitySet="AspNetRoles" />
             <End Role="AspNetUser" EntitySet="AspNetUsers" />
           </AssociationSet>
+          <FunctionImport Name="spGetDriverVehicleDetail" ReturnType="Collection(CangooModel.spGetDriverVehicleDetail_Result)">
+            <Parameter Name="driverID" Mode="In" Type="String" />
+            <Parameter Name="vehicleID" Mode="In" Type="String" />
+            <Parameter Name="userID" Mode="In" Type="String" />
+            <Parameter Name="ishotel" Mode="In" Type="Boolean" />
+          </FunctionImport>
           </EntityContainer>
         <ComplexType Name="FetchAdminAnnualEarningAndProfit_Result">
           <Property Type="String" Name="Month" Nullable="true" MaxLength="30" />
@@ -5491,17 +5512,6 @@
           <Property Type="String" Name="captainName" Nullable="true" MaxLength="200" />
           <Property Type="String" Name="userName" Nullable="true" MaxLength="101" />
         </ComplexType>
-        <ComplexType Name="spGetDriverVehicleDetail_Result">
-          <Property Type="String" Name="Name" Nullable="true" MaxLength="200" />
-          <Property Type="Double" Name="Rating" Nullable="true" />
-          <Property Type="String" Name="Picture" Nullable="true" MaxLength="200" />
-          <Property Type="String" Name="ContactNumber" Nullable="true" />
-          <Property Type="String" Name="PlateNumber" Nullable="true" MaxLength="100" />
-          <Property Type="Double" Name="vehicleRating" Nullable="true" />
-          <Property Type="String" Name="Make" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="Model" Nullable="true" MaxLength="150" />
-          <Property Type="String" Name="DeviceToken" Nullable="true" />
-        </ComplexType>
         <ComplexType Name="spGetFleetMonthlyInvoice_Result">
           <Property Type="String" Name="FleetName" Nullable="true" MaxLength="50" />
           <Property Type="String" Name="ReportNumber" Nullable="true" MaxLength="50" />
@@ -5677,23 +5687,6 @@
           <Property Type="String" Name="DropOffLocation" Nullable="true" MaxLength="500" />
           <Property Type="String" Name="isWeb" Nullable="false" MaxLength="5" />
           <Property Type="String" Name="Name" Nullable="true" MaxLength="200" />
-        </ComplexType>
-        <ComplexType Name="spGetUpdateTripDataOnAcceptRide_Result">
-          <Property Type="Int32" Name="ArrivedTime" Nullable="true" />
-          <Property Type="Double" Name="RequestWaitingTime" Nullable="true" />
-          <Property Type="String" Name="PickupLocationLatitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="PickupLocationLongitude" Nullable="true" MaxLength="100" />
-          <Property Type="Guid" Name="UserID" Nullable="true" />
-          <Property Type="String" Name="dropoffLocationLatitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="dropofflocationLongitude" Nullable="true" MaxLength="100" />
-          <Property Type="DateTime" Name="PickUpBookingDateTime" Nullable="true" Precision="23" />
-          <Property Type="DateTime" Name="BookingDateTime" Nullable="true" Precision="23" />
-          <Property Type="Boolean" Name="isReRouted" Nullable="false" />
-          <Property Type="String" Name="description" Nullable="true" MaxLength="1000" />
-          <Property Type="String" Name="VoucherCode" Nullable="true" MaxLength="4" />
-          <Property Type="Decimal" Name="VoucherAmount" Nullable="true" Precision="19" />
-          <Property Type="String" Name="PhoneNumber" Nullable="true" />
-          <Property Type="String" Name="PassengerName" Nullable="true" MaxLength="201" />
         </ComplexType>
         <ComplexType Name="spGetUpdateTripOnCaptainArrived_Result">
           <Property Type="String" Name="DropOffLocationLatitude" Nullable="true" MaxLength="100" />
@@ -6119,6 +6112,40 @@
           <Property Type="String" Name="ExpiryDate" Nullable="true" MaxLength="10" />
           <Property Type="Boolean" Name="IsActive" Nullable="false" />
         </ComplexType>
+        <ComplexType Name="FetchAllCoupons_Result">
+          <Property Type="Int64" Name="RowNo" Nullable="true" />
+          <Property Type="Int32" Name="Total" Nullable="true" />
+          <Property Type="String" Name="CouponID" Nullable="true" MaxLength="128" />
+          <Property Type="String" Name="Code" Nullable="false" MaxLength="50" />
+          <Property Type="String" Name="CouponStatus" Nullable="false" MaxLength="9" />
+          <Property Type="String" Name="Amount" Nullable="true" MaxLength="30" />
+          <Property Type="String" Name="GeneratedOn" Nullable="true" MaxLength="30" />
+          <Property Type="Boolean" Name="IsActive" Nullable="true" />
+        </ComplexType>
+        <ComplexType Name="spGetUpdateTripDataOnAcceptRide_Result">
+          <Property Type="Int32" Name="ArrivedTime" Nullable="true" />
+          <Property Type="Double" Name="RequestWaitingTime" Nullable="true" />
+          <Property Type="Guid" Name="UserID" Nullable="true" />
+          <Property Type="String" Name="VehicleCategory" Nullable="true" />
+          <Property Type="Decimal" Name="TotalFare" Nullable="true" Precision="10" Scale="2" />
+          <Property Type="String" Name="PickupLocationLatitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="PickupLocationLongitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="PickUpLocation" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="MidwayStop1Latitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="MidwayStop1Longitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="MidwayStop1Location" Nullable="true" MaxLength="1000" />
+          <Property Type="String" Name="dropoffLocationLatitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="dropofflocationLongitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="DropOffLocation" Nullable="true" MaxLength="500" />
+          <Property Type="DateTime" Name="PickUpBookingDateTime" Nullable="true" Precision="23" />
+          <Property Type="DateTime" Name="BookingDateTime" Nullable="true" Precision="23" />
+          <Property Type="Boolean" Name="isReRouted" Nullable="false" />
+          <Property Type="String" Name="description" Nullable="true" MaxLength="1000" />
+          <Property Type="String" Name="VoucherCode" Nullable="true" MaxLength="4" />
+          <Property Type="Decimal" Name="VoucherAmount" Nullable="true" Precision="19" />
+          <Property Type="String" Name="PhoneNumber" Nullable="true" />
+          <Property Type="String" Name="PassengerName" Nullable="true" MaxLength="201" />
+        </ComplexType>
         <EntityType Name="Agreement">
           <Key>
             <PropertyRef Name="AgreementID" />
@@ -6537,6 +6564,8 @@
           <Property Name="UsedOn" Type="DateTime" Precision="3" />
           <Property Name="UsedBy" Type="Guid" />
           <Property Name="ApplicationID" Type="Guid" Nullable="false" />
+          <Property Name="IsActive" Type="Boolean" />
+          <Property Name="ResellerId" Type="Guid" />
         </EntityType>
         <EntityType Name="CourierServicesDistrict">
           <Key>
@@ -7304,6 +7333,8 @@
           <Property Name="PickupLocationPostalCode" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
           <Property Name="DropOffLocationPostalCode" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
           <Property Name="MidwayStop1PostalCode" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Name="CreditCardPaymentIntent" Type="String" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="isSpecialPromotionApplied" Type="Boolean" />
         </EntityType>
         <EntityType Name="TripStatu">
           <Key>
@@ -7495,6 +7526,20 @@
           <End Type="CangooModel.AspNetRole" Role="AspNetRole" Multiplicity="*" />
           <End Type="CangooModel.AspNetUser" Role="AspNetUser" Multiplicity="*" />
         </Association>
+        <ComplexType Name="spGetDriverVehicleDetail_Result">
+          <Property Type="String" Name="Name" Nullable="true" MaxLength="200" />
+          <Property Type="Double" Name="Rating" Nullable="true" />
+          <Property Type="String" Name="Picture" Nullable="true" MaxLength="200" />
+          <Property Type="String" Name="ContactNumber" Nullable="true" />
+          <Property Type="String" Name="PlateNumber" Nullable="true" MaxLength="100" />
+          <Property Type="Double" Name="vehicleRating" Nullable="true" />
+          <Property Type="String" Name="Color" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Make" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Model" Nullable="true" MaxLength="150" />
+          <Property Type="String" Name="DeviceToken" Nullable="false" />
+          <Property Type="String" Name="FleetAddress" Nullable="true" MaxLength="250" />
+          <Property Type="String" Name="FleetName" Nullable="true" MaxLength="200" />
+        </ComplexType>
         </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -9475,21 +9520,6 @@
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>
-          <FunctionImportMapping FunctionImportName="spGetDriverVehicleDetail" FunctionName="CangooModel.Store.spGetDriverVehicleDetail">
-            <ResultMapping>
-              <ComplexTypeMapping TypeName="CangooModel.spGetDriverVehicleDetail_Result">
-                <ScalarProperty Name="Name" ColumnName="Name" />
-                <ScalarProperty Name="Rating" ColumnName="Rating" />
-                <ScalarProperty Name="Picture" ColumnName="Picture" />
-                <ScalarProperty Name="ContactNumber" ColumnName="ContactNumber" />
-                <ScalarProperty Name="PlateNumber" ColumnName="PlateNumber" />
-                <ScalarProperty Name="vehicleRating" ColumnName="vehicleRating" />
-                <ScalarProperty Name="Make" ColumnName="Make" />
-                <ScalarProperty Name="Model" ColumnName="Model" />
-                <ScalarProperty Name="DeviceToken" ColumnName="DeviceToken" />
-              </ComplexTypeMapping>
-            </ResultMapping>
-          </FunctionImportMapping>
           <FunctionImportMapping FunctionImportName="spGetFleetMonthlyInvoice" FunctionName="CangooModel.Store.spGetFleetMonthlyInvoice">
             <ResultMapping>
               <ComplexTypeMapping TypeName="CangooModel.spGetFleetMonthlyInvoice_Result">
@@ -9700,27 +9730,6 @@
                 <ScalarProperty Name="DropOffLocation" ColumnName="DropOffLocation" />
                 <ScalarProperty Name="isWeb" ColumnName="isWeb" />
                 <ScalarProperty Name="Name" ColumnName="Name" />
-              </ComplexTypeMapping>
-            </ResultMapping>
-          </FunctionImportMapping>
-          <FunctionImportMapping FunctionImportName="spGetUpdateTripDataOnAcceptRide" FunctionName="CangooModel.Store.spGetUpdateTripDataOnAcceptRide">
-            <ResultMapping>
-              <ComplexTypeMapping TypeName="CangooModel.spGetUpdateTripDataOnAcceptRide_Result">
-                <ScalarProperty Name="ArrivedTime" ColumnName="ArrivedTime" />
-                <ScalarProperty Name="RequestWaitingTime" ColumnName="RequestWaitingTime" />
-                <ScalarProperty Name="PickupLocationLatitude" ColumnName="PickupLocationLatitude" />
-                <ScalarProperty Name="PickupLocationLongitude" ColumnName="PickupLocationLongitude" />
-                <ScalarProperty Name="UserID" ColumnName="UserID" />
-                <ScalarProperty Name="dropoffLocationLatitude" ColumnName="dropoffLocationLatitude" />
-                <ScalarProperty Name="dropofflocationLongitude" ColumnName="dropofflocationLongitude" />
-                <ScalarProperty Name="PickUpBookingDateTime" ColumnName="PickUpBookingDateTime" />
-                <ScalarProperty Name="BookingDateTime" ColumnName="BookingDateTime" />
-                <ScalarProperty Name="isReRouted" ColumnName="isReRouted" />
-                <ScalarProperty Name="description" ColumnName="description" />
-                <ScalarProperty Name="VoucherCode" ColumnName="VoucherCode" />
-                <ScalarProperty Name="VoucherAmount" ColumnName="VoucherAmount" />
-                <ScalarProperty Name="PhoneNumber" ColumnName="PhoneNumber" />
-                <ScalarProperty Name="PassengerName" ColumnName="PassengerName" />
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>
@@ -10252,6 +10261,48 @@
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="FetchAllCoupons" FunctionName="CangooModel.Store.FetchAllCoupons">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CangooModel.FetchAllCoupons_Result">
+                <ScalarProperty Name="RowNo" ColumnName="RowNo" />
+                <ScalarProperty Name="Total" ColumnName="Total" />
+                <ScalarProperty Name="CouponID" ColumnName="CouponID" />
+                <ScalarProperty Name="Code" ColumnName="Code" />
+                <ScalarProperty Name="CouponStatus" ColumnName="CouponStatus" />
+                <ScalarProperty Name="Amount" ColumnName="Amount" />
+                <ScalarProperty Name="GeneratedOn" ColumnName="GeneratedOn" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="spGetUpdateTripDataOnAcceptRide" FunctionName="CangooModel.Store.spGetUpdateTripDataOnAcceptRide">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CangooModel.spGetUpdateTripDataOnAcceptRide_Result">
+                <ScalarProperty Name="ArrivedTime" ColumnName="ArrivedTime" />
+                <ScalarProperty Name="RequestWaitingTime" ColumnName="RequestWaitingTime" />
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="VehicleCategory" ColumnName="VehicleCategory" />
+                <ScalarProperty Name="TotalFare" ColumnName="TotalFare" />
+                <ScalarProperty Name="PickupLocationLatitude" ColumnName="PickupLocationLatitude" />
+                <ScalarProperty Name="PickupLocationLongitude" ColumnName="PickupLocationLongitude" />
+                <ScalarProperty Name="PickUpLocation" ColumnName="PickUpLocation" />
+                <ScalarProperty Name="MidwayStop1Latitude" ColumnName="MidwayStop1Latitude" />
+                <ScalarProperty Name="MidwayStop1Longitude" ColumnName="MidwayStop1Longitude" />
+                <ScalarProperty Name="MidwayStop1Location" ColumnName="MidwayStop1Location" />
+                <ScalarProperty Name="dropoffLocationLatitude" ColumnName="dropoffLocationLatitude" />
+                <ScalarProperty Name="dropofflocationLongitude" ColumnName="dropofflocationLongitude" />
+                <ScalarProperty Name="DropOffLocation" ColumnName="DropOffLocation" />
+                <ScalarProperty Name="PickUpBookingDateTime" ColumnName="PickUpBookingDateTime" />
+                <ScalarProperty Name="BookingDateTime" ColumnName="BookingDateTime" />
+                <ScalarProperty Name="isReRouted" ColumnName="isReRouted" />
+                <ScalarProperty Name="description" ColumnName="description" />
+                <ScalarProperty Name="VoucherCode" ColumnName="VoucherCode" />
+                <ScalarProperty Name="VoucherAmount" ColumnName="VoucherAmount" />
+                <ScalarProperty Name="PhoneNumber" ColumnName="PhoneNumber" />
+                <ScalarProperty Name="PassengerName" ColumnName="PassengerName" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
           <EntitySetMapping Name="Agreements">
             <EntityTypeMapping TypeName="CangooModel.Agreement">
               <MappingFragment StoreEntitySet="Agreements">
@@ -10674,6 +10725,8 @@
           <EntitySetMapping Name="CouponsManagers">
             <EntityTypeMapping TypeName="CangooModel.CouponsManager">
               <MappingFragment StoreEntitySet="CouponsManager">
+                <ScalarProperty Name="ResellerId" ColumnName="ResellerId" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
                 <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
                 <ScalarProperty Name="UsedBy" ColumnName="UsedBy" />
                 <ScalarProperty Name="UsedOn" ColumnName="UsedOn" />
@@ -11406,6 +11459,8 @@
           <EntitySetMapping Name="Trips">
             <EntityTypeMapping TypeName="CangooModel.Trip">
               <MappingFragment StoreEntitySet="Trips">
+                <ScalarProperty Name="isSpecialPromotionApplied" ColumnName="isSpecialPromotionApplied" />
+                <ScalarProperty Name="CreditCardPaymentIntent" ColumnName="CreditCardPaymentIntent" />
                 <ScalarProperty Name="MidwayStop1PostalCode" ColumnName="MidwayStop1PostalCode" />
                 <ScalarProperty Name="DropOffLocationPostalCode" ColumnName="DropOffLocationPostalCode" />
                 <ScalarProperty Name="PickupLocationPostalCode" ColumnName="PickupLocationPostalCode" />
@@ -11676,6 +11731,24 @@
               <ScalarProperty Name="Id" ColumnName="RoleId" />
             </EndProperty>
           </AssociationSetMapping>
+          <FunctionImportMapping FunctionImportName="spGetDriverVehicleDetail" FunctionName="CangooModel.Store.spGetDriverVehicleDetail">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CangooModel.spGetDriverVehicleDetail_Result">
+                <ScalarProperty Name="Name" ColumnName="Name" />
+                <ScalarProperty Name="Rating" ColumnName="Rating" />
+                <ScalarProperty Name="Picture" ColumnName="Picture" />
+                <ScalarProperty Name="ContactNumber" ColumnName="ContactNumber" />
+                <ScalarProperty Name="PlateNumber" ColumnName="PlateNumber" />
+                <ScalarProperty Name="vehicleRating" ColumnName="vehicleRating" />
+                <ScalarProperty Name="Color" ColumnName="Color" />
+                <ScalarProperty Name="Make" ColumnName="Make" />
+                <ScalarProperty Name="Model" ColumnName="Model" />
+                <ScalarProperty Name="DeviceToken" ColumnName="DeviceToken" />
+                <ScalarProperty Name="FleetAddress" ColumnName="FleetAddress" />
+                <ScalarProperty Name="FleetName" ColumnName="FleetName" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
           </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

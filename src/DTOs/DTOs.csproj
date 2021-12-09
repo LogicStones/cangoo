@@ -68,6 +68,11 @@
     <Compile Include="Shared\FavoritesModels.cs" />
     <Compile Include="Shared\PassengerModels.cs" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\Constants\Constants.csproj">
+      <Project>{BE3F6C0C-1A13-4967-850C-34E73904C690}</Project>
+      <Name>Constants</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

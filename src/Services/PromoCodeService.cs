@@ -30,15 +30,15 @@ namespace Services
                         {
                             lstPromoCodeDetails.Add(new PromoCodeDetails
                             {
-                                ID = item.ID,
+                                UserPromoCodeId = item.UserPromoCodeId,
                                 PromoCode = item.PromoCode,
                                 NoOfUsage = item.NoOfUsage,
-                                PromoID = item.PromoID,
+                                PromoCodeId = item.PromoCodeId,
                                 StartDate = item.StartDate,
                                 ExpiryDate = item.ExpiryDate,
                                 Amount = item.Amount,
                                 PaymentType = item.PaymentType,
-                                Repetition = item.Repetition
+                                AllowedRepetitions = item.AllowedRepetitions
                             });
                         }
                     }
@@ -138,6 +138,49 @@ namespace Services
                                                                                       new SqlParameter("@promocodeid", promoCodeId),
                                                                                       new SqlParameter("@tripId", tripId),
                                                                                       new SqlParameter("@passengerId", passengerId));
+            }
+        }
+
+        public static DiscountTypeDTO GetUserPromoDiscountAmount(string applicationID, string userID, string promoCodeId)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                var disccountDetails = new DiscountTypeDTO
+                {
+                    PromoCodeId = promoCodeId
+                };
+
+                DateTime dt = DateTime.UtcNow;
+
+                var availablePromoCodes = dbContext.PromoManagers
+                    .Where(p => p.ApplicationID.ToString() == applicationID && p.IsActive == true && p.isSpecialPromo == false && p.StartDate <= dt && p.ExpiryDate >= dt)
+                    .OrderBy(p => p.StartDate).ToList();
+
+
+                if (availablePromoCodes.Any())
+                {
+                    var appliedPromoCode = dbContext.UserPromos.Where(up => up.UserID == userID && up.PromoID.ToString().Equals(promoCodeId) && up.isActive == true).FirstOrDefault();
+                    if (appliedPromoCode != null)
+                    {
+                        if (availablePromoCodes.Exists(p => p.PromoID == appliedPromoCode.PromoID))
+                        {
+                            var promo = availablePromoCodes.Find(p => p.PromoID == appliedPromoCode.PromoID);
+
+                            if (promo.isFixed == true)
+                            {
+                                disccountDetails.DiscountType = Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Fixed).ToLower();
+                                disccountDetails.DiscountAmount = string.Format("{0:0.00}", (decimal)promo.Amount);
+                            }
+                            else
+                            {
+                                disccountDetails.DiscountType = Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Percentage).ToLower();
+                                disccountDetails.DiscountAmount = string.Format("{0:0.00}", (decimal)promo.Amount);
+                            }
+                        }
+                    }
+                }
+
+                return disccountDetails;
             }
         }
     }

@@ -3052,27 +3052,6 @@ namespace DatabaseModel
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetDriverUserDeviceTokens_Result>("spGetDriverUserDeviceTokens", tripIDParameter);
         }
     
-        public virtual ObjectResult<spGetDriverVehicleDetail_Result> spGetDriverVehicleDetail(string driverID, string vehicleID, string userID, Nullable<bool> ishotel)
-        {
-            var driverIDParameter = driverID != null ?
-                new ObjectParameter("driverID", driverID) :
-                new ObjectParameter("driverID", typeof(string));
-    
-            var vehicleIDParameter = vehicleID != null ?
-                new ObjectParameter("vehicleID", vehicleID) :
-                new ObjectParameter("vehicleID", typeof(string));
-    
-            var userIDParameter = userID != null ?
-                new ObjectParameter("userID", userID) :
-                new ObjectParameter("userID", typeof(string));
-    
-            var ishotelParameter = ishotel.HasValue ?
-                new ObjectParameter("ishotel", ishotel) :
-                new ObjectParameter("ishotel", typeof(bool));
-    
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetDriverVehicleDetail_Result>("spGetDriverVehicleDetail", driverIDParameter, vehicleIDParameter, userIDParameter, ishotelParameter);
-        }
-    
         public virtual ObjectResult<spGetFleetMonthlyInvoice_Result> spGetFleetMonthlyInvoice(string fleetId, Nullable<System.DateTime> dateFrom, Nullable<System.DateTime> dateTo)
         {
             var fleetIdParameter = fleetId != null ?
@@ -3213,39 +3192,6 @@ namespace DatabaseModel
                 new ObjectParameter("tripStatusID", typeof(int));
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetUpcomingLaterBookingByDriverID_Result>("spGetUpcomingLaterBookingByDriverID", driverIDParameter, currentDateTimeParameter, tripStatusIDParameter);
-        }
-    
-        public virtual ObjectResult<spGetUpdateTripDataOnAcceptRide_Result> spGetUpdateTripDataOnAcceptRide(string tripID, string driverID, Nullable<int> tripStatusID, string vehicleID, Nullable<int> oldBookingStatus, Nullable<int> isLaterBooking, Nullable<System.DateTime> pickUpDateTime)
-        {
-            var tripIDParameter = tripID != null ?
-                new ObjectParameter("tripID", tripID) :
-                new ObjectParameter("tripID", typeof(string));
-    
-            var driverIDParameter = driverID != null ?
-                new ObjectParameter("driverID", driverID) :
-                new ObjectParameter("driverID", typeof(string));
-    
-            var tripStatusIDParameter = tripStatusID.HasValue ?
-                new ObjectParameter("tripStatusID", tripStatusID) :
-                new ObjectParameter("tripStatusID", typeof(int));
-    
-            var vehicleIDParameter = vehicleID != null ?
-                new ObjectParameter("vehicleID", vehicleID) :
-                new ObjectParameter("vehicleID", typeof(string));
-    
-            var oldBookingStatusParameter = oldBookingStatus.HasValue ?
-                new ObjectParameter("oldBookingStatus", oldBookingStatus) :
-                new ObjectParameter("oldBookingStatus", typeof(int));
-    
-            var isLaterBookingParameter = isLaterBooking.HasValue ?
-                new ObjectParameter("isLaterBooking", isLaterBooking) :
-                new ObjectParameter("isLaterBooking", typeof(int));
-    
-            var pickUpDateTimeParameter = pickUpDateTime.HasValue ?
-                new ObjectParameter("pickUpDateTime", pickUpDateTime) :
-                new ObjectParameter("pickUpDateTime", typeof(System.DateTime));
-    
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetUpdateTripDataOnAcceptRide_Result>("spGetUpdateTripDataOnAcceptRide", tripIDParameter, driverIDParameter, tripStatusIDParameter, vehicleIDParameter, oldBookingStatusParameter, isLaterBookingParameter, pickUpDateTimeParameter);
         }
     
         public virtual ObjectResult<spGetUpdateTripOnCaptainArrived_Result> spGetUpdateTripOnCaptainArrived(Nullable<System.DateTime> arrivalDateTime, Nullable<double> earnedPoints, string tripID, string driverID, Nullable<bool> isHotel)
@@ -4246,6 +4192,85 @@ namespace DatabaseModel
                 new ObjectParameter("applicationID", typeof(System.Guid));
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<FetchPopUp_Result>("FetchPopUp", displayLengthParameter, displayStartParameter, sortColParameter, sortOrderParameter, searchParameter, applicationIDParameter);
+        }
+    
+        public virtual ObjectResult<FetchAllCoupons_Result> FetchAllCoupons(Nullable<int> displayLength, Nullable<int> displayStart, Nullable<int> sortCol, string sortOrder, string search, Nullable<System.Guid> applicationID)
+        {
+            var displayLengthParameter = displayLength.HasValue ?
+                new ObjectParameter("DisplayLength", displayLength) :
+                new ObjectParameter("DisplayLength", typeof(int));
+    
+            var displayStartParameter = displayStart.HasValue ?
+                new ObjectParameter("DisplayStart", displayStart) :
+                new ObjectParameter("DisplayStart", typeof(int));
+    
+            var sortColParameter = sortCol.HasValue ?
+                new ObjectParameter("SortCol", sortCol) :
+                new ObjectParameter("SortCol", typeof(int));
+    
+            var sortOrderParameter = sortOrder != null ?
+                new ObjectParameter("SortOrder", sortOrder) :
+                new ObjectParameter("SortOrder", typeof(string));
+    
+            var searchParameter = search != null ?
+                new ObjectParameter("Search", search) :
+                new ObjectParameter("Search", typeof(string));
+    
+            var applicationIDParameter = applicationID.HasValue ?
+                new ObjectParameter("applicationID", applicationID) :
+                new ObjectParameter("applicationID", typeof(System.Guid));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<FetchAllCoupons_Result>("FetchAllCoupons", displayLengthParameter, displayStartParameter, sortColParameter, sortOrderParameter, searchParameter, applicationIDParameter);
+        }
+    
+        public virtual ObjectResult<spGetUpdateTripDataOnAcceptRide_Result> spGetUpdateTripDataOnAcceptRide(string tripID, string driverID, Nullable<int> tripStatusID, string vehicleID, Nullable<int> isLaterBooking, Nullable<System.DateTime> pickUpDateTime)
+        {
+            var tripIDParameter = tripID != null ?
+                new ObjectParameter("tripID", tripID) :
+                new ObjectParameter("tripID", typeof(string));
+    
+            var driverIDParameter = driverID != null ?
+                new ObjectParameter("driverID", driverID) :
+                new ObjectParameter("driverID", typeof(string));
+    
+            var tripStatusIDParameter = tripStatusID.HasValue ?
+                new ObjectParameter("tripStatusID", tripStatusID) :
+                new ObjectParameter("tripStatusID", typeof(int));
+    
+            var vehicleIDParameter = vehicleID != null ?
+                new ObjectParameter("vehicleID", vehicleID) :
+                new ObjectParameter("vehicleID", typeof(string));
+    
+            var isLaterBookingParameter = isLaterBooking.HasValue ?
+                new ObjectParameter("isLaterBooking", isLaterBooking) :
+                new ObjectParameter("isLaterBooking", typeof(int));
+    
+            var pickUpDateTimeParameter = pickUpDateTime.HasValue ?
+                new ObjectParameter("pickUpDateTime", pickUpDateTime) :
+                new ObjectParameter("pickUpDateTime", typeof(System.DateTime));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetUpdateTripDataOnAcceptRide_Result>("spGetUpdateTripDataOnAcceptRide", tripIDParameter, driverIDParameter, tripStatusIDParameter, vehicleIDParameter, isLaterBookingParameter, pickUpDateTimeParameter);
+        }
+    
+        public virtual ObjectResult<spGetDriverVehicleDetail_Result> spGetDriverVehicleDetail(string driverID, string vehicleID, string userID, Nullable<bool> ishotel)
+        {
+            var driverIDParameter = driverID != null ?
+                new ObjectParameter("driverID", driverID) :
+                new ObjectParameter("driverID", typeof(string));
+    
+            var vehicleIDParameter = vehicleID != null ?
+                new ObjectParameter("vehicleID", vehicleID) :
+                new ObjectParameter("vehicleID", typeof(string));
+    
+            var userIDParameter = userID != null ?
+                new ObjectParameter("userID", userID) :
+                new ObjectParameter("userID", typeof(string));
+    
+            var ishotelParameter = ishotel.HasValue ?
+                new ObjectParameter("ishotel", ishotel) :
+                new ObjectParameter("ishotel", typeof(bool));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetDriverVehicleDetail_Result>("spGetDriverVehicleDetail", driverIDParameter, vehicleIDParameter, userIDParameter, ishotelParameter);
         }
     }
 }

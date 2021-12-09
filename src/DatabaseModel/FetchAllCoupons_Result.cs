@@ -10,19 +10,16 @@
 namespace DatabaseModel
 {
     using System;
-    using System.Collections.Generic;
     
-    public partial class CouponsManager
+    public partial class FetchAllCoupons_Result
     {
-        public System.Guid CouponID { get; set; }
+        public Nullable<long> RowNo { get; set; }
+        public Nullable<int> Total { get; set; }
+        public string CouponID { get; set; }
         public string Code { get; set; }
-        public decimal Amount { get; set; }
-        public bool isUsed { get; set; }
-        public System.DateTime GeneratedOn { get; set; }
-        public Nullable<System.DateTime> UsedOn { get; set; }
-        public Nullable<System.Guid> UsedBy { get; set; }
-        public System.Guid ApplicationID { get; set; }
+        public string CouponStatus { get; set; }
+        public string Amount { get; set; }
+        public string GeneratedOn { get; set; }
         public Nullable<bool> IsActive { get; set; }
-        public Nullable<System.Guid> ResellerId { get; set; }
     }
 }

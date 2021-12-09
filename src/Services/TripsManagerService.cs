@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data.Common;
+using System.Data.Entity;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
@@ -80,9 +81,9 @@ namespace Services
         {
             using (CangooEntities dbcontext=new CangooEntities())
             {
-                return (await dbcontext.Database.ExecuteSqlCommandAsync("UPDATE Trips SET UserSubmittedFeedback = @userfeedback WHERE TripID = @tripId",
+                return await dbcontext.Database.ExecuteSqlCommandAsync("UPDATE Trips SET UserSubmittedFeedback = @userfeedback WHERE TripID = @tripId",
                                                                                       new SqlParameter("@userfeedback", model.UserFeedBack),
-                                                                                      new SqlParameter("@tripId", model.TripId)));
+                                                                                      new SqlParameter("@tripId", model.TripId));
             }
         }
 
@@ -90,7 +91,7 @@ namespace Services
         {
             using (var dbContext = new CangooEntities())
             {
-                return dbContext.Trips.Where(t => t.TripID.ToString().Equals(tripId)).FirstOrDefault();
+                return await dbContext.Trips.Where(t => t.TripID.ToString().Equals(tripId)).FirstOrDefaultAsync();
             }
         }
 
@@ -98,13 +99,14 @@ namespace Services
         {
             using (var dbContext = new CangooEntities())
             {
-                return dbContext.Trips.Where(t => t.TripID.ToString().Equals(tripId) && t.UserID.ToString().Equals(passengerId)).FirstOrDefault();
+                return await dbContext.Trips.Where(t => t.TripID.ToString().Equals(tripId) && t.UserID.ToString().Equals(passengerId)).FirstOrDefaultAsync();
             }
         }
 
-        public static async Task<BookTripResponse> BookNewTrip(BookTripRequest model)
+        public static async Task<ResponseWrapper> BookNewTrip(BookTripRequest model)
         {
             //TBD : Save Passenger and Driver Device info etc from filter
+            
 
             using (CangooEntities dbContext = new CangooEntities())
             {
@@ -147,14 +149,22 @@ namespace Services
                     fav = false,
                     facilities = await FacilitiesService.GetDriverFacilitiesDetailByIds(model.RequiredFacilities),
                     lstCancel = await CancelReasonsService.GetDriverCancelReasons(true, false, false),
-                    discountType = "normal",
+                    discountType = Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Normal).ToLower(),
                     discountAmount = "0.0",
                     dispatcherID = "",
+                    estimatedPrice = model.TotalFare,
 
-                    //IsWeb = false,
-                    //REFACTOR - Remove this flag
-                    //isLaterBookingStarted = false
-                };
+                    PaymentModeId = model.PaymentModeId,
+                    CustomerId = model.CustomerId,
+                    CardId = model.CardId,
+                    Brand = model.Brand,
+                    Last4Digits = model.Last4Digits,
+                    WalletBalance = model.WalletBalance
+
+                //IsWeb = false,
+                //REFACTOR - Remove this flag
+                //isLaterBookingStarted = false
+            };
 
                 Trip tp = new Trip();
                 if (bool.Parse(model.IsReRouteRequest))
@@ -221,6 +231,34 @@ namespace Services
                         bookingRN.isDispatchedRide = false.ToString();
                         bookingRN.BookingModeId = ((int)BookingModes.UserApplication).ToString();
                         bookingRN.bookingMode = Enum.GetName(typeof(BookingModes), (int)BookingModes.UserApplication).ToLower();
+
+
+                        if (model.PaymentModeId.Equals(((int)PaymentModes.CreditCard).ToString()))
+                        {
+                            if (string.IsNullOrEmpty(model.CustomerId) || string.IsNullOrEmpty(model.CardId) || string.IsNullOrEmpty(model.TotalFare))
+                            {
+                                return new ResponseWrapper
+                                {
+                                    Error = true,
+                                    Message = ResponseKeys.invalidParameters
+                                };
+                            }
+
+                            var details = await WalletServices.AuthoizeCreditCardPayment(model.CustomerId, model.CardId, model.TotalFare);
+
+                            if (!details.Status.Equals("requires_capture"))
+                            {
+                                return new ResponseWrapper
+                                {
+                                    Message = ResponseKeys.paymentGetwayError,
+                                    Data = new BookTripResponse
+                                    {
+                                        CreditCardPaymentDetils = details
+                                    }
+                                };
+                            }
+                            tp.CreditCardPaymentIntent = details.PaymentIntentId;
+                        }
                     }
 
                     tp.ApplicationID = Guid.Parse(applicationId);
@@ -279,18 +317,21 @@ namespace Services
                     tp.InBoundTimeFare = decimal.Parse(model.InBoundTimeFare);
                     tp.OutBoundTimeFare = decimal.Parse(model.OutBoundTimeFare);
 
-                    tp.BaseFare = decimal.Parse(model.BaseFare) + decimal.Parse(model.FormattingAdjustment);
-                    tp.BookingFare = decimal.Parse(model.BookingFare);
-                    tp.WaitingFare = decimal.Parse(model.WaitingFare);
                     tp.InBoundSurchargeAmount = decimal.Parse(model.SurchargeAmount);   //Quick Fix : Without adding new column
-
                     tp.OutBoundSurchargeAmount = 0;
+
+                    //BaseFare and BookingFare will be added from InBound only - So we'll use BaseFare and BookingFare fields in database
                     tp.InBoundBaseFare = 0;
                     tp.OutBoundBaseFare = 0;
 
+                    tp.BaseFare = decimal.Parse(model.BaseFare) + decimal.Parse(model.FormattingAdjustment);
+                    tp.BookingFare = decimal.Parse(model.BookingFare);
+                    tp.WaitingFare = 0;// decimal.Parse(model.WaitingFare);
+                    tp.PerKMFare = 0;
+                    tp.PromoDiscount = 0;
+
                     tp.FareManagerID = model.InBoundRSFMId;
                     tp.DropOffFareMangerID = Guid.Parse(model.OutBoundRSFMId);
-
 
                     //tp.InBoundDistanceInMeters = string.IsNullOrEmpty(model.InBoundDistanceInMeters) ? 0 : int.Parse(model.InBoundDistanceInMeters);
                     //tp.OutBoundDistanceInMeters = string.IsNullOrEmpty(model.OutBoundDistanceInMeters) ? 0 : int.Parse(model.OutBoundDistanceInMeters);
@@ -330,6 +371,8 @@ namespace Services
                         await FirebaseService.SetPassengerLaterBookingCancelReasons();
                     }
 
+                    tp.isSpecialPromotionApplied = model.DiscountType.Equals(Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Special).ToLower());
+
                     dbContext.Trips.Add(tp);
                     await dbContext.SaveChangesAsync();
                 }
@@ -344,26 +387,29 @@ namespace Services
                 //Following check seems to be un-necessary, set the value in bookingRN initialization and check for
                 //special promotions in estimate fare API.
 
-                if (bool.Parse(model.IsLaterBooking))
-                {
-                    //result.DiscountType = "normal";
-                    //result.DiscountAmount = "0.00";
+                //if (bool.Parse(model.IsLaterBooking))
+                //{
+                //    //result.DiscountType = "normal";
+                //    //result.DiscountAmount = "0.00";
 
-                    var specialPromoDetails = await FareManagerService.IsSpecialPromotionApplicable(model.PickUpLatitude, model.PickUpLongitude, model.DropOffLatitude, model.DropOffLongitude, applicationId, true, bookingRN.pickUpDateTime);
+                //    var specialPromoDetails = await FareManagerService.IsSpecialPromotionApplicable(model.PickUpLatitude, model.PickUpLongitude, model.DropOffLatitude, model.DropOffLongitude, applicationId, true, bookingRN.pickUpDateTime);
 
-                    bookingRN.discountType = specialPromoDetails.DiscountType;
-                    bookingRN.discountAmount = specialPromoDetails.DiscountAmount;
-                    //bookingRN.PromoCodeId = specialPromoDetails.PromoCodeId;
-                }
-                else
-                {
-                    // in case of normal booking discount is applied only if dropoff location is provided (which hits estimated fare api)
-                    bookingRN.discountType = model.DiscountType;
-                    bookingRN.discountAmount = model.DiscountAmount;
-                    //bookingRN.PromoCodeId = model.PromoCodeId;
-                    //bookingRN.DiscountType = string.IsNullOrEmpty(model.DiscountType) ? "normal" : model.DiscountType;
-                    //bookingRN.DiscountAmount = string.IsNullOrEmpty(model.PromoDiscountAmount) ? "0.00" : model.PromoDiscountAmount;
-                }
+                //    bookingRN.discountType = specialPromoDetails.DiscountType;
+                //    bookingRN.discountAmount = specialPromoDetails.DiscountAmount;
+                //    //bookingRN.PromoCodeId = specialPromoDetails.PromoCodeId;
+                //}
+                //else
+                //{
+                //    // in case of normal booking discount is applied only if dropoff location is provided (which hits estimated fare api)
+                //    bookingRN.discountType = model.DiscountType;
+                //    bookingRN.discountAmount = model.DiscountAmount;
+                //    //bookingRN.PromoCodeId = model.PromoCodeId;
+                //    //bookingRN.DiscountType = string.IsNullOrEmpty(model.DiscountType) ? "normal" : model.DiscountType;
+                //    //bookingRN.DiscountAmount = string.IsNullOrEmpty(model.PromoDiscountAmount) ? "0.00" : model.PromoDiscountAmount;
+                //}
+
+                bookingRN.discountType = model.DiscountType;
+                bookingRN.discountAmount = model.DiscountAmount;
 
                 bookingRN.tripID = tp.TripID.ToString();
                 bookingRN.lat = tp.PickupLocationLatitude;
@@ -380,9 +426,6 @@ namespace Services
 
                 bookingRN.paymentMethod = tp.TripPaymentMode;
                 bookingRN.PaymentModeId = tp.PaymentModeId.ToString();
-                bookingRN.estimatedPrice = ((decimal)tp.InBoundDistanceFare + (decimal)tp.OutBoundDistanceFare + (decimal)tp.InBoundTimeFare + (decimal)tp.OutBoundTimeFare +
-                                            (decimal)tp.BaseFare + (decimal)tp.BookingFare + (decimal)tp.WaitingFare + (decimal)tp.InBoundSurchargeAmount +
-                                            (decimal)tp.OutBoundSurchargeAmount + (decimal)tp.InBoundBaseFare + (decimal)tp.OutBoundBaseFare).ToString("0.00");
 
                 //Send FCM of new / updated trip to online drivers
                 //string tripId, string passengerId, int reqSeatingCapacity, DriverBookingRequestNotification bookingRN, dynamic hotelSetting
@@ -393,11 +436,16 @@ namespace Services
                     await FirebaseService.SendRideRequestToOnlineDrivers(bookingRN.tripID, model.PassengerId, model.CategoryId.ToString(), int.Parse(model.SeatingCapacity), bookingRN, null);
                 });
 
-                return new BookTripResponse
+                return new ResponseWrapper
                 {
-                    RequestTime = timeOut.ToString(),
-                    TripId = tp.TripID.ToString(),
-                    IsLaterBooking = model.IsLaterBooking
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    Data = new BookTripResponse
+                    {
+                        RequestTime = timeOut.ToString(),
+                        TripId = tp.TripID.ToString(),
+                        IsLaterBooking = model.IsLaterBooking
+                    }
                 };
 
                 //response.error = false;
@@ -409,7 +457,6 @@ namespace Services
                 //    return request.CreateResponse(HttpStatusCode.OK, response);
                 //else
                 //    return Request.CreateResponse(HttpStatusCode.OK, response);
-
             }
         }
 
@@ -517,7 +564,7 @@ namespace Services
         {
             using (var dbContext = new CangooEntities())
             {
-                return dbContext.CompanyVouchers.Where(cv => cv.VoucherID == voucherId && cv.isUsed == false).FirstOrDefault();
+                return await dbContext.CompanyVouchers.Where(cv => cv.VoucherID == voucherId && cv.isUsed == false).FirstOrDefaultAsync();
             }
         }
 
@@ -537,7 +584,6 @@ namespace Services
             }
         }
 
-
         public static async Task<List<spGetUpcomingLaterBooking_Result>> GetUpcomingLaterBookings()
         {
             using (var dbContext = new CangooEntities())
@@ -550,7 +596,7 @@ namespace Services
         {
             using (var dbContext = new CangooEntities())
             {
-                return dbContext.spGetRideDetail(tripID, (int)TripStatuses.PaymentPending, isWeb).FirstOrDefault();
+                return dbContext.spGetRideDetail(tripID, (int)TripStatuses.Picked, isWeb).FirstOrDefault();
             }
         }
 
@@ -585,6 +631,7 @@ namespace Services
                 await dbContext.SaveChangesAsync();
             }
         }
+        
         public static async Task LogDispatchedTrips(DispatchedRideLogDTO dispatchedTrip)
         {
             using (var dbContext = new CangooEntities())

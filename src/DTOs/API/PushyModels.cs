@@ -31,11 +31,14 @@ namespace DTOs.API
 		public string DriverRating { get; set; }
 		public string DriverContactNumber { get; set; }
 		public string VehicleNumber { get; set; }
-		public string Model { get; set; }
 		public string Make { get; set; }
+		public string Model { get; set; }
+		public string Color { get; set; }
 		public string SeatingCapacity { get; set; }
 		public string VehicleRating { get; set; }
 		public string VehicleCategory { get; set; }
+		public string FleetAddress { get; set; }
+		public string FleetName { get; set; }
 		public string IsWeb { get; set; }
 		public string IsLaterBooking { get; set; }
 		public string IsDispatchedRide { get; set; }
@@ -45,6 +48,13 @@ namespace DTOs.API
 		public string VoucherCode { get; set; }
 		public string VoucherAmount { get; set; }
 		public string TotalFare { get; set; }
+		public string PaymentModeId { get; set; }
+		public string CustomerId { get; set; }
+		public string CardId { get; set; }
+		public string Brand { get; set; }
+		public string Last4Digits { get; set; }
+		public string WalletBalance { get; set; }
+
 		public List<PassengerCancelReasonsDTO> CancelReasons = new List<PassengerCancelReasonsDTO>();
 		public List<PassengerFacilityDTO> Facilities = new List<PassengerFacilityDTO>();
 	}
@@ -129,7 +139,12 @@ namespace DTOs.API
         public string MidwayStop1Latitude { get; set; }
         public string MidwayStop1Longitude { get; set; }
         public string MidwayStop1Location { get; set; }
-        public string PaymentModeId { get; set; }
         public string BookingModeId { get; set; }
-    }
+        public string PaymentModeId { get; set; }
+		public string CustomerId { get; set; }
+		public string CardId { get; set; }
+		public string Brand { get; set; }
+		public string Last4Digits { get; set; }
+		public string WalletBalance { get; set; }
+	}
 }

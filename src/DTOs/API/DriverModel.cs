@@ -1,4 +1,5 @@
-﻿using DTOs.Shared;
+﻿using Constants;
+using DTOs.Shared;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -339,7 +340,7 @@ namespace DTOs.API
 
     public class DriverEndTripResponse
     {
-        public string discountType { get; set; } = "normal";
+        public string discountType { get; set; } = Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Normal).ToLower();
         public string discountAmount { get; set; } = "0.00";
         public string pickUpFareManagerID { get; set; } = "0.00";
         public string dropOffFareMangerID { get; set; } = "0.00";

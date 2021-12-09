@@ -179,6 +179,9 @@
     <Compile Include="FetchAdminTransactionsHistory_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="FetchAllCoupons_Result.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="FetchApplicationAnnualEarningAndProfit_Result.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>

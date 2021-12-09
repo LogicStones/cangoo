@@ -89,4 +89,12 @@ namespace Constants
 		Paid,
 		Received
 	}
+
+	public enum DiscountTypes
+	{
+		Normal = 0,
+		Fixed,
+		Percentage,
+		Special
+	}
 }

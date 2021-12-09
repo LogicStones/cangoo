@@ -144,42 +144,37 @@ namespace Services
 
         public static async Task<bool> SendRideRequestToOnlineDrivers(string tripId, string passengerId, string vehicleCategoryId, int reqSeatingCapacity, DriverBookingRequestNotification bookingRN, dynamic hotelSetting)
         {
-            try
+            //Passenger data
+            if (bookingRN.isReRouteRequest)
             {
-                //Passenger data
-                if (bookingRN.isReRouteRequest)
+                if (!bookingRN.isLaterBooking)
                 {
-                    if (!bookingRN.isLaterBooking)
-                    {
-                        bookingRN.reRouteRequestTime = DateTime.UtcNow.ToString(Formats.DateFormat);
+                    bookingRN.reRouteRequestTime = DateTime.UtcNow.ToString(Formats.DateFormat);
 
-                        await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FBPassengerBookingRequest>(bookingRN), passengerId);
-                        await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.ReRouting));
+                    await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FirebasePassenger>(bookingRN), passengerId);
+                    await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.ReRouting));
 
-                        // free captain > update user > send request 
-                        await SendReRouteNotfication(bookingRN.BookingModeId, bookingRN.reRouteRequestTime, bookingRN.requestTimeOut.ToString(), bookingRN.previousCaptainId.ToString(), tripId, bookingRN.deviceToken); //passengerId, 
-                    }
-                    else
-                    {
-                        await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FBPassengerBookingRequest>(bookingRN), passengerId);
-                        await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.RequestSent));
-
-                        //UPDATE: Captain can canel inprocess later booking, so user / captain should be set free in every case.
-                        // free captain > update user > send request 
-                        await SendInProcessLaterBookingReRouteNotfication(bookingRN.BookingModeId, bookingRN.previousCaptainId.ToString(), tripId, passengerId, bookingRN.deviceToken);
-                    }
+                    // free captain > update user > send request 
+                    await SendReRouteNotfication(bookingRN.BookingModeId, bookingRN.reRouteRequestTime, bookingRN.requestTimeOut.ToString(), bookingRN.previousCaptainId.ToString(), tripId, bookingRN.deviceToken); //passengerId, 
                 }
                 else
                 {
-                    await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FBPassengerBookingRequest>(bookingRN), passengerId);
+                    await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FirebasePassenger>(bookingRN), passengerId);
                     await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.RequestSent));
 
-                    //NEW IMPLEMENTATION
-                    await UpdateDiscountTypeAndAmount(tripId, bookingRN.discountAmount, bookingRN.discountType);
+                    //UPDATE: Captain can canel inprocess later booking, so user / captain should be set free in every case.
+                    // free captain > update user > send request 
+                    await SendInProcessLaterBookingReRouteNotfication(bookingRN.BookingModeId, bookingRN.previousCaptainId.ToString(), tripId, passengerId, bookingRN.deviceToken);
                 }
             }
-            catch (Exception ex)
+            else
             {
+
+                await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FirebasePassenger>(bookingRN), passengerId);
+                await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.RequestSent));
+
+                //NEW IMPLEMENTATION
+                await UpdateDiscountTypeAndAmount(tripId, bookingRN.discountAmount, bookingRN.discountType);
 
             }
 
@@ -435,6 +430,29 @@ namespace Services
             return await FirebaseIntegration.Read("Trips/" + tripID);
         }
 
+        public static async Task<FirebasePassenger> GetTripPassengerDetails(string tripId, string passengerId)
+        {
+            dynamic trip = await FirebaseIntegration.Read("Trips/" + tripId + "/" + passengerId);
+
+            if (!string.IsNullOrEmpty(trip.Body) && !trip.Body.Equals("null"))
+            {
+                var passenger = JsonConvert.DeserializeObject<FirebasePassenger>(trip.Body);
+
+                return new FirebasePassenger
+                {
+                    Brand = passenger.Brand,
+                    CardId = passenger.CardId,
+                    CustomerId = passenger.CustomerId,
+                    Last4Digits = passenger.Last4Digits,
+                    PaymentModeId = passenger.PaymentModeId,
+                    WalletBalance = passenger.WalletBalance
+                };
+
+                //UpdateDiscountTypeAndAmount(false, tripId, temp["discount"]["amount"].ToString(), temp["discount"]["type"].ToString(), temp["isDispatchedRide"]);
+            }
+            return new FirebasePassenger();
+        }
+
         public static async Task<DiscountTypeDTO> GetTripDiscountDetails(string tripId)
         {
             dynamic resp = await GetTripDetails(tripId);
@@ -655,7 +673,7 @@ namespace Services
             await FreePassengerFromCurrentTrip(userID, tripID);
         }
 
-        public static async Task WriteTripPassengerDetails(FBPassengerBookingRequest data, string passengerId)
+        public static async Task WriteTripPassengerDetails(FirebasePassenger data, string passengerId)
         {
             await FirebaseIntegration.Write("Trips/" + data.TripId + "/" + passengerId, data);
         }

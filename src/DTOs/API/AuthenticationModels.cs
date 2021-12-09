@@ -45,7 +45,7 @@ namespace DTOs.API
 		public string Password { get; set; }
 
 		[Required]
-		[DefaultValue("asdsadadsadasdasdasdads")]
+		[DefaultValue("e40a93742285b9c1739c00")]
 		public string DeviceToken { get; set; }
 	}
 

@@ -6,6 +6,7 @@ using Integrations;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data.Entity;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -13,55 +14,71 @@ namespace Services
 {
     public class WalletServices
     {
-        public static async Task<RedeemCouponCodeResponse> AddCouponCode(RedeemCouponCodeRequest model)
+        public static async Task<ResponseWrapper> AddCouponCode(string passengerId, string couponCode)
         {
             using (CangooEntities dbcontext = new CangooEntities())
             {
-                var CouponsData = dbcontext.CouponsManagers.Where(x => x.Code.ToString().Equals(model.CouponCode)).FirstOrDefault();
-                var AppID = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString());
-                var ResellerId = Guid.Parse(ConfigurationManager.AppSettings["ResellerID"].ToString());
-                WalletTransfer wallet = new WalletTransfer
-                {
-                    Amount = CouponsData.Amount,
-                    RechargeDate = DateTime.UtcNow,
-                    WalletTransferID = Guid.NewGuid(),
-                    Referrence = "Promo Code Applied - " + CouponsData.Code,
-                    TransferredBy = AppID,
-                    TransferredTo = Guid.Parse(model.PassengerId),
-                    ApplicationID = AppID,
-                    ResellerID = ResellerId,
-                };
+                var couponDetails = await dbcontext.CouponsManagers.Where(x => x.Code.Equals(couponCode)).FirstOrDefaultAsync();
 
-                var userProfile = dbcontext.UserProfiles.Where(x => x.UserID.ToString().Equals(model.PassengerId)).FirstOrDefault();
-
-                if (userProfile != null)
+                if (couponDetails == null)
                 {
-                    userProfile.LastRechargedAt = wallet.RechargeDate;
-                    userProfile.WalletBalance = userProfile.WalletBalance == null ? CouponsData.Amount : userProfile.WalletBalance + CouponsData.Amount;
+                    return new ResponseWrapper
+                    {
+                        Message = ResponseKeys.invalidCouponCode,
+                    };
+                }
+                else if (couponDetails.isUsed)
+                {
+                    return new ResponseWrapper
+                    {
+                        Message = ResponseKeys.couponCodeAlreadyApplied,
+                    };
                 }
                 else
                 {
-                    return null;
+                    var userProfile = dbcontext.UserProfiles.Where(x => x.UserID.ToString().Equals(passengerId)).FirstOrDefault();
+
+                    if (userProfile == null)
+                    {
+                        return new ResponseWrapper
+                        {
+                            Message = ResponseKeys.userNotFound
+                        };
+                    }
+
+                    userProfile.LastRechargedAt = DateTime.UtcNow;
+                    userProfile.WalletBalance = userProfile.WalletBalance == null ? couponDetails.Amount : userProfile.WalletBalance + couponDetails.Amount;
+
+                    WalletTransfer wallet = new WalletTransfer
+                    {
+                        Amount = couponDetails.Amount,
+                        RechargeDate = DateTime.UtcNow,
+                        WalletTransferID = Guid.NewGuid(),
+                        Referrence = "Promo Code Applied - " + couponDetails.Code,
+                        TransferredTo = Guid.Parse(passengerId),
+                        TransferredBy = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString()),
+                        ApplicationID = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString()),
+                        ResellerID = Guid.Parse(ConfigurationManager.AppSettings["ResellerID"].ToString()),
+                    };
+
+                    couponDetails.isUsed = true;
+                    couponDetails.UsedOn = wallet.RechargeDate;
+                    couponDetails.UsedBy = Guid.Parse(passengerId);
+
+                    dbcontext.WalletTransfers.Add(wallet);
+                    await dbcontext.SaveChangesAsync();
+
+                    return new ResponseWrapper
+                    {
+                        Error = false,
+                        Message = ResponseKeys.msgSuccess,
+                        Data = new RedeemCouponCodeResponse
+                        {
+                            RechargedAmount = couponDetails.Amount.ToString("0.00"),
+                            WalletBalance = userProfile.WalletBalance.ToString(),
+                        }
+                    };
                 }
-
-                CouponsData.isUsed = true;
-                CouponsData.UsedOn = wallet.RechargeDate;
-                CouponsData.UsedBy = Guid.Parse(model.PassengerId);
-
-                dbcontext.WalletTransfers.Add(wallet);
-                await dbcontext.SaveChangesAsync();
-                return new RedeemCouponCodeResponse
-                {
-                    WalletBalance = userProfile.WalletBalance.ToString(),
-                };
-            }
-        }
-
-        public static async Task<CouponsManager> IsValidCouponCode(string CouponCode)
-        {
-            using (CangooEntities dbcontext = new CangooEntities())
-            {
-                return dbcontext.CouponsManagers.Where(x => x.Code.ToString().Equals(CouponCode)).FirstOrDefault();
             }
         }
 
@@ -99,74 +116,36 @@ namespace Services
             {
                 var applicationid = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString());
                 var resellerid = Guid.Parse(ConfigurationManager.AppSettings["ResellerID"].ToString());
-                var senderProfile = await UserService.GetProfileAsync(model.SenderId, applicationid.ToString(), resellerid.ToString());
-                if (senderProfile != null)
+
+                WalletTransfer wallet = new WalletTransfer
                 {
-                    var receiverProfile = await UserService.GetProfileAsync(model.ReceiverId, applicationid.ToString(), resellerid.ToString());
-                    if (receiverProfile != null)
-                    {
-                        WalletTransfer wallet = new WalletTransfer
-                        {
-                            Amount = decimal.Parse(model.ShareAmount),
-                            RechargeDate = DateTime.UtcNow,
-                            WalletTransferID = Guid.NewGuid(),
-                            Referrence = "In App Wallet Transfer Using Mobile No",
-                            TransferredBy = Guid.Parse(model.SenderId),
-                            TransferredTo = Guid.Parse(model.ReceiverId),
-                            ApplicationID = applicationid,
-                            ResellerID = resellerid,
-                        };
+                    Amount = decimal.Parse(model.ShareAmount),
+                    RechargeDate = DateTime.UtcNow,
+                    WalletTransferID = Guid.NewGuid(),
+                    Referrence = "In App Wallet Transfer Using Mobile No",
+                    TransferredBy = Guid.Parse(model.SenderId),
+                    TransferredTo = Guid.Parse(model.ReceiverId),
+                    ApplicationID = applicationid,
+                    ResellerID = resellerid,
+                };
 
-                        var sendingProfile = dbcontext.UserProfiles.Where(x => x.UserID.ToString().Equals(model.SenderId)).FirstOrDefault();
-                        if (sendingProfile != null)
-                        {
-                            if (sendingProfile.WalletBalance > 0)
-                            {
-                                sendingProfile.WalletBalance -= decimal.Parse(model.ShareAmount);
-                            }
-                            else
-                            {
-                                return null;
-                            }
-                        }
-                        else
-                        {
-                            return null;
-                        }
+                var senderProfile = dbcontext.UserProfiles.Where(x => x.UserID.ToString().Equals(model.SenderId)).FirstOrDefault();
+                senderProfile.WalletBalance -= decimal.Parse(model.ShareAmount);
 
-                        var transferProfile = dbcontext.UserProfiles.Where(x => x.UserID.ToString().Equals(model.ReceiverId)).FirstOrDefault();
-                        if (transferProfile != null)
-                        {
-                            if (transferProfile.WalletBalance > 0)
-                            {
-                                transferProfile.LastRechargedAt = wallet.RechargeDate;
-                                transferProfile.WalletBalance += decimal.Parse(model.ShareAmount);
-                            }
+                var receiverProfile = dbcontext.UserProfiles.Where(x => x.UserID.ToString().Equals(model.ReceiverId)).FirstOrDefault();
+                receiverProfile.WalletBalance = receiverProfile.WalletBalance == null ? decimal.Parse(model.ShareAmount) : receiverProfile.WalletBalance += decimal.Parse(model.ShareAmount);
+                receiverProfile.LastRechargedAt = wallet.RechargeDate;
 
-                        }
-                        else
-                        {
-                            return null;
-                        }
-                        dbcontext.WalletTransfers.Add(wallet);
-                        await dbcontext.SaveChangesAsync();
+                dbcontext.WalletTransfers.Add(wallet);
+                await dbcontext.SaveChangesAsync();
 
-                        return new ShareWalletBalanceResponse
-                        {
-                            FirstName = transferProfile.FirstName,
-                            LastName = transferProfile.LastName,
-                            TransferedAmount = wallet.Amount.ToString(),
-                        };
-                    }
-                    else
-                    {
-                        return null;
-                    }
-                }
-                else
+                return new ShareWalletBalanceResponse
                 {
-                    return null;
-                }
+                    FirstName = receiverProfile.FirstName,
+                    LastName = receiverProfile.LastName,
+                    WalletBalance = ((decimal)senderProfile.WalletBalance).ToString("0.00"),
+                    TransferedAmount = model.ShareAmount
+                };
             }
         }
 
@@ -227,8 +206,8 @@ namespace Services
                             Data = new WalletDetailsResponse
                             {
                                 PassengerId = passengerId,
-                                TotalWalletBalance = profile.WalletBalance.ToString(),
                                 AvailableWalletBalance = "0.00",
+                                TotalWalletBalance = profile.WalletBalance.ToString(),
                                 CustomerId = profile.CreditCardCustomerID,
                                 DefaultCardId = customer.InvoiceSettings.DefaultPaymentMethodId,
                                 CardsList = StripeIntegration.GetCardsList(customer.Id)
@@ -244,7 +223,7 @@ namespace Services
                             {
                                 PassengerId = passengerId,
                                 AvailableWalletBalance = "0.00",
-                                CustomerId = profile.CreditCardCustomerID,
+                                CustomerId = "",
                                 DefaultCardId = customer.InvoiceSettings.DefaultPaymentMethodId,
                                 TotalWalletBalance = profile.WalletBalance.ToString()
                             }
@@ -261,7 +240,7 @@ namespace Services
                         {
                             PassengerId = passengerId,
                             AvailableWalletBalance = "0.00",
-                            CustomerId = profile.CreditCardCustomerID,
+                            CustomerId = "",
                             TotalWalletBalance = profile.WalletBalance.ToString(),
                         }
                     };

@@ -46,7 +46,7 @@ namespace Services
             //time = distance / 400;
             //time = ceil(time);
 
-            return Math.Ceiling(minDistance / 400).ToString("00");
+            return Math.Ceiling(minDistance / 400).ToString() + "-" + (Math.Ceiling(minDistance / 400) + 2).ToString();
         }
     }
 }

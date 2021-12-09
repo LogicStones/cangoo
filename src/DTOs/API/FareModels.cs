@@ -1,4 +1,5 @@
-﻿using DTOs.Shared;
+﻿using Constants;
+using DTOs.Shared;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -77,14 +78,14 @@ namespace DTOs.API
         public CourierFareEstimate Courier { get; set; }
         public List<PassengerFacilityDTO> Facilities { get; set; }
         public List<VehicleCategoryFareEstimate> Categories { get; set; }
-        public string DiscountType { get; set; } = "normal";
+        public string DiscountType { get; set; } = Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Normal).ToLower();
         public string DiscountAmount { get; set; } = "0.00";
         public string PromoCodeId { get; set; } = "";
     }
 
     public class DiscountTypeDTO
     {
-        public string DiscountType { get; set; } = "normal";
+        public string DiscountType { get; set; } = Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Normal).ToLower();
         public string DiscountAmount { get; set; } = "0.00";
         public string PromoCodeId { get; set; } = "";
     }
@@ -103,25 +104,25 @@ namespace DTOs.API
         public string InBoundRSFMId { get; set; } = "";
         public string OutBoundRSFMId { get; set; } = "";
     }
-
+    
     public class FareBreakDownDTO
     {
-        [DefaultValue("0.0")]
+        [DefaultValue("15.00")]
         public string BaseFare { get; set; } = "0.0";
         
-        [DefaultValue("0.0")]
+        [DefaultValue("15.00")]
         public string BookingFare { get; set; } = "0.0";
         
-        [DefaultValue("0.0")]
+        [DefaultValue("0.00")]
         public string WaitingFare { get; set; } = "0.0";
         
-        [DefaultValue("0.0")]
+        [DefaultValue("20.24")]
         public string SurchargeAmount { get; set; } = "0.0";
         
-        [DefaultValue("0.0")]
+        [DefaultValue("3.68")]
         public string InBoundDistanceFare { get; set; } = "0.0";
         
-        [DefaultValue("0.0")]
+        [DefaultValue("86.25")]
         public string InBoundTimeFare { get; set; } = "0.0";
         
         [DefaultValue("0.0")]
@@ -130,11 +131,15 @@ namespace DTOs.API
         [DefaultValue("0.0")]
         public string OutBoundTimeFare { get; set; } = "0.0";
         
-        [DefaultValue("0.0")]
+        [DefaultValue("140.20")]
         public string TotalFare { get; set; } = "0.0";
 
-        [DefaultValue("0.0")]
+        [DefaultValue("0.03")]
         public string FormattingAdjustment { get; set; } = "0.0";
+
+
+
+
     }
 
     public class DistanceAndTimeFareDTO

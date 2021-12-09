@@ -68,12 +68,12 @@ namespace Services
             }
         }
 
-        public static async Task<spGetUpdateTripDataOnAcceptRide_Result> GetUpdateTripDataOnAcceptRide(
-            string tripId, string driverId, string vehicleId, int oldBookingStatus, int isLaterBooking)
+        public static async Task<spGetUpdateTripDataOnAcceptRide_Result> GetUpdatedTripDataOnAcceptRide(
+            string tripId, string driverId, string vehicleId, int isLaterBooking)
         {
             using (var dbContext = new CangooEntities())
             {
-                return dbContext.spGetUpdateTripDataOnAcceptRide(tripId, driverId, (int)TripStatuses.OnTheWay, vehicleId, oldBookingStatus, 
+                return dbContext.spGetUpdateTripDataOnAcceptRide(tripId, driverId, (int)TripStatuses.OnTheWay, vehicleId,  
                     isLaterBooking, DateTime.UtcNow).FirstOrDefault();
             }
         }

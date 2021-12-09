@@ -40,7 +40,7 @@ namespace Services.Automapper
             CreateMap<DispatchedRideLogDTO, DispatchedRidesLog>();
 
             //Following 3 mappings are quick fix for ride FirebaseService.SendRideRequestToOnlineDrivers
-            CreateMap<DriverBookingRequestNotification, FBPassengerBookingRequest>()
+            CreateMap<DriverBookingRequestNotification, FirebasePassenger>()
                 .ForMember(dest => dest.BookingMode, opt => opt.MapFrom(src => src.bookingMode))
                 .ForMember(dest => dest.BookingModeId, opt => opt.MapFrom(src => src.BookingModeId))
                 .ForMember(dest => dest.Description, opt => opt.MapFrom(src => src.description))
@@ -72,6 +72,15 @@ namespace Services.Automapper
                 .ForMember(dest => dest.VoucherCode, opt => opt.MapFrom(src => src.voucherCode))
                 .ForMember(dest => dest.TotalFare, opt => opt.MapFrom(src => src.estimatedPrice))
                 .ForMember(dest => dest.DispatcherId, opt => opt.MapFrom(src => src.dispatcherID))
+
+
+                .ForMember(dest => dest.WalletBalance, opt => opt.MapFrom(src => src.WalletBalance))
+                .ForMember(dest => dest.CustomerId, opt => opt.MapFrom(src => src.CustomerId))
+                .ForMember(dest => dest.CardId, opt => opt.MapFrom(src => src.CardId))
+                .ForMember(dest => dest.Last4Digits, opt => opt.MapFrom(src => src.Last4Digits))
+                .ForMember(dest => dest.Brand, opt => opt.MapFrom(src => src.Brand))
+                .ForMember(dest => dest.PaymentModeId, opt => opt.MapFrom(src => src.PaymentModeId))
+
                 .ForMember(dest => dest.Facilities, opt => opt.MapFrom(src => src.facilities))
                 .ForMember(dest => dest.CancelReasons, opt => opt.MapFrom(src => src.lstCancel));
 

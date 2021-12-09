@@ -23,8 +23,10 @@ namespace Services
             using (var dbContext = new CangooEntities())
             {
                 dt = isLaterBooking ? dt : DateTime.UtcNow;
-                //var specialPromo = await context.PromoManagers.Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == true && p.StartDate <= dt && p.ExpiryDate >= dt).ToListAsync();
-                var specialPromo = dbContext.PromoManagers.Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == true && p.StartDate <= dt && p.ExpiryDate >= dt).ToList();
+
+                var specialPromo = await dbContext.PromoManagers
+                    .Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == true && p.StartDate <= dt && p.ExpiryDate >= dt)
+                    .ToListAsync();
 
                 var result = new DiscountTypeDTO();
                 if (specialPromo.Any())
@@ -37,7 +39,7 @@ namespace Services
                             //dic["discountType"] = "special";
                             //dic["discountAmount"] = string.Format("{0:0.00}", (decimal)promotion.Amount);
                             //promotionID = promotion.PromoID.ToString();
-                            result.DiscountType = "special";
+                            result.DiscountType = Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Special).ToLower();
                             result.DiscountAmount = string.Format("{0:0.00}", (decimal)promotion.Amount);
                             result.PromoCodeId = promotion.PromoID.ToString();
                             break;
@@ -45,47 +47,6 @@ namespace Services
                     }
                 }
                 return result;
-            }
-        }
-
-        public static string ApplyPromoCode(string applicationID, string userID, ref DriverEndTripResponse result)
-        {
-            using (var dbContext = new CangooEntities())
-            {
-                DateTime dt = DateTime.UtcNow;
-                var availablePromoCodes = dbContext.PromoManagers.Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == false && p.StartDate <= dt && p.ExpiryDate >= dt).OrderBy(p => p.StartDate).ToList();
-
-                string promoCodeID = "";
-
-                if (availablePromoCodes.Any())
-                {
-                    var appliedPromoCode = dbContext.UserPromos.Where(up => up.UserID == userID && up.isActive == true).FirstOrDefault();
-                    if (appliedPromoCode != null)
-                    {
-                        //Business Rule: Only one promo can be applied 
-                        if (availablePromoCodes.Exists(p => p.PromoID == appliedPromoCode.PromoID))
-                        {
-                            var promo = availablePromoCodes.Find(p => p.PromoID == appliedPromoCode.PromoID);
-
-                            if (appliedPromoCode.NoOfUsage < promo.Repetition)
-                            {
-
-                                if (promo.isFixed == true)
-                                {
-                                    result.discountType = "fixed";
-                                    result.discountAmount = string.Format("{0:0.00}", (decimal)promo.Amount);
-                                }
-                                else
-                                {
-                                    result.discountType = "percentage";
-                                    result.discountAmount = string.Format("{0:0.00}", (decimal)promo.Amount);
-                                }
-                                promoCodeID = promo.PromoID.ToString();
-                            }
-                        }
-                    }
-                }
-                return promoCodeID;
             }
         }
 
@@ -238,6 +199,18 @@ namespace Services
 
             return result;
         }
+
+        public static async Task<decimal> GetTripCalculatedFare(string tripId)
+        {
+            var trip = await TripsManagerService.GetTripById(tripId);
+
+            return (decimal)(trip.BaseFare + trip.BookingFare + trip.WaitingFare + trip.PerKMFare +
+                                trip.InBoundBaseFare + trip.OutBoundBaseFare +
+                                trip.InBoundDistanceFare + trip.OutBoundDistanceFare +
+                                trip.InBoundTimeFare + trip.OutBoundTimeFare +
+                                trip.InBoundSurchargeAmount + trip.OutBoundSurchargeAmount);
+        }
+
 
         private static async Task<EstimateFareResponse> PrepareResponseObject(string polyLine,
             string inBoundTimeInSeconds, string inBoundDistanceInMeters,
@@ -399,7 +372,10 @@ namespace Services
                  (decimal)(isWeekend ? fareManager.WeekendPerMinFare : isMorningShift ? fareManager.MorningPerMinFare : fareManager.EveningPerMinFare));
 
             result.BaseFare = (isWeekend ? (decimal)fareManager.WeekendBaseFare : isMorningShift ? (decimal)fareManager.MorningBaseFare : (decimal)fareManager.EveningBaseFare).ToString("0.00");
-            result.WaitingFare = (isWeekend ? (decimal)fareManager.WeekendWaitingFare : isMorningShift ? (decimal)fareManager.MorningWaitingFare : (decimal)fareManager.EveningWaitingFare).ToString("0.00");
+            
+            //Waiting fare will be applied if there is some waiting time
+            result.WaitingFare = "0.00";    //(isWeekend ? (decimal)fareManager.WeekendWaitingFare : isMorningShift ? (decimal)fareManager.MorningWaitingFare : (decimal)fareManager.EveningWaitingFare).ToString("0.00");
+            
             result.BookingFare = (isWeekend ? (decimal)fareManager.WeekendBookingFare : isMorningShift ? (decimal)fareManager.MorningBookingFare : (decimal)fareManager.EveningBookingFare).ToString("0.00");
             result.InBoundDistanceFare = distanceAndTimeFare.DistanceFare.ToString("0.00");
             result.InBoundTimeFare = distanceAndTimeFare.TimeFare.ToString("0.00");
