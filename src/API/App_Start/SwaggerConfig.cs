@@ -48,7 +48,7 @@ namespace API
                 type = "string",
                 //description = "bearer iXwrsdj...",
                 required = false,
-                @default = "bearer "
+                @default = "bearer NQ8VW__zqSITBW33nGSfJTuYpDkyol-EQB4lgUBTL64_twT58OqQlErSisGEZJHPGTzGnqb58w7liA75eH0pXIk3jyPmUY3eTW9GCRTVWrfj0poHh3cvWQ9dgf6jz_oS0u64C_ssxfdCLlEdmT1jAfbSRhGN28F0YbO1uNfjIeSzzC9g8bBK9eY4tlpeUFJhBBPiEH3Brljdzgpr2JKNEqnde-DBu-7YMao_Ju-QOfOWzPj9F4UGnqY-Hgt54eME9Wr428T-kTEf_lwbKg_f0kzK4nlGY2argVVkusAANi5e1JdAMBJ4EarHyysOYCBCwtEMJwdNUKHeg3EOw4bVN-V-82CZueuOJVmBEz0mR0EL5mLNs7UL2w81JzHN-ipL6QX0t_xWXI5kR4EgQAFlUym_xQxil2lrRklZ-apHSE-rl3m8crAoeU_9X3vrEMDPNTQoXBeVd4FX2C5nKKqaoJQnvYf2bVGl79jfZd-7ILJ_PnyrvYRLDQaYG5nbjqjShZfP1iBeBeVoGumMuE_aTw"
             });
 
             operation.parameters.Add(new Parameter

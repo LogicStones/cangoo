@@ -99,13 +99,12 @@ namespace DTOs.API
 		public string amount { get; set; }
 	}
 
-
 	public class DriverBookingRequestNotification //: DiscountTypeDTO
 	{
 		public string tripID { get; set; }
-        public string lat { get; set; } // To be replaced with pickUplatitude while revamping driver app
-        public string lan { get; set; } // To be replaced with pickUplongitude while revamping driver app
-        public string paymentMethod { get; set; }
+		public string lat { get; set; } // To be replaced with pickUplatitude while revamping driver app
+		public string lan { get; set; } // To be replaced with pickUplongitude while revamping driver app
+		public string paymentMethod { get; set; }
 		public bool fav { get; set; }
 		public bool isWeb { get; set; }
 		public string dropOfflatitude { get; set; }
@@ -118,7 +117,7 @@ namespace DTOs.API
 		public string discountType { get; set; }
 		public string isDispatchedRide { get; set; }
 		public string dispatcherID { get; set; } = "";
-        public bool isReRouteRequest { get; set; }
+		public bool isReRouteRequest { get; set; }
 		public string estimatedPrice { get; set; }
 		public string bookingMode { get; set; }
 
@@ -136,15 +135,27 @@ namespace DTOs.API
 		public string deviceToken { get; set; } = "";
 		public string pickUpLocation { get; set; }
 		public string dropOffLocation { get; set; }
-        public string MidwayStop1Latitude { get; set; }
-        public string MidwayStop1Longitude { get; set; }
-        public string MidwayStop1Location { get; set; }
-        public string BookingModeId { get; set; }
-        public string PaymentModeId { get; set; }
+		public string MidwayStop1Latitude { get; set; }
+		public string MidwayStop1Longitude { get; set; }
+		public string MidwayStop1Location { get; set; }
+		public string BookingModeId { get; set; }
+		public string PaymentModeId { get; set; }
 		public string CustomerId { get; set; }
 		public string CardId { get; set; }
 		public string Brand { get; set; }
 		public string Last4Digits { get; set; }
 		public string WalletBalance { get; set; }
 	}
+
+	public class DriverCancelRequestNotification
+	{
+		public string tripID { get; set; }
+		public bool isLaterBooking { get; set; }
+	}
+
+	public class PassengerCancelRequestNotification
+	{
+		public string TripId { get; set; }
+        public string IsLaterBooking { get; set; }
+    }
 }

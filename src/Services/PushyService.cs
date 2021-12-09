@@ -19,7 +19,7 @@ namespace Services
 
             if (messageKey.Equals(NotificationKeys.cap_rideCancel))
             {
-                if ((payload as dynamic)["isLaterBooking"])
+                if ((payload as DriverCancelRequestNotification).isLaterBooking)
                     notification["loc_key"] = NotificationKeys.cap_laterRideCancel;
                 else
                     notification["loc_key"] = NotificationKeys.cap_rideCancel;

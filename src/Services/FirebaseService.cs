@@ -142,217 +142,225 @@ namespace Services
 
         #region Send Request to Online Drivers
 
-        public static async Task<bool> SendRideRequestToOnlineDrivers(string tripId, string passengerId, string vehicleCategoryId, int reqSeatingCapacity, DriverBookingRequestNotification bookingRN, dynamic hotelSetting)
+        public static async Task<bool> SendRideRequestToOnlineDrivers(string tripId, string passengerId, string vehicleCategoryId, int reqSeatingCapacity, DriverBookingRequestNotification bookingRN)
         {
-            //Passenger data
-            if (bookingRN.isReRouteRequest)
+            try
             {
-                if (!bookingRN.isLaterBooking)
+
+                //Passenger data
+                if (bookingRN.isReRouteRequest)
                 {
-                    bookingRN.reRouteRequestTime = DateTime.UtcNow.ToString(Formats.DateFormat);
+                    if (!bookingRN.isLaterBooking)
+                    {
+                        bookingRN.reRouteRequestTime = DateTime.UtcNow.ToString(Formats.DateFormat);
 
-                    await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FirebasePassenger>(bookingRN), passengerId);
-                    await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.ReRouting));
+                        await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FirebasePassenger>(bookingRN), passengerId);
+                        await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.ReRouting));
 
-                    // free captain > update user > send request 
-                    await SendReRouteNotfication(bookingRN.BookingModeId, bookingRN.reRouteRequestTime, bookingRN.requestTimeOut.ToString(), bookingRN.previousCaptainId.ToString(), tripId, bookingRN.deviceToken); //passengerId, 
+                        // free captain > update user > send request 
+                        await SendReRouteNotfication(bookingRN.BookingModeId, bookingRN.reRouteRequestTime, bookingRN.requestTimeOut.ToString(), bookingRN.previousCaptainId.ToString(), tripId, bookingRN.deviceToken); //passengerId, 
+                    }
+                    else
+                    {
+                        await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FirebasePassenger>(bookingRN), passengerId);
+                        await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.RequestSent));
+
+                        //UPDATE: Captain can canel inprocess later booking, so user / captain should be set free in every case.
+                        // free captain > update user > send request 
+                        await SendInProcessLaterBookingReRouteNotfication(bookingRN.BookingModeId, bookingRN.previousCaptainId.ToString(), tripId, passengerId, bookingRN.deviceToken);
+                    }
                 }
                 else
                 {
+
                     await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FirebasePassenger>(bookingRN), passengerId);
                     await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.RequestSent));
 
-                    //UPDATE: Captain can canel inprocess later booking, so user / captain should be set free in every case.
-                    // free captain > update user > send request 
-                    await SendInProcessLaterBookingReRouteNotfication(bookingRN.BookingModeId, bookingRN.previousCaptainId.ToString(), tripId, passengerId, bookingRN.deviceToken);
-                }
-            }
-            else
-            {
+                    await UpdateDiscountTypeAndAmount(tripId, bookingRN.discountAmount, bookingRN.discountType);
 
-                await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FirebasePassenger>(bookingRN), passengerId);
-                await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.RequestSent));
-
-                //NEW IMPLEMENTATION
-                await UpdateDiscountTypeAndAmount(tripId, bookingRN.discountAmount, bookingRN.discountType);
-
-            }
-
-            #region MakePreferredAndNormalDriversList
-
-            //Key: DriverID, Value: Online Driver Properties
-
-            List<FirebaseDriver> lstNormalCaptains = new List<FirebaseDriver>();
-            List<FirebaseDriver> lstPreferredCaptains = new List<FirebaseDriver>();
-
-            string captainIDs = "";
-            string preferredCaptainIDs = "";
-
-            var onlineDrivers = await GetOnlineDrivers();
-
-            foreach (var od in onlineDrivers)
-            {
-                FirebaseDriver driver = od.Value;// JsonConvert.DeserializeObject<FirebaseDriver>(JsonConvert.SerializeObject(od.Value));
-                if (string.IsNullOrEmpty(driver.driverID) || driver.location == null) //Dirty data
-                {
-                    continue;
                 }
 
-                if (!driver.categoryID.Contains(vehicleCategoryId))
+                #region MakePreferredAndNormalDriversList
+
+                //Key: DriverID, Value: Online Driver Properties
+
+                List<FirebaseDriver> lstNormalCaptains = new List<FirebaseDriver>();
+                List<FirebaseDriver> lstPreferredCaptains = new List<FirebaseDriver>();
+
+                string captainIDs = "";
+                string preferredCaptainIDs = "";
+
+                var onlineDrivers = await GetOnlineDrivers();
+
+                foreach (var od in onlineDrivers)
                 {
-                    continue;
-                }
-
-                //If user have requested some facilities then request should be sent to only eligible captains
-                if (!string.IsNullOrEmpty(bookingRN.requiredFacilities))
-                {
-                    var reqFac = bookingRN.requiredFacilities.ToLower().Split(',');
-                    var vehFac = driver.vehicleFacilities.ToLower().Split(',');
-                    var capFac = driver.driverFacilities.ToLower().Split(',');
-
-                    var vehCheck = reqFac.Intersect(vehFac);
-                    var capCheck = reqFac.Intersect(capFac);
-
-                    //If both vehicle and captain don't have required facilities
-
-                    if (!(reqFac.SequenceEqual(vehCheck) && reqFac.SequenceEqual(capCheck)))
+                    FirebaseDriver driver = od.Value;// JsonConvert.DeserializeObject<FirebaseDriver>(JsonConvert.SerializeObject(od.Value));
+                    if (string.IsNullOrEmpty(driver.driverID) || driver.location == null) //Dirty data
+                    {
                         continue;
-                }
-
-                if (driver.isPriorityHoursActive)
-                {
-                    preferredCaptainIDs = string.IsNullOrEmpty(preferredCaptainIDs) ? driver.driverID : preferredCaptainIDs + "," + driver.driverID;
-
-                    //If its later booking then send request to captains even if he is already busy
-                    if (bookingRN.isLaterBooking)
-                    {
-                        lstPreferredCaptains.Add(driver);
                     }
-                    //In case of normal booking send request to free captains only
-                    else
+
+                    if (!driver.categoryID.Contains(vehicleCategoryId))
                     {
-                        if (driver.isBusy.ToLower().Equals("false"))
+                        continue;
+                    }
+
+                    //If user have requested some facilities then request should be sent to only eligible captains
+                    if (!string.IsNullOrEmpty(bookingRN.requiredFacilities))
+                    {
+                        var reqFac = bookingRN.requiredFacilities.ToLower().Split(',');
+                        var vehFac = driver.vehicleFacilities.ToLower().Split(',');
+                        var capFac = driver.driverFacilities.ToLower().Split(',');
+
+                        var vehCheck = reqFac.Intersect(vehFac);
+                        var capCheck = reqFac.Intersect(capFac);
+
+                        //If both vehicle and captain don't have required facilities
+
+                        if (!(reqFac.SequenceEqual(vehCheck) && reqFac.SequenceEqual(capCheck)))
+                            continue;
+                    }
+
+                    if (driver.isPriorityHoursActive)
+                    {
+                        preferredCaptainIDs = string.IsNullOrEmpty(preferredCaptainIDs) ? driver.driverID : preferredCaptainIDs + "," + driver.driverID;
+
+                        //If its later booking then send request to captains even if he is already busy
+                        if (bookingRN.isLaterBooking)
                         {
                             lstPreferredCaptains.Add(driver);
                         }
+                        //In case of normal booking send request to free captains only
+                        else
+                        {
+                            if (driver.isBusy.ToLower().Equals("false"))
+                            {
+                                lstPreferredCaptains.Add(driver);
+                            }
+                        }
                     }
-                }
-                else
-                {
-                    captainIDs = string.IsNullOrEmpty(captainIDs) ? driver.driverID : captainIDs + "," + driver.driverID;
-
-                    //If it's later booking then send request to captains even if he is already busy
-                    if (bookingRN.isLaterBooking)
-                    {
-                        lstNormalCaptains.Add(driver);
-                    }
-                    //In case of normal booking send request to free captains only
                     else
                     {
-                        if (driver.isBusy.ToLower().Equals("false"))
+                        captainIDs = string.IsNullOrEmpty(captainIDs) ? driver.driverID : captainIDs + "," + driver.driverID;
+
+                        //If it's later booking then send request to captains even if he is already busy
+                        if (bookingRN.isLaterBooking)
                         {
                             lstNormalCaptains.Add(driver);
                         }
+                        //In case of normal booking send request to free captains only
+                        else
+                        {
+                            if (driver.isBusy.ToLower().Equals("false"))
+                            {
+                                lstNormalCaptains.Add(driver);
+                            }
+                        }
                     }
                 }
+                #endregion
+
+                //CaptainID won't be null in case of ReRouted trip request and don't send request to that captain again who have cancelled the current trip. 
+                //TBD: All the captains who ever accepted the trip can be excluded using ReroutedRidesLog table
+
+                if (!string.IsNullOrEmpty(bookingRN.previousCaptainId))
+                {
+                    lstNormalCaptains.RemoveAll(x => x.driverID.Equals(bookingRN.previousCaptainId));
+                    lstPreferredCaptains.RemoveAll(x => x.driverID.Equals(bookingRN.previousCaptainId));
+                }
+
+                //No driver available
+                if (lstNormalCaptains.Count == 0 && lstPreferredCaptains.Count == 0)
+                    return false;
+
+
+                /* REFACTOR
+                 * This function call seems to be unnecessary*/
+
+                //ALERT !!
+                //Double check the logic, following nodes are not added anywhere else before, in case of first time ride request.
+                //Probably same function is called when scheduling later booking (either in user of driver controller)
+
+                //NEW IMPLEMENTATION : Moved to IsReRouteRequest else part
+                //await UpdateDiscountTypeAndAmount(tripId, bookingRN.DiscountAmount ?? "0.00", bookingRN.DiscountType ?? "normal");
+                await SetTripDispatchedStatus(tripId, bookingRN.isDispatchedRide);
+
+                string applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
+                var applicationSettings = await ApplicationSettingService.GetApplicationSettings(applicationId);
+
+                var distanceInterval = (int)applicationSettings.RequestRadiusInterval;
+                var requestSearchRange = bookingRN.isLaterBooking ? (int)(applicationSettings.LaterBookingRequestSearchRange * 1000) : (int)(applicationSettings.RequestSearchRange * 1000);
+                var captainMinRating = applicationSettings.CaptainMinRating;
+
+                int minDistanceRange = 0;
+                var maxDistanceRange = distanceInterval;
+                var pickPosition = new GeoCoordinate(Convert.ToDouble(bookingRN.lat), Convert.ToDouble(bookingRN.lan));
+
+                var lstPreferredCaptainsDetail = new List<DatabaseOlineDriversDTO>();
+                if (!string.IsNullOrEmpty(preferredCaptainIDs))
+                    lstPreferredCaptainsDetail = await DriverService.GetOnlineDriversByIds(preferredCaptainIDs);
+
+                var lstNormalCaptainsDetail = new List<DatabaseOlineDriversDTO>();
+                if (!string.IsNullOrEmpty(captainIDs))
+                    lstNormalCaptainsDetail = await DriverService.GetOnlineDriversByIds(captainIDs);
+
+                do
+                {
+                    Dictionary<string, string> lstFilteredPreferredCaptains = new Dictionary<string, string>();
+                    Dictionary<string, string> lstFilteredNormalCaptains = new Dictionary<string, string>();
+
+                    var lstRequestLog = new List<TripRequestLogDTO>();
+
+                    FilterDriverForRideRequest(lstPreferredCaptains, lstPreferredCaptainsDetail, lstFilteredPreferredCaptains, lstRequestLog, tripId, reqSeatingCapacity, bookingRN, requestSearchRange, captainMinRating, minDistanceRange, maxDistanceRange, pickPosition);
+
+                    //if request is already accpeted then no need to save current drivers list in log, so break loop 
+                    if (lstFilteredPreferredCaptains.Any())
+                    {
+                        if (await IsRequestAccepted(tripId))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            await SendRequestToFilteredDrivers(bookingRN, applicationSettings, lstFilteredPreferredCaptains, lstRequestLog);
+                        }
+                    }
+
+                    //TBD: Loop Optimization - Remove currently selected drivers from lstPreferredOnlineDriver
+                    //ExcludeLoggedDriversForNextIteration(lstPreferredCaptains, lstPreferredCaptainsDetail, lstFilteredPreferredCaptains);
+
+                    lstRequestLog = new List<TripRequestLogDTO>();
+
+                    FilterDriverForRideRequest(lstNormalCaptains, lstNormalCaptainsDetail, lstFilteredNormalCaptains, lstRequestLog, tripId, reqSeatingCapacity, bookingRN, requestSearchRange, captainMinRating, minDistanceRange, maxDistanceRange, pickPosition);
+
+                    //TBD: Loop Optimization - Remove currently selected drivers from lstOnlineDriver
+                    //ExcludeLoggedDriversForNextIteration(lstNormalCaptains, lstNormalCaptainsDetail, lstFilteredNormalCaptains);
+
+                    //if request is already accpeted then no need to save current drivers list in log, so break loop 
+                    if (lstFilteredNormalCaptains.Any())
+                    {
+                        if (await IsRequestAccepted(tripId))
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            await SendRequestToFilteredDrivers(bookingRN, applicationSettings, lstFilteredNormalCaptains, lstRequestLog);
+                        }
+                    }
+
+                    minDistanceRange = maxDistanceRange;
+                    maxDistanceRange = maxDistanceRange + distanceInterval > requestSearchRange ? requestSearchRange : maxDistanceRange + distanceInterval;
+
+                } while (!await IsRequestAccepted(tripId) && minDistanceRange < requestSearchRange);
+
+                return true; //Ride is accepted
+
             }
-            #endregion
-
-            //CaptainID won't be null in case of ReRouted trip request and don't send request to that captain again who have cancelled the current trip. 
-            //TBD: All the captains who ever accepted the trip can be excluded using ReroutedRidesLog table
-
-            if (!string.IsNullOrEmpty(bookingRN.previousCaptainId))
+            catch (Exception ex)
             {
-                lstNormalCaptains.RemoveAll(x => x.driverID.Equals(bookingRN.previousCaptainId));
-                lstPreferredCaptains.RemoveAll(x => x.driverID.Equals(bookingRN.previousCaptainId));
-            }
-
-            //No driver available
-            if (lstNormalCaptains.Count == 0 && lstPreferredCaptains.Count == 0)
                 return false;
-
-
-            /* REFACTOR
-             * This function call seems to be unnecessary*/
-
-            //ALERT !!
-            //Double check the logic, following nodes are not added anywhere else before, in case of first time ride request.
-            //Probably same function is called when scheduling later booking (either in user of driver controller)
-
-            //NEW IMPLEMENTATION : Moved to IsReRouteRequest else part
-            //await UpdateDiscountTypeAndAmount(tripId, bookingRN.DiscountAmount ?? "0.00", bookingRN.DiscountType ?? "normal");
-            await SetTripDispatchedStatus(tripId, bookingRN.isDispatchedRide);
-
-            string applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
-            var applicationSettings = await ApplicationSettingService.GetApplicationSettings(applicationId);
-
-            var distanceInterval = (int)applicationSettings.RequestRadiusInterval;
-            var requestSearchRange = bookingRN.isLaterBooking ? (int)(applicationSettings.LaterBookingRequestSearchRange * 1000) : (int)(applicationSettings.RequestSearchRange * 1000);
-            var captainMinRating = applicationSettings.CaptainMinRating;
-
-            int minDistanceRange = 0;
-            var maxDistanceRange = distanceInterval;
-            var pickPosition = new GeoCoordinate(Convert.ToDouble(bookingRN.lat), Convert.ToDouble(bookingRN.lan));
-
-            var lstPreferredCaptainsDetail = new List<DatabaseOlineDriversDTO>();
-            if (!string.IsNullOrEmpty(preferredCaptainIDs))
-                lstPreferredCaptainsDetail = await DriverService.GetOnlineDriversByIds(preferredCaptainIDs);
-
-            var lstNormalCaptainsDetail = new List<DatabaseOlineDriversDTO>();
-            if (!string.IsNullOrEmpty(captainIDs))
-                lstNormalCaptainsDetail = await DriverService.GetOnlineDriversByIds(captainIDs);
-
-            do
-            {
-                Dictionary<string, string> lstFilteredPreferredCaptains = new Dictionary<string, string>();
-                Dictionary<string, string> lstFilteredNormalCaptains = new Dictionary<string, string>();
-
-                var lstRequestLog = new List<TripRequestLogDTO>();
-
-                FilterDriverForRideRequest(lstPreferredCaptains, lstPreferredCaptainsDetail, lstFilteredPreferredCaptains, lstRequestLog, tripId, reqSeatingCapacity, bookingRN, requestSearchRange, captainMinRating, minDistanceRange, maxDistanceRange, pickPosition);
-
-                //if request is already accpeted then no need to save current drivers list in log, so break loop 
-                if (lstFilteredPreferredCaptains.Any())
-                {
-                    if (await IsRequestAccepted(tripId))
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        await SendRequestToFilteredDrivers(bookingRN, applicationSettings, lstFilteredPreferredCaptains, lstRequestLog);
-                    }
-                }
-
-                //TBD: Loop Optimization - Remove currently selected drivers from lstPreferredOnlineDriver
-                //ExcludeLoggedDriversForNextIteration(lstPreferredCaptains, lstPreferredCaptainsDetail, lstFilteredPreferredCaptains);
-
-                lstRequestLog = new List<TripRequestLogDTO>();
-
-                FilterDriverForRideRequest(lstNormalCaptains, lstNormalCaptainsDetail, lstFilteredNormalCaptains, lstRequestLog, tripId, reqSeatingCapacity, bookingRN, requestSearchRange, captainMinRating, minDistanceRange, maxDistanceRange, pickPosition);
-
-                //TBD: Loop Optimization - Remove currently selected drivers from lstOnlineDriver
-                //ExcludeLoggedDriversForNextIteration(lstNormalCaptains, lstNormalCaptainsDetail, lstFilteredNormalCaptains);
-
-                //if request is already accpeted then no need to save current drivers list in log, so break loop 
-                if (lstFilteredNormalCaptains.Any())
-                {
-                    if (await IsRequestAccepted(tripId))
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        await SendRequestToFilteredDrivers(bookingRN, applicationSettings, lstFilteredNormalCaptains, lstRequestLog);
-                    }
-                }
-
-                minDistanceRange = maxDistanceRange;
-                maxDistanceRange = maxDistanceRange + distanceInterval > requestSearchRange ? requestSearchRange : maxDistanceRange + distanceInterval;
-
-            } while (!await IsRequestAccepted(tripId) && minDistanceRange < requestSearchRange);
-
-            return true; //Ride is accepted
+            }
         }
 
         private static async Task SendRequestToFilteredDrivers(DriverBookingRequestNotification bookingRN, DatabaseModel.ApplicationSetting applicationSettings, Dictionary<string, string> lstFilteredCaptains, List<TripRequestLogDTO> lstRequestLog)

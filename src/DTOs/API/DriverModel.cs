@@ -235,37 +235,43 @@ namespace DTOs.API
         [Required]
         [DefaultValue("")]
         public string tripID { get; set; }
+        
         [Required]
-        [DefaultValue("")]
+        [DefaultValue("902179f6-167e-4cd9-9ce8-701b92771f97")]
         public string driverID { get; set; }
+        
         [Required]
-        [DefaultValue("")]
+        [DefaultValue(4)]
         public int cancelID { get; set; }
+        
         [Required]
         [DefaultValue("True")]
         public string isAtPickupLocation { get; set; }
+        
         [Required]
         [DefaultValue("[{\"lat\":68.3908316470314,\"lng\":-169.25109883759296},{\"lat\":38.39278982958803,\"lng\":171.06140116240704},{\"lat\":-57.243772723990084,\"lng\":154.71374491240704},{\"lat\":-33.0092509544725,\"lng\":66.64733866240704},{\"lat\":-41.525554039286014,\"lng\":13.912963662407037},{\"lat\":-45.549637304437304,\"lng\":-18.423294077947503},{\"lat\":-52.710099753168834,\"lng\":-100.16906758759296},{\"lat\":56.546179852988224,\"lng\":-176.950561665387},{\"lat\":82.84011158544916,\"lng\":-53.90546558717142},{\"lat\":82.53196871665712,\"lng\":5.8348478588152375},{\"lat\":82.76804348272478,\"lng\":88.83966180216396}]")]
         public string resellerArea { get; set; }
-        [DefaultValue("False")]
+        
+        [DefaultValue(false)]
         public bool isWeb { get; set; }
-        [DefaultValue("False")]
+
+        [DefaultValue(false)]
         public bool isLaterBooking { get; set; }
 
 
         //Following params are set when cron job cancels and reroutes upcoming later booking
 
 
-        [DefaultValue("")]
+        [DefaultValue("73BABE98-3CA1-49E0-BE0A-1638B154762D")]
         public string resellerID { get; set; }
 
-        [DefaultValue("")]
+        [DefaultValue("18000")]
         public string timeZoneOffset { get; set; }
 
-        [DefaultValue("")]
+        [DefaultValue("False")]
         public string isDispatchedRide { get; set; }
 
-        [DefaultValue("")]
+        [DefaultValue(false)]
         public bool isReRouteRequest { get; set; }
     }
     

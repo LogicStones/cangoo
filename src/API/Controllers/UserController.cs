@@ -449,6 +449,11 @@ namespace API.Controllers
         [Route("update-phone-number-otp")]
         public async Task<HttpResponseMessage> UpdatePhoneNumberOTP([FromUri] UpdatePassengerPhoneNumberOTPRequest model)
         {
+            var user = await UserService.GetByUserNameAsync(model.PhoneNumber);
+
+            if (user != null)
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper { Message = ResponseKeys.userAlreadyRegistered });
+
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
@@ -464,11 +469,6 @@ namespace API.Controllers
         [Route("update-phone-number")]
         public async Task<HttpResponseMessage> UpdatePhoneNumber([FromBody] UpdatePassengerPhoneNumberRequest model)
         {
-            var user = await UserService.GetByUserNameAsync(model.PhoneNumber);
-
-            if (user != null)
-                return Request.CreateResponse(HttpStatusCode.Conflict, new ResponseWrapper { Message = ResponseKeys.userAlreadyRegistered });
-
             await UserService.UpdatePhoneNumberAsync(model.PhoneNumber, model.CountryCode, model.PassengerId);
 
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
@@ -1025,29 +1025,29 @@ namespace API.Controllers
             
         }
 
-        [AllowAnonymous]
-        [HttpPost]
-        [Route("authorize-credit-card-payment")]
-        public async Task<HttpResponseMessage> AuthorizeCreditCardPayment([FromBody] AuthorizeCreditCardPaymentRequest model)
-        {
-            var details = await WalletServices.AuthoizeCreditCardPayment(model.CustomerId, model.CardId, model.FareAmount);
+        //[AllowAnonymous]
+        //[HttpPost]
+        //[Route("authorize-credit-card-payment")]
+        //public async Task<HttpResponseMessage> AuthorizeCreditCardPayment([FromBody] AuthorizeCreditCardPaymentRequest model)
+        //{
+        //    var details = await WalletServices.AuthoizeCreditCardPayment(model.CustomerId, model.CardId, model.FareAmount);
 
-            if (details.Status.Equals("requires_capture"))
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Data = details,
-                    Message = ResponseKeys.msgSuccess
-                });
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Data = details,
-                    Message = ResponseKeys.paymentGetwayError
-                });
-            }
-        }
+        //    if (details.Status.Equals("requires_capture"))
+        //        return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+        //        {
+        //            Error = false,
+        //            Data = details,
+        //            Message = ResponseKeys.msgSuccess
+        //        });
+        //    else
+        //    {
+        //        return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+        //        {
+        //            Data = details,
+        //            Message = ResponseKeys.paymentGetwayError
+        //        });
+        //    }
+        //}
 
         [AllowAnonymous]
         [HttpPost]  

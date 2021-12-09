@@ -290,14 +290,23 @@ namespace DTOs.API
     public class CancelTripRequest
     {
         [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string PassengerId { get; set; }
+
         [Required]
+        [DefaultValue("")]
         public string TripId { get; set; }
+
         [Required]
+        [DefaultValue("0")]
         public string DistanceTravelled { get; set; }
+
         [Required]
+        [DefaultValue("1")]
         public string CancelID { get; set; }
+
         [Required]
+        [DefaultValue("False")]
         public string IsLaterBooking { get; set; }
     }
 

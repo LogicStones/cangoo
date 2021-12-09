@@ -879,12 +879,13 @@ namespace API.Controllers
                     await FirebaseService.AddUpcomingLaterBooking(model.driverID, await DriverService.GetUpcomingLaterBooking(model.driverID));
                 }
 
-                await FirebaseService.SetDriverBusy(model.driverID, model.tripID);
+                await FirebaseService.SetDriverFree(model.driverID, model.tripID);
                 await FirebaseService.UpdateDriverEarnedPoints(model.driverID, tp.EarningPoints.ToString());
 
                 dic = new Dictionary<dynamic, dynamic>
                         {
-                            { "TripId", model.tripID }
+                            { "tripID", model.tripID },
+                            { "isLaterBooking", model.isLaterBooking }
                         };
 
                 //in normal booking if captain is arrived and cancels the ride then don't reroute
@@ -894,20 +895,20 @@ namespace API.Controllers
                 {
                     await FirebaseService.FreePassengerFromCurrentTrip(tp.TripID.ToString(), tp.UserID.ToString());
 
-                    await PushyService.UniCast(tp.DeviceToken, dic, NotificationKeys.pas_rideCancel);
+                    await PushyService.UniCast(tp.DeviceToken,
+                        new PassengerCancelRequestNotification { TripId = model.tripID, IsLaterBooking = model.isLaterBooking.ToString()},
+                        NotificationKeys.pas_rideCancel);
+
                     await FirebaseService.DeleteTrip(tp.TripID.ToString());
                 }
                 else
                 {
                     //Reroute Request
-                    response.data = (await TripsManagerService.BookNewTrip(GetCancelledTripRequestObject(model, tp))).Data;
+                    response.data = (await TripsManagerService.BookNewTrip(await TripsManagerService.GetCancelledTripRequestObject(model, tp))).Data;
                 }
 
                 response.error = false;
-                response.data = new Dictionary<dynamic, dynamic>
-                        {
-                            { "tripID", model.tripID }
-                        };
+                response.data = dic;
                 response.message = ResponseKeys.msgSuccess;
 
                 //If later booking was over due and cancelled by cron-job (if driver app was not active)
@@ -2955,55 +2956,6 @@ namespace API.Controllers
                 dic.isWalletPreferred = false;
                 dic.availableWalletBalance = string.Format("{0:0.00}", 0);
             }
-        }
-
-        private BookTripRequest GetCancelledTripRequestObject(DriverCancelTripRequest req, spCaptainCancelRide_Result tp)
-        {
-            BookTripRequest pr = new BookTripRequest
-            {
-                PickUpLatitude = tp.PickupLocationLatitude,
-                PickUpLongitude = tp.PickupLocationLongitude,
-                PickUpPostalCode = "",
-                PickUpLocation = tp.PickUpLocation,
-
-                MidwayStop1Latitude = "",
-                MidwayStop1Longitude = "",
-                MidwayStop1PostalCode = "",
-                MidwayStop1Location = "",
-
-                DropOffLatitude = tp.DropOffLocationLatitude,
-                DropOffLongitude = tp.DropOffLocationLongitude,
-                DropOffPostalCode = "",
-                DropOffLocation = tp.DropOffLocation,
-
-                PassengerId = tp.UserID.ToString(),
-                PaymentModeId = tp.PaymentModeId.ToString(),//Enum.GetName(typeof(ResellerPaymentModes), tp.TripPaymentMode),
-                LaterBookingDate = tp.PickUpBookingDateTime.ToString(),
-                TripId = tp.TripID.ToString(),
-                SeatingCapacity = tp.NoOfPerson.ToString(),
-                RequiredFacilities = tp.facilities,
-                IsLaterBooking = req.isLaterBooking.ToString(),
-                DriverId = req.driverID,
-                TimeZoneOffset = "0", //Will not be considered, in case of later booking reroute, PickUpBookingDateTime is being fetched from db
-                IsReRouteRequest = true.ToString()
-                //DeviceToken = tp.DeviceToken,
-                //resellerArea = req.resellerArea,
-            };
-
-            //NEW IMPLEMENTATION : Adjusted in Firebase Service (SendRideRequestToOnlineDrivers)
-
-            //string path = "Trips/" + req.tripID.ToString() + "/discount";
-
-            //client = new FireSharp.FirebaseClient(config);
-            //FirebaseResponse resp = client.Get(path);
-            //if (!string.IsNullOrEmpty(resp.Body) && !resp.Body.Equals("null"))
-            //{
-            //    Dictionary<string, dynamic> discountDetails = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(resp.Body);
-            //    pr.discountType = discountDetails["type"].ToString();
-            //    pr.promoDiscountAmount = discountDetails["amount"].ToString();
-            //}
-
-            return pr;
         }
 
         private LaterBookingConflictDTO checkLaterBookingDate(string captainID, DateTime pickUpDateTime)

@@ -106,7 +106,7 @@ namespace Services
         public static async Task<ResponseWrapper> BookNewTrip(BookTripRequest model)
         {
             //TBD : Save Passenger and Driver Device info etc from filter
-            
+
 
             using (CangooEntities dbContext = new CangooEntities())
             {
@@ -149,8 +149,13 @@ namespace Services
                     fav = false,
                     facilities = await FacilitiesService.GetDriverFacilitiesDetailByIds(model.RequiredFacilities),
                     lstCancel = await CancelReasonsService.GetDriverCancelReasons(true, false, false),
+
+                    BookingModeId = model.BookingModeId,
+                    bookingMode = Enum.GetName(typeof(BookingModes), int.Parse(model.BookingModeId)).ToLower(),
+
                     discountType = Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Normal).ToLower(),
                     discountAmount = "0.0",
+
                     dispatcherID = "",
                     estimatedPrice = model.TotalFare,
 
@@ -161,10 +166,10 @@ namespace Services
                     Last4Digits = model.Last4Digits,
                     WalletBalance = model.WalletBalance
 
-                //IsWeb = false,
-                //REFACTOR - Remove this flag
-                //isLaterBookingStarted = false
-            };
+                    //IsWeb = false,
+                    //REFACTOR - Remove this flag
+                    //isLaterBookingStarted = false
+                };
 
                 Trip tp = new Trip();
                 if (bool.Parse(model.IsReRouteRequest))
@@ -195,6 +200,8 @@ namespace Services
                     bookingRN.description = tp.Description;
                     bookingRN.previousCaptainId = model.DriverId;
                     //bookingRN.DeviceToken = model.DeviceToken;
+
+                    await dbContext.SaveChangesAsync();
                 }
                 else
                 {
@@ -263,6 +270,7 @@ namespace Services
 
                     tp.ApplicationID = Guid.Parse(applicationId);
                     tp.ResellerID = Guid.Parse(resellerId);
+
                     tp.PickupLocationLatitude = model.PickUpLatitude;
                     tp.PickupLocationLongitude = model.PickUpLongitude;
                     tp.PickupLocationPostalCode = model.PickUpPostalCode;
@@ -277,15 +285,6 @@ namespace Services
                     tp.DropOffLocationLongitude = model.DropOffLongitude;
                     tp.DropOffLocationPostalCode = model.DropOffPostalCode;
                     tp.DropOffLocation = model.DropOffLocation;
-
-                    //tp.MidwayStop1Latitude = string.IsNullOrEmpty(model.MidwayStop1Latitude) ? "0.00" : model.MidwayStop1Latitude;
-                    //tp.MidwayStop1Longitude = string.IsNullOrEmpty(model.MidwayStop1Longitude) ? "0.00" : model.MidwayStop1Longitude;
-                    //tp.MidwayStop1PostalCode = model.MidwayStop1PostalCode;
-                    //tp.MidwayStop1Location = string.IsNullOrEmpty(model.MidwayStop1Location) ? "" : model.MidwayStop1Location;
-                    //tp.DropOffLocationLatitude = string.IsNullOrEmpty(model.DropOffLatitude) ? "0.00" : model.DropOffLatitude;
-                    //tp.DropOffLocationLongitude = string.IsNullOrEmpty(model.DropOffLongitutde) ? "0.00" : model.DropOffLongitutde;
-                    //tp.DropOffLocationPostalCode = model.DropOffPostalCode;
-                    //tp.DropOffLocation = string.IsNullOrEmpty(model.DropOffLocation) ? "" : model.DropOffLocation;
 
                     tp.UserID = Guid.Parse(model.PassengerId);
                     tp.TripStatusID = (int)TripStatuses.RequestSent;
@@ -433,7 +432,7 @@ namespace Services
                 //Explicitly create new thread to return API response.
                 var task = Task.Run(async () =>
                 {
-                    await FirebaseService.SendRideRequestToOnlineDrivers(bookingRN.tripID, model.PassengerId, model.CategoryId.ToString(), int.Parse(model.SeatingCapacity), bookingRN, null);
+                    await FirebaseService.SendRideRequestToOnlineDrivers(bookingRN.tripID, model.PassengerId, model.CategoryId.ToString(), int.Parse(model.SeatingCapacity), bookingRN);
                 });
 
                 return new ResponseWrapper
@@ -491,7 +490,7 @@ namespace Services
         {
             using (var dbContext = new CangooEntities())
             {
-                var result = new CancelTripResponse
+                var response = new CancelTripResponse
                 {
                     TripId = tripId,
                     IsLaterBooking = isLaterBooking
@@ -522,7 +521,7 @@ namespace Services
                     {
                         Message = ResponseKeys.msgSuccess,
                         Error = false,
-                        Data = result
+                        Data = response
                     };
                 }
 
@@ -549,13 +548,19 @@ namespace Services
                     await FirebaseService.DeletePassengerTrip(passengerId);
                 }
 
-                await PushyService.UniCast(tp.deviceToken, result, NotificationKeys.cap_rideCancel);
+                await PushyService.UniCast(tp.deviceToken, 
+                    new DriverCancelRequestNotification
+                    {
+                        tripID = tripId,
+                        isLaterBooking = bool.Parse(isLaterBooking)
+                    }, 
+                    NotificationKeys.cap_rideCancel);
 
                 return new ResponseWrapper
                 {
                     Message = ResponseKeys.msgSuccess,
                     Error = false,
-                    Data = result
+                    Data = response
                 };
             }
         }
@@ -643,5 +648,58 @@ namespace Services
             }
         }
 
+        public static async Task<BookTripRequest> GetCancelledTripRequestObject(DriverCancelTripRequest req, spCaptainCancelRide_Result tp)
+        {
+            var discountDetails = await FirebaseService.GetTripDiscountDetails(tp.TripID.ToString());
+
+            return new BookTripRequest
+            {
+                PickUpLatitude = tp.PickupLocationLatitude,
+                PickUpLongitude = tp.PickupLocationLongitude,
+                PickUpPostalCode = "",
+                PickUpLocation = tp.PickUpLocation,
+
+                MidwayStop1Latitude = "",
+                MidwayStop1Longitude = "",
+                MidwayStop1PostalCode = "",
+                MidwayStop1Location = "",
+
+                DropOffLatitude = tp.DropOffLocationLatitude,
+                DropOffLongitude = tp.DropOffLocationLongitude,
+                DropOffPostalCode = "",
+                DropOffLocation = tp.DropOffLocation,
+
+                PassengerId = tp.UserID.ToString(),
+                PaymentModeId = tp.PaymentModeId.ToString(),//Enum.GetName(typeof(ResellerPaymentModes), tp.TripPaymentMode),
+                LaterBookingDate = tp.PickUpBookingDateTime.ToString(),
+                TripId = tp.TripID.ToString(),
+                SeatingCapacity = tp.NoOfPerson.ToString(),
+                RequiredFacilities = tp.facilities,
+                IsLaterBooking = req.isLaterBooking.ToString(),
+                DriverId = req.driverID,
+                TimeZoneOffset = "0", //Will not be considered, in case of later booking reroute, PickUpBookingDateTime is being fetched from db
+                IsReRouteRequest = true.ToString(),
+                CategoryId = tp.VehicleCategoryId.ToString(),
+                BookingModeId = tp.BookingModeID.ToString(),
+                DiscountAmount = discountDetails.DiscountAmount,
+                DiscountType = discountDetails.DiscountType,
+                TotalFare = (await FareManagerService.GetTripCalculatedFare(tp.TripID.ToString())).ToString("0.00")
+                //DeviceToken = tp.DeviceToken,
+                //resellerArea = req.resellerArea,
+            };
+
+            //NEW IMPLEMENTATION : Adjusted in Firebase Service (SendRideRequestToOnlineDrivers)
+
+            //string path = "Trips/" + req.tripID.ToString() + "/discount";
+
+            //client = new FireSharp.FirebaseClient(config);
+            //FirebaseResponse resp = client.Get(path);
+            //if (!string.IsNullOrEmpty(resp.Body) && !resp.Body.Equals("null"))
+            //{
+            //    Dictionary<string, dynamic> discountDetails = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(resp.Body);
+            //    pr.discountType = discountDetails["type"].ToString();
+            //    pr.promoDiscountAmount = discountDetails["amount"].ToString();
+            //}
+        }
     }
 }
