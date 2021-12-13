@@ -130,8 +130,9 @@ namespace Services
                     {
                         //No midway, so there will be no outbound fare calculation. outBoundFareManagerId will be null
 
-                        if (areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).Select(ac => ac.AreaID).Distinct().Count() == 1) //All categories may have same fare manager for selected area
-                        {
+                        if (areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).Select(ac => ac.AreaID).Count() == 1) //All categories may have same fare manager for selected area
+                        {   
+                            //outBoundFareManagerId is set only in case of Midwaystop
                             var inBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).FirstOrDefault().RSFMID;
                             await SetFareBreakDownAndETA(onlineDrivers, result, inBoundFareManagerId, false, null, false, "", pickUpLatitude, pickUpLongitude);
                         }
@@ -142,8 +143,8 @@ namespace Services
                     }
                     else if (!string.IsNullOrEmpty(midwayStop1PostalCode) && pickUpServiceArea.AreaID != Guid.Empty && midWayServiceArea.AreaID != Guid.Empty && dropOffServiceArea.AreaID != Guid.Empty)
                     {
-                        if (areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).Select(ac => ac.AreaID).Distinct().Count() == 1 &&
-                            areasCategoryFareList.Where(ac => ac.AreaID == midWayServiceArea.AreaID).Select(ac => ac.AreaID).Distinct().Count() == 1)
+                        if (areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).Select(ac => ac.AreaID).Count() == 1 &&
+                            areasCategoryFareList.Where(ac => ac.AreaID == midWayServiceArea.AreaID).Select(ac => ac.AreaID).Count() == 1)
                         {
                             var inBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).FirstOrDefault().RSFMID;
                             var outBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == midWayServiceArea.AreaID).FirstOrDefault().RSFMID;
@@ -276,6 +277,15 @@ namespace Services
             }
         }
 
+        private static async Task CalculateFareWithCategoryInOutBoundFareManagers(Dictionary<string, FirebaseDriver> onlineDrivers, EstimateFareResponse result, List<RideServicesAreaCategoryFare> areasCategoryFareList, Guid pickUpAreaId, int categoryId, bool isOutBound, Guid? midWayAreaId, string pickUpLatitude, string pickUpLongitude)
+        {
+            //what if current category fare is not added in this area - It'll throw Object reference set to null error
+            var inBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == pickUpAreaId && ac.CategoryID == categoryId).FirstOrDefault().RSFMID;
+            var outBoundFareManagerId = areasCategoryFareList.Where(ac => ac.AreaID == midWayAreaId && ac.CategoryID == categoryId).FirstOrDefault();
+
+            await SetFareBreakDownAndETA(onlineDrivers, result, inBoundFareManagerId, isOutBound, outBoundFareManagerId?.RSFMID, true, categoryId.ToString(), pickUpLatitude, pickUpLongitude);
+        }
+
         private static bool CheckShift(TimeSpan morningShiftStartTime, TimeSpan morningShiftEndTime)
         {
             return DateTime.UtcNow.TimeOfDay >= morningShiftStartTime && DateTime.UtcNow.TimeOfDay <= morningShiftEndTime;
@@ -293,13 +303,13 @@ namespace Services
             }
         }
 
-        private static async Task SetFareBreakDownAndETA(Dictionary<string, FirebaseDriver> onlineDrivers, EstimateFareResponse result, Guid inBoundFareManagerId, bool isOutBound, Guid? outBoundFareManagerId, bool IsSingleCategory, string categoryId, string pickUpLatitude, string pickUpLongitude)
+        private static async Task SetFareBreakDownAndETA(Dictionary<string, FirebaseDriver> onlineDrivers, EstimateFareResponse result, Guid inBoundFareManagerId, bool isOutBound, Guid? outBoundFareManagerId, bool isSingleCategory, string categoryId, string pickUpLatitude, string pickUpLongitude)
         {
             FareBreakDownDTO fareDetails = new FareBreakDownDTO();
 
             fareDetails = await CalcuateFareBreakdown(inBoundFareManagerId, result.InBoundDistanceInMeters, result.InBoundTimeInSeconds, isOutBound, isOutBound ? outBoundFareManagerId : null, isOutBound ? result.OutBoundDistanceInMeters : "0", isOutBound ? result.OutBoundTimeInSeconds : "0");
 
-            if (!IsSingleCategory)
+            if (!isSingleCategory)
             {
                 //Same fare will be set for every category
                 result.Categories
@@ -318,20 +328,12 @@ namespace Services
             {
                 result.Categories
                   .Where(c => c.CategoryId.Equals(categoryId.ToString()))
-                  .Select(async c =>
+                  .Select(c =>
                   {
                       c.ETA = VehiclesService.GetETAByCategoryId(onlineDrivers, categoryId.ToString(), pickUpLatitude, pickUpLongitude);
                       return SetVehicleCategoryFare(inBoundFareManagerId, outBoundFareManagerId, c, fareDetails);
                   }).ToList();
             }
-        }
-
-        private static async Task CalculateFareWithCategoryInOutBoundFareManagers(Dictionary<string, FirebaseDriver> onlineDrivers, EstimateFareResponse result, List<RideServicesAreaCategoryFare> areasCategoryFareList, Guid pickUpAreaId, int categoryId, bool isOutBound, Guid? midWayAreaId, string pickUpLatitude, string pickUpLongitude)
-        {
-            var inBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == pickUpAreaId && ac.CategoryID == categoryId).FirstOrDefault().RSFMID;
-            var outBoundFareManagerId = areasCategoryFareList.Where(ac => ac.AreaID == midWayAreaId && ac.CategoryID == categoryId).FirstOrDefault();
-
-            await SetFareBreakDownAndETA(onlineDrivers, result, inBoundFareManagerId, isOutBound, outBoundFareManagerId?.RSFMID, true, categoryId.ToString(), pickUpLatitude, pickUpLongitude);
         }
 
         private static VehicleCategoryFareEstimate SetVehicleCategoryFare(Guid inBoundFareManagerId, Guid? outBoundFareManagerId, VehicleCategoryFareEstimate category, FareBreakDownDTO fareDetails)
