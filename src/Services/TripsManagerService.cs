@@ -459,22 +459,25 @@ namespace Services
             }
         }
 
-        public static async Task<string> TimeOutTrip(string tripId, string passengerId)
+        public static async Task<ResponseWrapper> TimeOutTrip(string tripId, string passengerId)
         {
             var tp = await GetPassengerTripById(tripId, passengerId);
 
             if (tp == null)
             {
-                return ResponseKeys.notFound;
+                return new ResponseWrapper { Message = ResponseKeys.notFound };
             }
 
             if (tp.TripStatusID != (int)TripStatuses.RequestSent) //Ride already cancelled or accepted.
             {
-                return ResponseKeys.tripAlreadyBooked;
+                return new ResponseWrapper { Message = ResponseKeys.tripAlreadyBooked };
             }
 
             await FirebaseService.DeleteTrip(tripId);
             await FirebaseService.DeletePassengerTrip(passengerId);       //New implementation
+
+            if (tp.PaymentModeId == (int)PaymentModes.CreditCard)
+                await WalletServices.CancelAuthorizedPayment(tp.CreditCardPaymentIntent);
 
             using (var dbContext = new CangooEntities())
             {
@@ -483,7 +486,7 @@ namespace Services
                 await dbContext.SaveChangesAsync();
             }
 
-            return ResponseKeys.msgSuccess;
+            return new ResponseWrapper { Error = false, Message = ResponseKeys.tripAlreadyBooked };
         }
 
         public static async Task<ResponseWrapper> CancelTripByPassenger(string tripId, string passengerId, string distanceTravelled, string cancelId, string isLaterBooking)
@@ -496,13 +499,12 @@ namespace Services
                     IsLaterBooking = isLaterBooking
                 };
                 
-                double estimatedDistance = 0;
                 var trip = await GetPassengerTripById(tripId, passengerId);
 
-                if (trip != null)
-                {
-                    estimatedDistance = await FirebaseService.GetTripEstimatedDistanceOnArrival(trip.CaptainID.ToString());
-                }
+                double estimatedDistance = await FirebaseService.GetTripEstimatedDistanceOnArrival(trip.CaptainID.ToString());
+
+                if (trip.PaymentModeId == (int)PaymentModes.CreditCard)
+                    await WalletServices.CancelAuthorizedPayment(trip.CreditCardPaymentIntent);
 
                 var tp = dbContext.spPassengerCancelRide(tripId, int.Parse(cancelId), (int)TripStatuses.Cancel,
                         (double.Parse(distanceTravelled) <= estimatedDistance ? double.Parse(distanceTravelled) : estimatedDistance) / 100).FirstOrDefault();
@@ -514,7 +516,6 @@ namespace Services
                     {
                         await FirebaseService.DeletePendingLaterBooking(tripId);
                         await FirebaseService.DeleteTrip(tripId);
-
                     }
 
                     return new ResponseWrapper

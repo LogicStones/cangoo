@@ -1358,19 +1358,7 @@ namespace API.Controllers
         [Route("time-out")]
         public async Task<HttpResponseMessage> TimeOut([FromBody] TripTimeOutRequest model)
         {
-            var responseKey = await TripsManagerService.TimeOutTrip(model.TripId, model.PassengerId);
-            if (responseKey.Equals(ResponseKeys.notFound))
-            {
-                return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper { Message = ResponseKeys.notFound });
-            }
-            else if (responseKey.Equals(ResponseKeys.tripAlreadyBooked))
-            {
-                return Request.CreateResponse(HttpStatusCode.Forbidden, new ResponseWrapper { Message = ResponseKeys.tripAlreadyBooked });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper { Message = ResponseKeys.msgSuccess, Error = false });
-            }
+            return Request.CreateResponse(HttpStatusCode.OK, await TripsManagerService.TimeOutTrip(model.TripId, model.PassengerId));
         }
 
         [HttpPost]
