@@ -155,8 +155,11 @@ namespace API.Controllers
                         //user will be null if ride is booked by hotel / company.No need to send notifications on portals.
                         string deviceToken = user != null ? user.DeviceToken : "";
 
+                        if (tp.PaymentModeId == (int)PaymentModes.CreditCard)
+                            await WalletServices.CancelAuthorizedPayment(tp.CreditCardPaymentIntent);
+
                         //Refund voucher amount
-                        if (user == null && tp.BookingModeID == (int)BookingModes.Voucher)
+                        else if (user == null && tp.BookingModeID == (int)BookingModes.Voucher)
                         {
                             VoucherService.RefundFullVoucherAmount(tp);
                         }
@@ -188,7 +191,8 @@ namespace API.Controllers
                     var diff = (Convert.ToDateTime(item.Value.pickUpDateTime) - DateTime.UtcNow).TotalMinutes;
 
                     var tokens = new spGetDriverUserDeviceTokens_Result();
-                    if (Convert.ToInt32(diff) == 30 && Convert.ToInt32(diff) > 0 && !item.Value.isSend30MinutSendFCM)
+                    //if (Convert.ToInt32(diff) == 30 && Convert.ToInt32(diff) > 0 && !item.Value.isSend30MinutSendFCM)
+                    if (Convert.ToInt32(diff) > 20 && Convert.ToInt32(diff) <= 30 && !item.Value.isSend30MinutSendFCM)
                     {
                         await FirebaseService.UpdateUpcomingBooking30MinuteFlag(item.Key);
                         tokens = await TripsManagerService.GetDriverAndPassengerDeviceToken(item.Value.tripID);
@@ -199,7 +203,8 @@ namespace API.Controllers
                         //user fcm
                         await PushyService.UniCast(tokens.userDeviceToken, tokens.userName + " 30 minutes left your later booking.", NotificationKeys.pas_30MinutesLeft);
                     }
-                    else if (Convert.ToInt32(diff) == 20 && Convert.ToInt32(diff) > 0 && !item.Value.isSend20MinutSendFCM)
+                    //else if (Convert.ToInt32(diff) == 20 && Convert.ToInt32(diff) > 0 && !item.Value.isSend20MinutSendFCM)
+                    else if (Convert.ToInt32(diff) >= 14 && Convert.ToInt32(diff) <= 20 && !item.Value.isSend20MinutSendFCM)
                     {
                         tokens = await TripsManagerService.GetDriverAndPassengerDeviceToken(item.Value.tripID);
 
@@ -251,6 +256,7 @@ namespace API.Controllers
                 //select * from cte where rn =1 
 
                 var lstLaterBooking = await TripsManagerService.GetUpcomingLaterBookings();
+
                 foreach (var laterBooking in lstLaterBooking)
                 {
                     UpcomingLaterBooking lb = new UpcomingLaterBooking
@@ -268,23 +274,22 @@ namespace API.Controllers
                         isSend30MinutSendFCM = (Convert.ToDateTime(laterBooking.PickUpBookingDateTime) - DateTime.UtcNow).TotalMinutes <= 30 ? true : false,
                         isSend20MinutSendFCM = (Convert.ToDateTime(laterBooking.PickUpBookingDateTime) - DateTime.UtcNow).TotalMinutes <= 20 ? true : false,
                         isWeb = laterBooking.isWeb
-
                     };
 
-                    //if there are some later bookings on firebase
-                    if (dic != null)
-                    {
-                        //if this booking already exists on firebase then no need to update the node
-                        var checkOldLaterBooking = dic.Any(d => d.Value.tripID == laterBooking.TripID.ToString());
-                        if (!checkOldLaterBooking)
-                        {
-                            await FirebaseService.AddUpcomingLaterBooking(laterBooking.CaptainID.ToString(), lb);
-                        }
-                    }
-                    else
-                    {
-                        await FirebaseService.AddUpcomingLaterBooking(laterBooking.CaptainID.ToString(), lb);
-                    }
+                    //If somehow meanwhile there are some upcoming later bookings on firebase
+
+                    //if (dic != null)
+                    //{
+                    //    //if this booking already exists on firebase then no need to update the  node
+                    //    if (!dic.Any(d => d.Value.tripID.Equals(laterBooking.TripID.ToString())))
+                    //    {
+                    //        await FirebaseService.AddUpcomingLaterBooking(laterBooking.CaptainID.ToString(), lb);
+                    //    }
+                    //}
+                    //else
+                    //{
+                    await FirebaseService.AddUpcomingLaterBooking(laterBooking.CaptainID.ToString(), lb);
+                    //}
                 }
             }
 

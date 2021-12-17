@@ -22,27 +22,6 @@ namespace Services
         public static async Task SendInvoice(string toEmailAddress, string body, string subject, string fromEmail, string fromDisplayName, string AttachmentName, byte[] invoiceContent, string invoiceNumber)
         {
             await SendGrid.SendInvoiceAsync(toEmailAddress, body, subject, fromEmail, fromDisplayName, AttachmentName, invoiceContent, invoiceNumber);
-            //try
-            //{
-            //    var apiKey = ConfigurationManager.AppSettings["SendGridSuperAdminAPIKey"];
-            //    var client = new SendGridClient(apiKey);
-            //    var from = new EmailAddress(fromEmail, fromDisplayName);
-            //    var to = new EmailAddress(toEmailAddress);
-            //    var plainTextContent = "";
-            //    var htmlContent = body;
-            //    var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
-
-            //    var file = Convert.ToBase64String(invoiceContent);
-            //    msg.AddAttachment(AttachmentName, file);
-            //    var task = Task.Run(async () => { await client.SendEmailAsync(msg); });
-            //    task.Wait();
-            //    return true;
-            //}
-            //catch (Exception ex)
-            //{
-            //    Logger.WriteLog(ex);
-            //    return false;
-            //}
         }
 
         public static async Task SendReports(string toEmailAddress, string body, string subject, string fromEmail, string fromDisplayName, List<ReportAttachments> reports)

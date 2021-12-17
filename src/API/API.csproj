@@ -259,6 +259,10 @@
     <Content Include="Content\report.css" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
+    <Content Include="Images\rechnung_1.png" />
+    <Content Include="Images\rechnung_2.png" />
+    <Content Include="Images\User\iOSPin.png" />
+    <Content Include="Images\User\userAvatar.png" />
     <Content Include="Rotativa\help-wkhtmltoimage.txt" />
     <Content Include="Rotativa\help-wkhtmltopdf.txt" />
     <Content Include="Rotativa\wkhtmltoimage.exe" />

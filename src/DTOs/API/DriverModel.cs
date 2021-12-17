@@ -34,57 +34,69 @@ namespace DTOs.API
         public string vehicleID { get; set; }
     }
 
-    public class RequestModel
+            //    if (model != null && !string.IsNullOrEmpty(model.isOverride) && model.driverID != string.Empty && model.estimatedFare != string.Empty &&
+            //model.duration != string.Empty && model.distance != string.Empty && model.tripID != string.Empty && model.fleetID != string.Empty &&
+            //model.paymentMode != string.Empty && model.vehicleID != string.Empty && !string.IsNullOrEmpty(model.walletUsedAmount) &&
+            //!string.IsNullOrEmpty(model.walletTotalAmount) && !string.IsNullOrEmpty(model.voucherUsedAmount) &&
+            //!string.IsNullOrEmpty(model.promoDiscountAmount) && !string.IsNullOrEmpty(model.totalFare))
+
+    public class CreditCardPaymentRequest
     {
-        public string resellerID { get; set; }
+        [Required]
+        [DefaultValue("e5cece85-c6b7-4c37-bf02-573b4b3607e5")]
         public string fleetID { get; set; }
+      
+        [Required]
+        [DefaultValue("")]
         public string tripID { get; set; }
-        public double lat { get; set; }
-        public double lon { get; set; }
-        public bool isAccept { get; set; }
-        public bool isReRouteRequest { get; set; }
+       
+        [Required]
+        [DefaultValue("02179f6-167e-4cd9-9ce8-701b92771f97")]
         public string driverID { get; set; }
-        public string userID { get; set; }
-        public string walkInOldUserID { get; set; }
-        public string reDateTime { get; set; }
-        public double customerRating { get; set; }
-        public string duration { get; set; }
-        public string distance { get; set; }
-        public string paymentMode { get; set; }
-        public string resellerArea { get; set; }
+              
+        [Required]
+        [DefaultValue("dcd1d468-e032-49d4-9711-02715b3c4c5e")]
         public string vehicleID { get; set; }
-        public string phoneNumber { get; set; }
-        public int cancelID { get; set; }
-        public int bookingModeID { get; set; }
-        public bool passengerFav { get; set; }
-        public bool isWeb { get; set; }
-        public string pickUplatitude { get; set; }
-        public string pickUplongitude { get; set; }
-        public string dropOfflatitude { get; set; }
-        public string dropOfflongitude { get; set; }
-        public string dropOffLocation { get; set; }
-        public DateTime pickUpDateTime { get; set; }
-        public bool isCheckLaterBookingConflict { get; set; }
-        public bool isLaterBooking { get; set; }
-        public string timeZoneOffset { get; set; }
-        public string distanceToPickUpLocation { get; set; }
-        public string isAtPickupLocation { get; set; }
-        public string estimatedFare { get; set; }
-        public string discountType { get; set; }
-        public string isOverride { get; set; }
-        public string isAtDropOffLocation { get; set; }
-        public string collectedAmount { get; set; }
+
+        //[Required]
+        //[DefaultValue("false")]
+        //public string isOverride { get; set; }
+
+        //[Required]
+        //[DefaultValue("120")]
+        //public string walletTotalAmount { get; set; }
+
+        //[Required]
+        //[DefaultValue("0")]
+        //public string voucherUsedAmount { get; set; }
+
+        //[Required]
+        //[DefaultValue("")]
+        //public string duration { get; set; }
+
+        //[Required]
+        //[DefaultValue("")]
+        //public string distance { get; set; }
+
+        //[Required]
+        //[DefaultValue("CreditCard")]
+        //public string paymentMode { get; set; }
+        //public string PaymentModeId { get; set; }
+
+        [Required]
+        [DefaultValue("0")]
         public string promoDiscountAmount { get; set; }
+       
+        [Required]
+        [DefaultValue("0")]
         public string walletUsedAmount { get; set; }
-        public string walletTotalAmount { get; set; }
-        public string voucherUsedAmount { get; set; }
+       
+        [Required]
+        [DefaultValue("100")]
         public string totalFare { get; set; }
+
+        [DefaultValue("20")]
         public string tipAmount { get; set; }
-        public string isDispatchedRide { get; set; }
-        public string dispatcherID { get; set; }
-        public string description { get; set; }
-        public string passengerName { get; set; }
-        public bool isWalkIn { get; set; }
     }
 
     public class GetDriverSettingsRequest

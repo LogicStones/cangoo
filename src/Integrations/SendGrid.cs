@@ -31,15 +31,6 @@ namespace Integrations
 
 		public static async Task SendInvoiceAsync(string toEmailAddress, string body, string subject, string fromEmail, string fromDisplayName, string attachmentName, byte[] file, string invoiceNumber)
 		{
-			//var apiKey = ConfigurationManager.AppSettings["SendGridSuperAdminAPIKey"];
-			//var client = new SendGridClient(apiKey);
-			//var from = new EmailAddress(fromEmail, fromDisplayName);
-			//var to = new EmailAddress(toEmailAddress);
-			//var plainTextContent = "";
-			//var htmlContent = body;
-			//var msg = MailHelper.CreateSingleEmail(from, to, subject, plainTextContent, htmlContent);
-
-
 			var msg = MailHelper.CreateSingleEmail(
 				new EmailAddress(fromEmail, fromDisplayName),
 				new EmailAddress(toEmailAddress),
@@ -50,14 +41,12 @@ namespace Integrations
 
 			msg.AddAttachment(attachmentName, Convert.ToBase64String(file));
 
-			var path = "~/Invoices/" + DateTime.Today + "/";
-			var directoryPath = HttpContext.Current.Server.MapPath(path);
-			Directory.CreateDirectory(directoryPath);
-			File.WriteAllBytes(directoryPath + invoiceNumber, file);
+			//var path = "~/Invoices/" + DateTime.Today + "/";
+			//var directoryPath = HttpContext.Current.Server.MapPath(path);
+			//Directory.CreateDirectory(directoryPath);
+			//File.WriteAllBytes(directoryPath + invoiceNumber, file);
 
 			await SendEmail(msg);
-			//var client = new SendGridClient(ConfigurationManager.AppSettings["SendGridSuperAdminAPIKey"]);
-			//await client.SendEmailAsync(msg);
 		}
 
 		public static async Task SendMonthlyReportsAsync(string toEmailAddress, string body, string subject, string fromEmail, string fromDisplayName, List<ReportAttachments> reports)
@@ -89,10 +78,10 @@ namespace Integrations
 				//Alternatively add new project, general purpose services in that project and add reference of new project in
 				//existing required projects
 
-				var path = "~/Reports/" + report.ReportMonth + "/";
-				var directoryPath = HttpContext.Current.Server.MapPath(path);
-				Directory.CreateDirectory(directoryPath);
-				File.WriteAllBytes(directoryPath + report.FleetName + " - " + "(" + report.ReportNumber + ") - " + report.Name, report.Content);
+				//var path = "~/Reports/" + report.ReportMonth + "/";
+				//var directoryPath = HttpContext.Current.Server.MapPath(path);
+				//Directory.CreateDirectory(directoryPath);
+				//File.WriteAllBytes(directoryPath + report.FleetName + " - " + "(" + report.ReportNumber + ") - " + report.Name, report.Content);
 			}
 
 			await SendEmail(msg);

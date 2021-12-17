@@ -987,12 +987,10 @@ namespace Services
         //    }
         //}
 
-        //public async Task<bool> sendFCMForCreditCardPaymentToPassenger(string fleetID, string isOverride, string vehicleID, string estimatedFare, string walletUsedAmount,
+        //public static async Task<bool> sendFCMForCreditCardPaymentToPassenger(string fleetID, string isOverride, string vehicleID, string estimatedFare, string walletUsedAmount,
         //    string walletTotalAmount, string voucherUsedAmount, string promoDiscountAmount, string totalFare, string duration, string distance, string paymentMode, string tripID, string driverID)
         //{
-        //    using (CanTaxiResellerEntities context = new CanTaxiResellerEntities())
-        //    {
-        //        var result = context.spGetTripPassengerDetailsByTripID(tripID).FirstOrDefault();
+        //        var result = TripsManagerService.GetTripPassengerDetailsByTripID(tripID);
 
         //        if (result == null)
         //        {
@@ -1003,12 +1001,40 @@ namespace Services
 
         //        string path = "Trips/" + tripID + "/";
 
-        //        await FirebaseIntegration.RideDataWriteOnFireBase(App_Start.Enumration.returnRideFirebaseStatus(App_Start.RideFirebaseStatus.PaymentRequested), true, path, pa, "", result.UserID, false);
-        //        await FirebaseIntegration.RideDataWriteOnFireBase(App_Start.Enumration.returnRideFirebaseStatus(App_Start.RideFirebaseStatus.PaymentRequested), false, path, pa, driverID, "", false);
+        //        await FirebaseIntegration.ridePassengerDataWriteOnFireBase(Enum.GetName(typeof(TripStatuses), (int)TripStatuses.PaymentRequested), path, pa, "", result.UserID, false);
+        //        await FirebaseIntegration.rideDriverDataWriteOnFireBase(Enum.GetName(typeof(TripStatuses), (int)TripStatuses.PaymentRequested), path, pa, driverID, "", false);
 
-        //        await sentSingleFCM(result.DeviceToken, pa, "pas_creditCardPayment");
+        //        await PushyService.UniCast(result.DeviceToken, pa, "pas_creditCardPayment");
         //        return true;
-        //    }
+        //}
+
+        //private async void ridePassengerDataWriteOnFireBase(string statusRide, string path, dynamic data, string driverID, string userID, bool isWeb)
+        //{
+        //    client = new FireSharp.FirebaseClient(config);
+
+        //    SetResponse rs = client.Set(path + "/TripStatus", statusRide);
+
+        //    //if (Enumration.returnRideFirebaseStatus(RideFirebaseStatus.RequestSent).Equals(statusRide))
+        //    //{
+        //    //    PassengerRideRequest pr = data;
+        //    //    client.Set(path + "/Info", new Dictionary<string, dynamic> {
+        //    //        {"isLaterBooking", pr.isLaterBooking },
+        //    //        {"requestTimeOut", 300 },
+        //    //        {"bookingDateTime", Common.getUtcDateTime() },
+        //    //        {"bookingMode", pr.bookingMode },
+        //    //    });
+        //    //}
+
+        //    rs = await client.SetTaskAsync(path + "/" + userID, data);
+        //}
+
+        //private async void rideDriverDataWriteOnFireBase(string statusRide, string path, dynamic data, string driverID, string userID, bool isWeb)
+        //{
+        //    client = new FireSharp.FirebaseClient(config);
+
+        //    SetResponse rs = client.Set(path + "/TripStatus", statusRide);
+
+        //    rs = await client.SetTaskAsync(path + "/" + driverID, data);
         //}
 
         //private static MobilePayment PopulateMobilePaymentObject(string fleetID, string isOverride, string vehicleID, string estimatedFare, string walletUsedAmount, string walletTotalAmount, string voucherUsedAmount, string promoDiscountAmount, string totalFare, string duration, string distance, string paymentMode, string tripID, string driverID, string userID)

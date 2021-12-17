@@ -240,45 +240,25 @@ namespace DTOs.API
 		public string PaymentMode { get; set; }
 		public bool isFareChangePermissionGranted { get; set; }
 	}
-
-	//public class RequestResponse
-	//{
-	//    public string PickUpLatitude { get; set; }
-	//    public string PickUpLongitude { get; set; }
-	//    public string PickUpLocation { get; set; }
-	//    public string DropOffLatitude { get; set; }
-	//    public string DropOffLongitude { get; set; }
-	//    public string DropOffLocation { get; set; }
-	//    public bool IsLaterBooking { get; set; }
-	//    public int NumberOfPerson { get; set; }
-	//    public string PickUpDateTime { get; set; }
-	//    public string TripId { get; set; }
-	//    public string PaymentMethod { get; set; }
-	//    public string PaymentMethodId { get; set; }
-	//    public string IsDispatchedRide { get; set; }
-	//    public bool IsFavorite { get; set; }
-	//    public bool IsWeb { get; set; }
-	//    public string Description { get; set; }
-	//    public string RequiredFacilities { get; set; }
-	//    public List<FacilitiyDTO> Facilities { get; set; }
-	//    public string DiscountType { get; set; }
-	//    public string DiscountAmount { get; set; }
-	//    public bool IsReRouteRequest { get; set; }
-	//    public string EstimatedPrice { get; set; }
-	//    public string BookingMode { get; set; }
-	//    public string BookingModeId { get; set; }
-	//    public string DispatcherID { get; set; }
-	//}
-
-	public class WalkInTrip
+	public class MobilePayment
 	{
-		public string newTripID { get; set; }
-	}
-
-	public class LocationUpdate
-	{
-		public string latitude { get; set; }
-		public string longitude { get; set; }
-		public long locationTime { get; set; }
+		public string estmateFare { get; set; }
+		public string distance { get; set; }
+		public string paymentMode { get; set; }
+		public string paypalAccount { get; set; }
+		public string duration { get; set; }
+		public bool isPaymentRequested { get; set; }
+		public string isOverride { get; set; }
+		public string voucherUsedAmount { get; set; }
+		public string walletAmountUsed { get; set; }
+		public string walletTotalAmount { get; set; }
+		public string promoDiscountAmount { get; set; }
+		public string totalFare { get; set; }
+		public string fleetID { get; set; }
+		public string tripID { get; set; }
+		public string vehicleID { get; set; }
+		public string driverID { get; set; }
+		public string userID { get; set; }
+		public string paymentRequestTime { get; set; }
 	}
 }

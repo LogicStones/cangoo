@@ -103,7 +103,14 @@ namespace DatabaseModel
         public string PickupLocationPostalCode { get; set; }
         public string DropOffLocationPostalCode { get; set; }
         public string MidwayStop1PostalCode { get; set; }
+        public string CreditCardPaymentIntent { get; set; }
+        public Nullable<bool> isSpecialPromotionApplied { get; set; }
         public string DeviceToken { get; set; }
+        public Nullable<bool> isCaptainOnTheWay { get; set; }
+        public Nullable<bool> isCaptainArrived { get; set; }
+        public Nullable<int> remainingTime { get; set; }
+        public Nullable<bool> isPriorityHourEnabled { get; set; }
+        public Nullable<int> lastStatusId { get; set; }
         public Nullable<double> EarningPoints { get; set; }
     }
 }

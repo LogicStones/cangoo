@@ -3810,15 +3810,6 @@
             <Parameter Name="Search" Mode="In" Type="String" />
             <Parameter Name="ApplicationID" Mode="In" Type="Guid" />
           </FunctionImport>
-          <FunctionImport Name="spCaptainCancelRide" ReturnType="Collection(CangooModel.spCaptainCancelRide_Result)">
-            <Parameter Name="tripID" Mode="In" Type="String" />
-            <Parameter Name="driverID" Mode="In" Type="String" />
-            <Parameter Name="tripStatusID" Mode="In" Type="Int32" />
-            <Parameter Name="cancelID" Mode="In" Type="Int32" />
-            <Parameter Name="isWeb" Mode="In" Type="Boolean" />
-            <Parameter Name="isAtPickupLocation" Mode="In" Type="Boolean" />
-            <Parameter Name="rideCancelDateTime" Mode="In" Type="DateTime" />
-          </FunctionImport>
           <FunctionImport Name="spGetCompanyVehicle" ReturnType="Collection(CangooModel.spGetCompanyVehicle_Result)">
           <Parameter Name="companyID" Mode="In" Type="String" />
           </FunctionImport>
@@ -3962,6 +3953,15 @@
             <Parameter Name="vehicleID" Mode="In" Type="String" />
             <Parameter Name="userID" Mode="In" Type="String" />
             <Parameter Name="ishotel" Mode="In" Type="Boolean" />
+          </FunctionImport>
+          <FunctionImport Name="spCaptainCancelRide" ReturnType="Collection(CangooModel.spCaptainCancelRide_Result)">
+            <Parameter Name="tripID" Mode="In" Type="String" />
+            <Parameter Name="driverID" Mode="In" Type="String" />
+            <Parameter Name="tripStatusID" Mode="In" Type="Int32" />
+            <Parameter Name="cancelID" Mode="In" Type="Int32" />
+            <Parameter Name="isWeb" Mode="In" Type="Boolean" />
+            <Parameter Name="isAtPickupLocation" Mode="In" Type="Boolean" />
+            <Parameter Name="rideCancelDateTime" Mode="In" Type="DateTime" />
           </FunctionImport>
           </EntityContainer>
         <ComplexType Name="FetchAdminAnnualEarningAndProfit_Result">
@@ -5958,100 +5958,6 @@
           <Property Type="String" Name="HolidayDate" Nullable="true" MaxLength="10" />
           <Property Type="Boolean" Name="IsActive" Nullable="false" />
         </ComplexType>
-        <ComplexType Name="spCaptainCancelRide_Result">
-          <Property Type="Guid" Name="TripID" Nullable="false" />
-          <Property Type="String" Name="PickupLocationLatitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="PickupLocationLongitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="PickUpLocation" Nullable="true" MaxLength="500" />
-          <Property Type="String" Name="DropOffLocationLatitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="DropOffLocationLongitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="DropOffLocation" Nullable="true" MaxLength="500" />
-          <Property Type="Guid" Name="CaptainID" Nullable="true" />
-          <Property Type="Guid" Name="UserID" Nullable="true" />
-          <Property Type="Guid" Name="VehicleID" Nullable="true" />
-          <Property Type="Int32" Name="NoOfPerson" Nullable="true" />
-          <Property Type="DateTime" Name="BookingDateTime" Nullable="true" Precision="23" />
-          <Property Type="DateTime" Name="ArrivalDateTime" Nullable="true" Precision="23" />
-          <Property Type="DateTime" Name="TripStartDatetime" Nullable="true" Precision="23" />
-          <Property Type="DateTime" Name="TripEndDatetime" Nullable="true" Precision="23" />
-          <Property Type="Boolean" Name="isLaterBooking" Nullable="true" />
-          <Property Type="DateTime" Name="PickUpBookingDateTime" Nullable="true" Precision="23" />
-          <Property Type="Int32" Name="DriverRating" Nullable="true" />
-          <Property Type="Int32" Name="VehicleRating" Nullable="true" />
-          <Property Type="Int32" Name="UserRating" Nullable="true" />
-          <Property Type="String" Name="FareManagerID" Nullable="true" MaxLength="50" />
-          <Property Type="Decimal" Name="BaseFare" Nullable="true" Precision="19" />
-          <Property Type="Double" Name="WaitingMinutes" Nullable="true" />
-          <Property Type="Decimal" Name="BookingFare" Nullable="true" Precision="19" />
-          <Property Type="Decimal" Name="WaitingFare" Nullable="true" Precision="19" />
-          <Property Type="Double" Name="DistanceTraveled" Nullable="true" />
-          <Property Type="Boolean" Name="isOverRided" Nullable="true" />
-          <Property Type="Decimal" Name="PerKMFare" Nullable="true" Precision="19" />
-          <Property Type="Decimal" Name="Tip" Nullable="true" Precision="19" />
-          <Property Type="Guid" Name="PromoCodeID" Nullable="true" />
-          <Property Type="Decimal" Name="PromoDiscount" Nullable="true" Precision="19" />
-          <Property Type="Guid" Name="VoucherID" Nullable="true" />
-          <Property Type="Decimal" Name="WalletAmountUsed" Nullable="true" Precision="19" />
-          <Property Type="String" Name="DriverSubmittedFeedback" Nullable="true" MaxLength="500" />
-          <Property Type="String" Name="UserSubmittedFeedback" Nullable="true" MaxLength="500" />
-          <Property Type="Double" Name="DriverEarnedPoints" Nullable="true" />
-          <Property Type="String" Name="TripPaymentMode" Nullable="true" MaxLength="100" />
-          <Property Type="Int32" Name="CancelID" Nullable="true" />
-          <Property Type="Int32" Name="TripStatusID" Nullable="true" />
-          <Property Type="Int32" Name="BookingModeID" Nullable="true" />
-          <Property Type="Boolean" Name="isHotelBooking" Nullable="true" />
-          <Property Type="String" Name="Description" Nullable="true" MaxLength="1000" />
-          <Property Type="Int32" Name="BookingTypeID" Nullable="true" />
-          <Property Type="Boolean" Name="isDispatched" Nullable="false" />
-          <Property Type="Boolean" Name="isReRouted" Nullable="false" />
-          <Property Type="Double" Name="DistanceToPickUpLocation" Nullable="true" />
-          <Property Type="Guid" Name="ApplicationID" Nullable="true" />
-          <Property Type="Guid" Name="ResellerID" Nullable="true" />
-          <Property Type="Guid" Name="CompanyID" Nullable="true" />
-          <Property Type="String" Name="facilities" Nullable="false" MaxLength="100" />
-          <Property Type="Decimal" Name="AdminProfit" Nullable="true" Precision="18" Scale="2" />
-          <Property Type="Decimal" Name="ResellerProfit" Nullable="true" Precision="18" Scale="2" />
-          <Property Type="Decimal" Name="ApplicationProfit" Nullable="true" Precision="18" Scale="2" />
-          <Property Type="Decimal" Name="FleetProfit" Nullable="true" Precision="18" Scale="2" />
-          <Property Type="Int32" Name="UTCTimeZoneOffset" Nullable="false" />
-          <Property Type="String" Name="InvoiceNumber" Nullable="true" MaxLength="8" />
-          <Property Type="Boolean" Name="isFareChangePermissionGranted" Nullable="true" />
-          <Property Type="Int32" Name="InBoundDistanceInMeters" Nullable="true" />
-          <Property Type="Int32" Name="InBoundTimeInSeconds" Nullable="true" />
-          <Property Type="Int32" Name="OutBoundDistanceInMeters" Nullable="true" />
-          <Property Type="Int32" Name="OutBoundTimeInSeconds" Nullable="true" />
-          <Property Type="Decimal" Name="OutBoundTimeFare" Nullable="true" Precision="19" />
-          <Property Type="Decimal" Name="OutBoundDistanceFare" Nullable="true" Precision="19" />
-          <Property Type="Decimal" Name="InBoundTimeFare" Nullable="true" Precision="19" />
-          <Property Type="Decimal" Name="InBoundDistanceFare" Nullable="true" Precision="19" />
-          <Property Type="Decimal" Name="InBoundSurchargeAmount" Nullable="true" Precision="19" />
-          <Property Type="Decimal" Name="OutBoundSurchargeAmount" Nullable="true" Precision="19" />
-          <Property Type="Guid" Name="DropOffFareMangerID" Nullable="true" />
-          <Property Type="Decimal" Name="InBoundBaseFare" Nullable="true" Precision="19" />
-          <Property Type="Decimal" Name="OutBoundBaseFare" Nullable="true" Precision="19" />
-          <Property Type="String" Name="PolyLine" Nullable="true" />
-          <Property Type="Int32" Name="PaymentModeId" Nullable="false" />
-          <Property Type="Boolean" Name="isWishCarRequested" Nullable="false" />
-          <Property Type="Int32" Name="VehicleCategoryId" Nullable="true" />
-          <Property Type="String" Name="DriverUserAgent" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="DriverOS" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="DriverAppVersion" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="PassengerUserAgent" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="PassengerOS" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="PassengerAppVersion" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="Complaint" Nullable="true" MaxLength="1000" />
-          <Property Type="String" Name="MidwayStop1Latitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="MidwayStop1Longitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="MidwayStop1Location" Nullable="true" MaxLength="1000" />
-          <Property Type="DateTime" Name="MidwayStop1ArrivalDateTime" Nullable="true" Precision="23" />
-          <Property Type="DateTime" Name="MidwayStop1LeaveDateTime" Nullable="true" Precision="23" />
-          <Property Type="Boolean" Name="isLogisticRequest" Nullable="false" />
-          <Property Type="String" Name="PickupLocationPostalCode" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="DropOffLocationPostalCode" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="MidwayStop1PostalCode" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="DeviceToken" Nullable="true" />
-          <Property Type="Double" Name="EarningPoints" Nullable="true" />
-        </ComplexType>
         <ComplexType Name="spGetCompanyVehicle_Result">
           <Property Type="Guid" Name="VehicleID" Nullable="false" />
           <Property Type="String" Name="PlateNumber" Nullable="true" MaxLength="100" />
@@ -7539,6 +7445,107 @@
           <Property Type="String" Name="DeviceToken" Nullable="false" />
           <Property Type="String" Name="FleetAddress" Nullable="true" MaxLength="250" />
           <Property Type="String" Name="FleetName" Nullable="true" MaxLength="200" />
+        </ComplexType>
+        <ComplexType Name="spCaptainCancelRide_Result">
+          <Property Type="Guid" Name="TripID" Nullable="false" />
+          <Property Type="String" Name="PickupLocationLatitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="PickupLocationLongitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="PickUpLocation" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="DropOffLocationLatitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="DropOffLocationLongitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="DropOffLocation" Nullable="true" MaxLength="500" />
+          <Property Type="Guid" Name="CaptainID" Nullable="true" />
+          <Property Type="Guid" Name="UserID" Nullable="true" />
+          <Property Type="Guid" Name="VehicleID" Nullable="true" />
+          <Property Type="Int32" Name="NoOfPerson" Nullable="true" />
+          <Property Type="DateTime" Name="BookingDateTime" Nullable="true" Precision="23" />
+          <Property Type="DateTime" Name="ArrivalDateTime" Nullable="true" Precision="23" />
+          <Property Type="DateTime" Name="TripStartDatetime" Nullable="true" Precision="23" />
+          <Property Type="DateTime" Name="TripEndDatetime" Nullable="true" Precision="23" />
+          <Property Type="Boolean" Name="isLaterBooking" Nullable="true" />
+          <Property Type="DateTime" Name="PickUpBookingDateTime" Nullable="true" Precision="23" />
+          <Property Type="Int32" Name="DriverRating" Nullable="true" />
+          <Property Type="Int32" Name="VehicleRating" Nullable="true" />
+          <Property Type="Int32" Name="UserRating" Nullable="true" />
+          <Property Type="String" Name="FareManagerID" Nullable="true" MaxLength="50" />
+          <Property Type="Decimal" Name="BaseFare" Nullable="true" Precision="19" />
+          <Property Type="Double" Name="WaitingMinutes" Nullable="true" />
+          <Property Type="Decimal" Name="BookingFare" Nullable="true" Precision="19" />
+          <Property Type="Decimal" Name="WaitingFare" Nullable="true" Precision="19" />
+          <Property Type="Double" Name="DistanceTraveled" Nullable="true" />
+          <Property Type="Boolean" Name="isOverRided" Nullable="true" />
+          <Property Type="Decimal" Name="PerKMFare" Nullable="true" Precision="19" />
+          <Property Type="Decimal" Name="Tip" Nullable="true" Precision="19" />
+          <Property Type="Guid" Name="PromoCodeID" Nullable="true" />
+          <Property Type="Decimal" Name="PromoDiscount" Nullable="true" Precision="19" />
+          <Property Type="Guid" Name="VoucherID" Nullable="true" />
+          <Property Type="Decimal" Name="WalletAmountUsed" Nullable="true" Precision="19" />
+          <Property Type="String" Name="DriverSubmittedFeedback" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="UserSubmittedFeedback" Nullable="true" MaxLength="500" />
+          <Property Type="Double" Name="DriverEarnedPoints" Nullable="true" />
+          <Property Type="String" Name="TripPaymentMode" Nullable="true" MaxLength="100" />
+          <Property Type="Int32" Name="CancelID" Nullable="true" />
+          <Property Type="Int32" Name="TripStatusID" Nullable="true" />
+          <Property Type="Int32" Name="BookingModeID" Nullable="true" />
+          <Property Type="Boolean" Name="isHotelBooking" Nullable="true" />
+          <Property Type="String" Name="Description" Nullable="true" MaxLength="1000" />
+          <Property Type="Int32" Name="BookingTypeID" Nullable="true" />
+          <Property Type="Boolean" Name="isDispatched" Nullable="false" />
+          <Property Type="Boolean" Name="isReRouted" Nullable="false" />
+          <Property Type="Double" Name="DistanceToPickUpLocation" Nullable="true" />
+          <Property Type="Guid" Name="ApplicationID" Nullable="true" />
+          <Property Type="Guid" Name="ResellerID" Nullable="true" />
+          <Property Type="Guid" Name="CompanyID" Nullable="true" />
+          <Property Type="String" Name="facilities" Nullable="false" MaxLength="100" />
+          <Property Type="Decimal" Name="AdminProfit" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="Decimal" Name="ResellerProfit" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="Decimal" Name="ApplicationProfit" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="Decimal" Name="FleetProfit" Nullable="true" Precision="18" Scale="2" />
+          <Property Type="Int32" Name="UTCTimeZoneOffset" Nullable="false" />
+          <Property Type="String" Name="InvoiceNumber" Nullable="true" MaxLength="8" />
+          <Property Type="Boolean" Name="isFareChangePermissionGranted" Nullable="true" />
+          <Property Type="Int32" Name="InBoundDistanceInMeters" Nullable="true" />
+          <Property Type="Int32" Name="InBoundTimeInSeconds" Nullable="true" />
+          <Property Type="Int32" Name="OutBoundDistanceInMeters" Nullable="true" />
+          <Property Type="Int32" Name="OutBoundTimeInSeconds" Nullable="true" />
+          <Property Type="Decimal" Name="OutBoundTimeFare" Nullable="true" Precision="19" />
+          <Property Type="Decimal" Name="OutBoundDistanceFare" Nullable="true" Precision="19" />
+          <Property Type="Decimal" Name="InBoundTimeFare" Nullable="true" Precision="19" />
+          <Property Type="Decimal" Name="InBoundDistanceFare" Nullable="true" Precision="19" />
+          <Property Type="Decimal" Name="InBoundSurchargeAmount" Nullable="true" Precision="19" />
+          <Property Type="Decimal" Name="OutBoundSurchargeAmount" Nullable="true" Precision="19" />
+          <Property Type="Guid" Name="DropOffFareMangerID" Nullable="true" />
+          <Property Type="Decimal" Name="InBoundBaseFare" Nullable="true" Precision="19" />
+          <Property Type="Decimal" Name="OutBoundBaseFare" Nullable="true" Precision="19" />
+          <Property Type="String" Name="PolyLine" Nullable="true" />
+          <Property Type="Int32" Name="PaymentModeId" Nullable="false" />
+          <Property Type="Boolean" Name="isWishCarRequested" Nullable="false" />
+          <Property Type="Int32" Name="VehicleCategoryId" Nullable="true" />
+          <Property Type="String" Name="DriverUserAgent" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="DriverOS" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="DriverAppVersion" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="PassengerUserAgent" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="PassengerOS" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="PassengerAppVersion" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="Complaint" Nullable="true" MaxLength="1000" />
+          <Property Type="String" Name="MidwayStop1Latitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="MidwayStop1Longitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="MidwayStop1Location" Nullable="true" MaxLength="1000" />
+          <Property Type="DateTime" Name="MidwayStop1ArrivalDateTime" Nullable="true" Precision="23" />
+          <Property Type="DateTime" Name="MidwayStop1LeaveDateTime" Nullable="true" Precision="23" />
+          <Property Type="Boolean" Name="isLogisticRequest" Nullable="false" />
+          <Property Type="String" Name="PickupLocationPostalCode" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="DropOffLocationPostalCode" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="MidwayStop1PostalCode" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="CreditCardPaymentIntent" Nullable="true" />
+          <Property Type="Boolean" Name="isSpecialPromotionApplied" Nullable="true" />
+          <Property Type="String" Name="DeviceToken" Nullable="true" />
+          <Property Type="Boolean" Name="isCaptainOnTheWay" Nullable="true" />
+          <Property Type="Boolean" Name="isCaptainArrived" Nullable="true" />
+          <Property Type="Int32" Name="remainingTime" Nullable="true" />
+          <Property Type="Boolean" Name="isPriorityHourEnabled" Nullable="true" />
+          <Property Type="Int32" Name="lastStatusId" Nullable="true" />
+          <Property Type="Double" Name="EarningPoints" Nullable="true" />
         </ComplexType>
         </Schema>
     </edmx:ConceptualModels>
@@ -10083,104 +10090,6 @@
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>
-          <FunctionImportMapping FunctionImportName="spCaptainCancelRide" FunctionName="CangooModel.Store.spCaptainCancelRide">
-            <ResultMapping>
-              <ComplexTypeMapping TypeName="CangooModel.spCaptainCancelRide_Result">
-                <ScalarProperty Name="TripID" ColumnName="TripID" />
-                <ScalarProperty Name="PickupLocationLatitude" ColumnName="PickupLocationLatitude" />
-                <ScalarProperty Name="PickupLocationLongitude" ColumnName="PickupLocationLongitude" />
-                <ScalarProperty Name="PickUpLocation" ColumnName="PickUpLocation" />
-                <ScalarProperty Name="DropOffLocationLatitude" ColumnName="DropOffLocationLatitude" />
-                <ScalarProperty Name="DropOffLocationLongitude" ColumnName="DropOffLocationLongitude" />
-                <ScalarProperty Name="DropOffLocation" ColumnName="DropOffLocation" />
-                <ScalarProperty Name="CaptainID" ColumnName="CaptainID" />
-                <ScalarProperty Name="UserID" ColumnName="UserID" />
-                <ScalarProperty Name="VehicleID" ColumnName="VehicleID" />
-                <ScalarProperty Name="NoOfPerson" ColumnName="NoOfPerson" />
-                <ScalarProperty Name="BookingDateTime" ColumnName="BookingDateTime" />
-                <ScalarProperty Name="ArrivalDateTime" ColumnName="ArrivalDateTime" />
-                <ScalarProperty Name="TripStartDatetime" ColumnName="TripStartDatetime" />
-                <ScalarProperty Name="TripEndDatetime" ColumnName="TripEndDatetime" />
-                <ScalarProperty Name="isLaterBooking" ColumnName="isLaterBooking" />
-                <ScalarProperty Name="PickUpBookingDateTime" ColumnName="PickUpBookingDateTime" />
-                <ScalarProperty Name="DriverRating" ColumnName="DriverRating" />
-                <ScalarProperty Name="VehicleRating" ColumnName="VehicleRating" />
-                <ScalarProperty Name="UserRating" ColumnName="UserRating" />
-                <ScalarProperty Name="FareManagerID" ColumnName="FareManagerID" />
-                <ScalarProperty Name="BaseFare" ColumnName="BaseFare" />
-                <ScalarProperty Name="WaitingMinutes" ColumnName="WaitingMinutes" />
-                <ScalarProperty Name="BookingFare" ColumnName="BookingFare" />
-                <ScalarProperty Name="WaitingFare" ColumnName="WaitingFare" />
-                <ScalarProperty Name="DistanceTraveled" ColumnName="DistanceTraveled" />
-                <ScalarProperty Name="isOverRided" ColumnName="isOverRided" />
-                <ScalarProperty Name="PerKMFare" ColumnName="PerKMFare" />
-                <ScalarProperty Name="Tip" ColumnName="Tip" />
-                <ScalarProperty Name="PromoCodeID" ColumnName="PromoCodeID" />
-                <ScalarProperty Name="PromoDiscount" ColumnName="PromoDiscount" />
-                <ScalarProperty Name="VoucherID" ColumnName="VoucherID" />
-                <ScalarProperty Name="WalletAmountUsed" ColumnName="WalletAmountUsed" />
-                <ScalarProperty Name="DriverSubmittedFeedback" ColumnName="DriverSubmittedFeedback" />
-                <ScalarProperty Name="UserSubmittedFeedback" ColumnName="UserSubmittedFeedback" />
-                <ScalarProperty Name="DriverEarnedPoints" ColumnName="DriverEarnedPoints" />
-                <ScalarProperty Name="TripPaymentMode" ColumnName="TripPaymentMode" />
-                <ScalarProperty Name="CancelID" ColumnName="CancelID" />
-                <ScalarProperty Name="TripStatusID" ColumnName="TripStatusID" />
-                <ScalarProperty Name="BookingModeID" ColumnName="BookingModeID" />
-                <ScalarProperty Name="isHotelBooking" ColumnName="isHotelBooking" />
-                <ScalarProperty Name="Description" ColumnName="Description" />
-                <ScalarProperty Name="BookingTypeID" ColumnName="BookingTypeID" />
-                <ScalarProperty Name="isDispatched" ColumnName="isDispatched" />
-                <ScalarProperty Name="isReRouted" ColumnName="isReRouted" />
-                <ScalarProperty Name="DistanceToPickUpLocation" ColumnName="DistanceToPickUpLocation" />
-                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
-                <ScalarProperty Name="ResellerID" ColumnName="ResellerID" />
-                <ScalarProperty Name="CompanyID" ColumnName="CompanyID" />
-                <ScalarProperty Name="facilities" ColumnName="facilities" />
-                <ScalarProperty Name="AdminProfit" ColumnName="AdminProfit" />
-                <ScalarProperty Name="ResellerProfit" ColumnName="ResellerProfit" />
-                <ScalarProperty Name="ApplicationProfit" ColumnName="ApplicationProfit" />
-                <ScalarProperty Name="FleetProfit" ColumnName="FleetProfit" />
-                <ScalarProperty Name="UTCTimeZoneOffset" ColumnName="UTCTimeZoneOffset" />
-                <ScalarProperty Name="InvoiceNumber" ColumnName="InvoiceNumber" />
-                <ScalarProperty Name="isFareChangePermissionGranted" ColumnName="isFareChangePermissionGranted" />
-                <ScalarProperty Name="InBoundDistanceInMeters" ColumnName="InBoundDistanceInMeters" />
-                <ScalarProperty Name="InBoundTimeInSeconds" ColumnName="InBoundTimeInSeconds" />
-                <ScalarProperty Name="OutBoundDistanceInMeters" ColumnName="OutBoundDistanceInMeters" />
-                <ScalarProperty Name="OutBoundTimeInSeconds" ColumnName="OutBoundTimeInSeconds" />
-                <ScalarProperty Name="OutBoundTimeFare" ColumnName="OutBoundTimeFare" />
-                <ScalarProperty Name="OutBoundDistanceFare" ColumnName="OutBoundDistanceFare" />
-                <ScalarProperty Name="InBoundTimeFare" ColumnName="InBoundTimeFare" />
-                <ScalarProperty Name="InBoundDistanceFare" ColumnName="InBoundDistanceFare" />
-                <ScalarProperty Name="InBoundSurchargeAmount" ColumnName="InBoundSurchargeAmount" />
-                <ScalarProperty Name="OutBoundSurchargeAmount" ColumnName="OutBoundSurchargeAmount" />
-                <ScalarProperty Name="DropOffFareMangerID" ColumnName="DropOffFareMangerID" />
-                <ScalarProperty Name="InBoundBaseFare" ColumnName="InBoundBaseFare" />
-                <ScalarProperty Name="OutBoundBaseFare" ColumnName="OutBoundBaseFare" />
-                <ScalarProperty Name="PolyLine" ColumnName="PolyLine" />
-                <ScalarProperty Name="PaymentModeId" ColumnName="PaymentModeId" />
-                <ScalarProperty Name="isWishCarRequested" ColumnName="isWishCarRequested" />
-                <ScalarProperty Name="VehicleCategoryId" ColumnName="VehicleCategoryId" />
-                <ScalarProperty Name="DriverUserAgent" ColumnName="DriverUserAgent" />
-                <ScalarProperty Name="DriverOS" ColumnName="DriverOS" />
-                <ScalarProperty Name="DriverAppVersion" ColumnName="DriverAppVersion" />
-                <ScalarProperty Name="PassengerUserAgent" ColumnName="PassengerUserAgent" />
-                <ScalarProperty Name="PassengerOS" ColumnName="PassengerOS" />
-                <ScalarProperty Name="PassengerAppVersion" ColumnName="PassengerAppVersion" />
-                <ScalarProperty Name="Complaint" ColumnName="Complaint" />
-                <ScalarProperty Name="MidwayStop1Latitude" ColumnName="MidwayStop1Latitude" />
-                <ScalarProperty Name="MidwayStop1Longitude" ColumnName="MidwayStop1Longitude" />
-                <ScalarProperty Name="MidwayStop1Location" ColumnName="MidwayStop1Location" />
-                <ScalarProperty Name="MidwayStop1ArrivalDateTime" ColumnName="MidwayStop1ArrivalDateTime" />
-                <ScalarProperty Name="MidwayStop1LeaveDateTime" ColumnName="MidwayStop1LeaveDateTime" />
-                <ScalarProperty Name="isLogisticRequest" ColumnName="isLogisticRequest" />
-                <ScalarProperty Name="PickupLocationPostalCode" ColumnName="PickupLocationPostalCode" />
-                <ScalarProperty Name="DropOffLocationPostalCode" ColumnName="DropOffLocationPostalCode" />
-                <ScalarProperty Name="MidwayStop1PostalCode" ColumnName="MidwayStop1PostalCode" />
-                <ScalarProperty Name="DeviceToken" ColumnName="DeviceToken" />
-                <ScalarProperty Name="EarningPoints" ColumnName="EarningPoints" />
-              </ComplexTypeMapping>
-            </ResultMapping>
-          </FunctionImportMapping>
           <FunctionImportMapping FunctionImportName="spGetCompanyVehicle" FunctionName="CangooModel.Store.spGetCompanyVehicle">
             <ResultMapping>
               <ComplexTypeMapping TypeName="CangooModel.spGetCompanyVehicle_Result">
@@ -11746,6 +11655,111 @@
                 <ScalarProperty Name="DeviceToken" ColumnName="DeviceToken" />
                 <ScalarProperty Name="FleetAddress" ColumnName="FleetAddress" />
                 <ScalarProperty Name="FleetName" ColumnName="FleetName" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
+          <FunctionImportMapping FunctionImportName="spCaptainCancelRide" FunctionName="CangooModel.Store.spCaptainCancelRide">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CangooModel.spCaptainCancelRide_Result">
+                <ScalarProperty Name="TripID" ColumnName="TripID" />
+                <ScalarProperty Name="PickupLocationLatitude" ColumnName="PickupLocationLatitude" />
+                <ScalarProperty Name="PickupLocationLongitude" ColumnName="PickupLocationLongitude" />
+                <ScalarProperty Name="PickUpLocation" ColumnName="PickUpLocation" />
+                <ScalarProperty Name="DropOffLocationLatitude" ColumnName="DropOffLocationLatitude" />
+                <ScalarProperty Name="DropOffLocationLongitude" ColumnName="DropOffLocationLongitude" />
+                <ScalarProperty Name="DropOffLocation" ColumnName="DropOffLocation" />
+                <ScalarProperty Name="CaptainID" ColumnName="CaptainID" />
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="VehicleID" ColumnName="VehicleID" />
+                <ScalarProperty Name="NoOfPerson" ColumnName="NoOfPerson" />
+                <ScalarProperty Name="BookingDateTime" ColumnName="BookingDateTime" />
+                <ScalarProperty Name="ArrivalDateTime" ColumnName="ArrivalDateTime" />
+                <ScalarProperty Name="TripStartDatetime" ColumnName="TripStartDatetime" />
+                <ScalarProperty Name="TripEndDatetime" ColumnName="TripEndDatetime" />
+                <ScalarProperty Name="isLaterBooking" ColumnName="isLaterBooking" />
+                <ScalarProperty Name="PickUpBookingDateTime" ColumnName="PickUpBookingDateTime" />
+                <ScalarProperty Name="DriverRating" ColumnName="DriverRating" />
+                <ScalarProperty Name="VehicleRating" ColumnName="VehicleRating" />
+                <ScalarProperty Name="UserRating" ColumnName="UserRating" />
+                <ScalarProperty Name="FareManagerID" ColumnName="FareManagerID" />
+                <ScalarProperty Name="BaseFare" ColumnName="BaseFare" />
+                <ScalarProperty Name="WaitingMinutes" ColumnName="WaitingMinutes" />
+                <ScalarProperty Name="BookingFare" ColumnName="BookingFare" />
+                <ScalarProperty Name="WaitingFare" ColumnName="WaitingFare" />
+                <ScalarProperty Name="DistanceTraveled" ColumnName="DistanceTraveled" />
+                <ScalarProperty Name="isOverRided" ColumnName="isOverRided" />
+                <ScalarProperty Name="PerKMFare" ColumnName="PerKMFare" />
+                <ScalarProperty Name="Tip" ColumnName="Tip" />
+                <ScalarProperty Name="PromoCodeID" ColumnName="PromoCodeID" />
+                <ScalarProperty Name="PromoDiscount" ColumnName="PromoDiscount" />
+                <ScalarProperty Name="VoucherID" ColumnName="VoucherID" />
+                <ScalarProperty Name="WalletAmountUsed" ColumnName="WalletAmountUsed" />
+                <ScalarProperty Name="DriverSubmittedFeedback" ColumnName="DriverSubmittedFeedback" />
+                <ScalarProperty Name="UserSubmittedFeedback" ColumnName="UserSubmittedFeedback" />
+                <ScalarProperty Name="DriverEarnedPoints" ColumnName="DriverEarnedPoints" />
+                <ScalarProperty Name="TripPaymentMode" ColumnName="TripPaymentMode" />
+                <ScalarProperty Name="CancelID" ColumnName="CancelID" />
+                <ScalarProperty Name="TripStatusID" ColumnName="TripStatusID" />
+                <ScalarProperty Name="BookingModeID" ColumnName="BookingModeID" />
+                <ScalarProperty Name="isHotelBooking" ColumnName="isHotelBooking" />
+                <ScalarProperty Name="Description" ColumnName="Description" />
+                <ScalarProperty Name="BookingTypeID" ColumnName="BookingTypeID" />
+                <ScalarProperty Name="isDispatched" ColumnName="isDispatched" />
+                <ScalarProperty Name="isReRouted" ColumnName="isReRouted" />
+                <ScalarProperty Name="DistanceToPickUpLocation" ColumnName="DistanceToPickUpLocation" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="ResellerID" ColumnName="ResellerID" />
+                <ScalarProperty Name="CompanyID" ColumnName="CompanyID" />
+                <ScalarProperty Name="facilities" ColumnName="facilities" />
+                <ScalarProperty Name="AdminProfit" ColumnName="AdminProfit" />
+                <ScalarProperty Name="ResellerProfit" ColumnName="ResellerProfit" />
+                <ScalarProperty Name="ApplicationProfit" ColumnName="ApplicationProfit" />
+                <ScalarProperty Name="FleetProfit" ColumnName="FleetProfit" />
+                <ScalarProperty Name="UTCTimeZoneOffset" ColumnName="UTCTimeZoneOffset" />
+                <ScalarProperty Name="InvoiceNumber" ColumnName="InvoiceNumber" />
+                <ScalarProperty Name="isFareChangePermissionGranted" ColumnName="isFareChangePermissionGranted" />
+                <ScalarProperty Name="InBoundDistanceInMeters" ColumnName="InBoundDistanceInMeters" />
+                <ScalarProperty Name="InBoundTimeInSeconds" ColumnName="InBoundTimeInSeconds" />
+                <ScalarProperty Name="OutBoundDistanceInMeters" ColumnName="OutBoundDistanceInMeters" />
+                <ScalarProperty Name="OutBoundTimeInSeconds" ColumnName="OutBoundTimeInSeconds" />
+                <ScalarProperty Name="OutBoundTimeFare" ColumnName="OutBoundTimeFare" />
+                <ScalarProperty Name="OutBoundDistanceFare" ColumnName="OutBoundDistanceFare" />
+                <ScalarProperty Name="InBoundTimeFare" ColumnName="InBoundTimeFare" />
+                <ScalarProperty Name="InBoundDistanceFare" ColumnName="InBoundDistanceFare" />
+                <ScalarProperty Name="InBoundSurchargeAmount" ColumnName="InBoundSurchargeAmount" />
+                <ScalarProperty Name="OutBoundSurchargeAmount" ColumnName="OutBoundSurchargeAmount" />
+                <ScalarProperty Name="DropOffFareMangerID" ColumnName="DropOffFareMangerID" />
+                <ScalarProperty Name="InBoundBaseFare" ColumnName="InBoundBaseFare" />
+                <ScalarProperty Name="OutBoundBaseFare" ColumnName="OutBoundBaseFare" />
+                <ScalarProperty Name="PolyLine" ColumnName="PolyLine" />
+                <ScalarProperty Name="PaymentModeId" ColumnName="PaymentModeId" />
+                <ScalarProperty Name="isWishCarRequested" ColumnName="isWishCarRequested" />
+                <ScalarProperty Name="VehicleCategoryId" ColumnName="VehicleCategoryId" />
+                <ScalarProperty Name="DriverUserAgent" ColumnName="DriverUserAgent" />
+                <ScalarProperty Name="DriverOS" ColumnName="DriverOS" />
+                <ScalarProperty Name="DriverAppVersion" ColumnName="DriverAppVersion" />
+                <ScalarProperty Name="PassengerUserAgent" ColumnName="PassengerUserAgent" />
+                <ScalarProperty Name="PassengerOS" ColumnName="PassengerOS" />
+                <ScalarProperty Name="PassengerAppVersion" ColumnName="PassengerAppVersion" />
+                <ScalarProperty Name="Complaint" ColumnName="Complaint" />
+                <ScalarProperty Name="MidwayStop1Latitude" ColumnName="MidwayStop1Latitude" />
+                <ScalarProperty Name="MidwayStop1Longitude" ColumnName="MidwayStop1Longitude" />
+                <ScalarProperty Name="MidwayStop1Location" ColumnName="MidwayStop1Location" />
+                <ScalarProperty Name="MidwayStop1ArrivalDateTime" ColumnName="MidwayStop1ArrivalDateTime" />
+                <ScalarProperty Name="MidwayStop1LeaveDateTime" ColumnName="MidwayStop1LeaveDateTime" />
+                <ScalarProperty Name="isLogisticRequest" ColumnName="isLogisticRequest" />
+                <ScalarProperty Name="PickupLocationPostalCode" ColumnName="PickupLocationPostalCode" />
+                <ScalarProperty Name="DropOffLocationPostalCode" ColumnName="DropOffLocationPostalCode" />
+                <ScalarProperty Name="MidwayStop1PostalCode" ColumnName="MidwayStop1PostalCode" />
+                <ScalarProperty Name="CreditCardPaymentIntent" ColumnName="CreditCardPaymentIntent" />
+                <ScalarProperty Name="isSpecialPromotionApplied" ColumnName="isSpecialPromotionApplied" />
+                <ScalarProperty Name="DeviceToken" ColumnName="DeviceToken" />
+                <ScalarProperty Name="isCaptainOnTheWay" ColumnName="isCaptainOnTheWay" />
+                <ScalarProperty Name="isCaptainArrived" ColumnName="isCaptainArrived" />
+                <ScalarProperty Name="remainingTime" ColumnName="remainingTime" />
+                <ScalarProperty Name="isPriorityHourEnabled" ColumnName="isPriorityHourEnabled" />
+                <ScalarProperty Name="lastStatusId" ColumnName="lastStatusId" />
+                <ScalarProperty Name="EarningPoints" ColumnName="EarningPoints" />
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>

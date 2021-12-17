@@ -246,7 +246,6 @@ namespace Services
                             {
                                 return new ResponseWrapper
                                 {
-                                    Error = true,
                                     Message = ResponseKeys.invalidParameters
                                 };
                             }
@@ -701,6 +700,14 @@ namespace Services
             //    pr.discountType = discountDetails["type"].ToString();
             //    pr.promoDiscountAmount = discountDetails["amount"].ToString();
             //}
+        }
+
+        public static async Task<spGetTripPassengerDetailsByTripID_Result> GetTripPassengerDetailsByTripID(string tripId)
+        {
+            using (CangooEntities dbContext = new CangooEntities())
+            {
+                return dbContext.spGetTripPassengerDetailsByTripID(tripId).FirstOrDefault();
+            }
         }
     }
 }
