@@ -62,17 +62,18 @@ namespace Services
 
         public static async Task<List<DriverFacilityDTO>> GetDriverFacilitiesDetailByIds(string subscribedFacilities)
         {
-
             using (var context = new CangooEntities())
             {
+                var requiredIds = subscribedFacilities.Split(',');
+
                 var resellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
                 var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
 
-                var facilities = await context.Facilities
+                var facilities = (await context.Facilities
                     .Where(f => f.ResellerID.ToString().Equals(resellerId)
                     && f.ApplicationID.ToString().Equals(applicationId)
-                    && f.FacilityID.ToString().Contains(subscribedFacilities)
-                    && f.isActive == true).ToListAsync();
+                    && requiredIds.Contains(f.FacilityID.ToString())
+                    && f.isActive == true).ToListAsync());
 
                 return AutoMapperConfig._mapper.Map<List<Facility>, List<DriverFacilityDTO>>(facilities);
             }
