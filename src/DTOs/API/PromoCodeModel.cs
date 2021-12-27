@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
@@ -17,13 +18,13 @@ namespace DTOs.API
         public string StartDate { get; set; } = "";
         public string ExpiryDate { get; set; } = "";
         public string Amount { get; set; } = "";
-        public string PaymentType { get; set; } = "";
-
+        public string DiscountTypeId { get; set; } = "";
     }
 
     public class GetPassengerPromoRequest
     {
         [Required]
+        [DefaultValue("95c08150-c0c6-431a-9f2c-2f223cef8911")]
         public string PassengerId { get; set; }
     }
 

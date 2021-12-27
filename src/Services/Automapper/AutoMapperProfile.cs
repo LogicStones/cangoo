@@ -27,17 +27,17 @@ namespace Services.Automapper
 
         private void MapSingle()
         {
-            CreateMap<CancelReason, PassengerCancelReasonsDTO>();
-            CreateMap<CancelReason, DriverCancelReasonsDTO>();
-            CreateMap<Facility, PassengerFacilityDTO>();
-            CreateMap<Facility, DriverFacilityDTO>();
-            CreateMap<AspNetUser, PassengerIdentityDTO>();
-            CreateMap<UserProfile, PassengerProfileDTO>();
+            CreateMap<CancelReason, PassengerCancelReasonsDTO>().ReverseMap();
+            CreateMap<CancelReason, DriverCancelReasonsDTO>().ReverseMap();
+            CreateMap<Facility, PassengerFacilityDTO>().ReverseMap();
+            CreateMap<Facility, DriverFacilityDTO>().ReverseMap();
+            CreateMap<AspNetUser, PassengerIdentityDTO>().ReverseMap();
+            CreateMap<UserProfile, PassengerProfileDTO>().ReverseMap();
             CreateMap<PassengerPlace, AddPassengerPlaceRequest>().ReverseMap();
             CreateMap<TrustedContact, UpdateTrustedContactRequest>().ReverseMap();
             CreateMap<spGetOnlineDriver_Result, DatabaseOlineDriversDTO>().ReverseMap();
             CreateMap<TripRequestLogDTO, TripRequestLog>().ReverseMap();
-            CreateMap<DispatchedRideLogDTO, DispatchedRidesLog>();
+            CreateMap<DispatchedRideLogDTO, DispatchedRidesLog>().ReverseMap();
 
             //Following 3 mappings are quick fix for ride FirebaseService.SendRideRequestToOnlineDrivers
             CreateMap<DriverBookingRequestNotification, FirebasePassenger>()
@@ -82,7 +82,7 @@ namespace Services.Automapper
                 .ForMember(dest => dest.PaymentModeId, opt => opt.MapFrom(src => src.PaymentModeId))
 
                 .ForMember(dest => dest.Facilities, opt => opt.MapFrom(src => src.facilities))
-                .ForMember(dest => dest.CancelReasons, opt => opt.MapFrom(src => src.lstCancel));
+                .ForMember(dest => dest.CancelReasons, opt => opt.MapFrom(src => src.lstCancel)).ReverseMap();
 
             CreateMap<DriverFacilityDTO, PassengerFacilityDTO>()
                 .ForMember(dest => dest.FacilityID, opt => opt.MapFrom(src => src.facilityID))

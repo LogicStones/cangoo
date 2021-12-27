@@ -261,4 +261,12 @@ namespace DTOs.API
 		public string userID { get; set; }
 		public string paymentRequestTime { get; set; }
 	}
+
+	public class LocationUpdate
+	{
+		public string latitude { get; set; }
+		public string longitude { get; set; }
+		public long locationTime { get; set; }
+	}
+
 }

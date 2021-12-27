@@ -11,8 +11,8 @@
         <EntityTypeShape EntityType="CangooModel.ApplicationSetting" Width="1.5" PointX="6.75" PointY="6.75" />
         <EntityTypeShape EntityType="CangooModel.ApplicationUserType" Width="1.5" PointX="7.75" PointY="0.75" />
         <EntityTypeShape EntityType="CangooModel.AspNetRole" Width="1.5" PointX="0.75" PointY="2.5" />
-        <EntityTypeShape EntityType="CangooModel.AspNetUserClaim" Width="1.5" PointX="5.25" PointY="3.625" />
-        <EntityTypeShape EntityType="CangooModel.AspNetUserLogin" Width="1.5" PointX="5.25" PointY="1" />
+        <EntityTypeShape EntityType="CangooModel.AspNetUserClaim" Width="1.5" PointX="5.25" PointY="1" />
+        <EntityTypeShape EntityType="CangooModel.AspNetUserLogin" Width="1.5" PointX="5.25" PointY="3.75" />
         <EntityTypeShape EntityType="CangooModel.AspNetUser" Width="1.5" PointX="3" PointY="1.375" />
         <EntityTypeShape EntityType="CangooModel.Benificiary" Width="1.5" PointX="7.75" PointY="3.75" />
         <EntityTypeShape EntityType="CangooModel.BenificiaryTransactionDetail" Width="1.5" PointX="8.75" PointY="6.75" />
@@ -73,7 +73,6 @@
         <EntityTypeShape EntityType="CangooModel.SubscriptionType" Width="1.5" PointX="24.75" PointY="18.75" />
         <EntityTypeShape EntityType="CangooModel.Transaction" Width="1.5" PointX="24.75" PointY="21.75" />
         <EntityTypeShape EntityType="CangooModel.TripRequestLog" Width="1.5" PointX="12.75" PointY="25.75" />
-        <EntityTypeShape EntityType="CangooModel.Trip" Width="1.5" PointX="14.75" PointY="25.75" />
         <EntityTypeShape EntityType="CangooModel.TripStatu" Width="1.5" PointX="26.75" PointY="0.75" />
         <EntityTypeShape EntityType="CangooModel.TrustedContact" Width="1.5" PointX="26.75" PointY="3.75" />
         <EntityTypeShape EntityType="CangooModel.UserFavoriteCaptain" Width="1.5" PointX="4.75" PointY="26.75" />
@@ -88,6 +87,7 @@
         <AssociationConnector Association="CangooModel.FK_dbo_AspNetUserClaims_dbo_AspNetUsers_UserId" />
         <AssociationConnector Association="CangooModel.FK_dbo_AspNetUserLogins_dbo_AspNetUsers_UserId" />
         <AssociationConnector Association="CangooModel.AspNetUserRoles" />
+        <EntityTypeShape EntityType="CangooModel.Trip" Width="1.5" PointX="23.375" PointY="27.75" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

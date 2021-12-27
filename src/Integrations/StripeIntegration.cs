@@ -197,6 +197,14 @@ namespace Integrations
             }
         }
 
+        public static PaymentIntent GetPaymentIntentDetails(string paymentIntentId)
+        {
+            SetStripAPIKey();
+
+            var service = new PaymentIntentService();
+            return service.Get(paymentIntentId);
+        }
+
         public static PaymentIntent CancelAuthorizedPayment(string paymentIntentId)
         {
             SetStripAPIKey();

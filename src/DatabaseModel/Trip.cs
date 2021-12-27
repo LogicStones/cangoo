@@ -106,5 +106,7 @@ namespace DatabaseModel
         public string MidwayStop1PostalCode { get; set; }
         public string CreditCardPaymentIntent { get; set; }
         public Nullable<bool> isSpecialPromotionApplied { get; set; }
+        public string CreditCardLast4Digits { get; set; }
+        public string CreditCardBrand { get; set; }
     }
 }

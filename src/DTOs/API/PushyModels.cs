@@ -31,6 +31,7 @@ namespace DTOs.API
 		public string DriverRating { get; set; }
 		public string DriverContactNumber { get; set; }
 		public string VehicleNumber { get; set; }
+		public string VehicleCategoryId { get; set; }
 		public string Make { get; set; }
 		public string Model { get; set; }
 		public string Color { get; set; }
@@ -85,11 +86,31 @@ namespace DTOs.API
 
 	public class CashPaymentNotification
 	{
-		public string CollectedAmount { get; set; }
-		public string VoucherUsedAmount { get; set; }
-		public string WalletAmountUsed { get; set; }
-		public string PromoDiscountAmount { get; set; }
+		//public string CollectedAmount { get; set; }
+		//public string VoucherUsedAmount { get; set; }
+		//public string WalletAmountUsed { get; set; }
+		//public string PromoDiscountAmount { get; set; }
+		public string TripId { get; set; }
+		public string SelectedTipAmount { get; set; }
+		public string DriverId { get; set; }
 		public string TotalFare { get; set; }
+		public string IsDriverFavorite { get; set; }
+		public string PaymentModeId { get; set; }
+	}
+
+	public class MobilePaymentNotification
+	{
+		//public string CollectedAmount { get; set; }
+		//public string VoucherUsedAmount { get; set; }
+		//public string WalletAmountUsed { get; set; }
+		//public string PaymentModeId { get; set; }
+		public string TripId { get; set; }
+		public string SelectedTipAmount { get; set; }
+		public string PromoDiscountAmount { get; set; }
+		public string PaymentModeId { get; set; }
+		public string TotalFare { get; set; }
+		public string DriverId { get; set; }
+		public string IsDriverFavorite { get; set; }
 	}
 
 	public class CreditCardPaymentNotification

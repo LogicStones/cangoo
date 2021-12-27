@@ -64,12 +64,14 @@ namespace DTOs.API
         public string CaptainName { get; set; } = "";
         public string CaptainPicture { get; set; } = "";
         public string VehicleCategory { get; set; } = "";
+        public string VehicleCategoryId { get; set; } = "";
         public string PolyLine { get; set; } = "";
         public string Distance { get; set; } = "";
-        public string Fare { get; set; } = "";
-        public string Tip { get; set; } = "";
+        public string TotalFare { get; set; } = "";
+        public string AmountPaid { get; set; } = "";
+        public string TipAmount { get; set; } = "";
+        public string DiscountAmount { get; set; } = "";
         public string PromoID { get; set; } = "";
-        public string PromoDiscount { get; set; } = "";
         public string PromoCode { get; set; } = "";
         public string StatusId { get; set; } = "";
         public string CancelReason { get; set; } = "";
@@ -80,6 +82,8 @@ namespace DTOs.API
         public string Make { get; set; } = "";
         public string Model { get; set; } = "";
         public string PlateNumber { get; set; } = "";
+        public string Brand { get; set; } = "";
+        public string Last4Digits { get; set; } = "";
         public List<PassengerFacilityDTO> FacilitiesList { get; set; }
     }
 
@@ -228,10 +232,10 @@ namespace DTOs.API
 
         //credit card payment related
 
-        [DefaultValue("cus_Ki0HplO99Pjr5L")]
+        [DefaultValue("cus_KjxHHoj7dM4wh2")]
         public string CustomerId { get; set; }
         
-        [DefaultValue("card_1K2g2vJeFP4nLZjMXR3F3fDr")]
+        [DefaultValue("pm_1K4TNUJeFP4nLZjMVYpOYylA")]
         public string CardId { get; set; }
 
         [DefaultValue("Visa")]
@@ -246,7 +250,8 @@ namespace DTOs.API
         [DefaultValue("False")]
         public string IsPaidClientSide { get; set; }
 
-        public string PaymentId { get; set; }
+        [DefaultValue("False")]
+        public string StripePaymentIntentId { get; set; }
     }
 
     public class BookTripResponse : DiscountTypeDTO
@@ -329,26 +334,85 @@ namespace DTOs.API
     public class UpdateTripPaymentMethodRequest
     {
         [Required]
-        public string PaymentModeId { get; set; } = "";
+        [DefaultValue("1")]
+        public string CurrentPaymentModeId { get; set; } = "";
+
         [Required]
+        [DefaultValue("2")]
+        public string NewPaymentModeId { get; set; } = "";
+
+        [Required]
+        [DefaultValue("")]
         public string TripId { get; set; } = "";
+
         [Required]
+        [DefaultValue("")]
+        public string TotalFare { get; set; } = "";
+
+        [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string PassengerId { get; set; } = "";
+
+        [Required]
+        [DefaultValue("False")]
+        public string IsPaidClientSide { get; set; } = "";
+
+        [DefaultValue("")]
+        public string StripePaymentIntentId { get; set; } = "";
+
+        [DefaultValue("pm_1K4TNUJeFP4nLZjMVYpOYylA")]
+        public string CardId { get; set; } = "";
+
+        [DefaultValue("cus_KjxHHoj7dM4wh2")]
+        public string CustomerId { get; set; } = "";
+
+        [DefaultValue("Visa")]
+        public string Brand { get; set; }
+
+        [DefaultValue("4242")]
+        public string Last4Digits { get; set; }
     }
 
     public class UpdateTripTipAmountRequest
     {
         [Required]
+        [DefaultValue("")]
         public string TripId { get; set; } = "";
+
         [Required]
+        [DefaultValue("2.00")]
         public string TipAmount { get; set; } = "";
     }
 
-    public class UpdateTripUserFeedback
+    public class UpdateTripUserFeedbackRequest
     {
         [Required]
-        public string TripId { get; set; }
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
+        public string PassengerId { get; set; }
+
         [Required]
+        [DefaultValue("")]
+        public string TripId { get; set; }
+
+        [Required]
+        [DefaultValue("902179f6-167e-4cd9-9ce8-701b92771f97")]
+        public string DriverId { get; set; }
+
+        [Required]
+        [DefaultValue("4")]
+        public string TipAmount { get; set; }
+
+        [Required]
+        [DefaultValue("5")]
+        public string Rating { get; set; }
+
+        //[Required]
+        [DefaultValue("Ride was fucking good :D")]
         public string UserFeedBack { get; set; }
+    }
+
+    public class UpdateTripUserFeedbackResponse
+    {
+        public string IsTipPaid { get; set; }
     }
 }

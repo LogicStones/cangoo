@@ -2,6 +2,8 @@
 using DTOs.API;
 using Integrations;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Serilog;
 using Services.Automapper;
 using System;
 using System.Collections.Generic;
@@ -48,28 +50,49 @@ namespace Services
 
         public static async Task<Dictionary<string, FirebaseDriver>> GetOnlineDrivers()
         {
-            //get online driver from firebase
-            //client = new FireSharp.FirebaseClient(config);
-            //FirebaseResponse resp = client.Get();
-
             var fbOnlineDrivers = await FirebaseIntegration.Read("OnlineDriver");
 
             //Key: DriverID, Value: Online Driver Properties
 
-            Dictionary<string, FirebaseDriver> rawOnlineDrivers = new Dictionary<string, FirebaseDriver>();
+            Dictionary<string, FirebaseDriver> onlineDrivers = new Dictionary<string, FirebaseDriver>();
 
             if (!string.IsNullOrEmpty(fbOnlineDrivers.Body) && !fbOnlineDrivers.Body.Equals("null"))
             {
-                rawOnlineDrivers = JsonConvert.DeserializeObject<Dictionary<string, FirebaseDriver>>(fbOnlineDrivers.Body);
+                Dictionary<string, dynamic> dirtyData = JsonConvert.DeserializeObject<Dictionary<string, dynamic>>(fbOnlineDrivers.Body);
+                foreach (var item in dirtyData)
+                {
+                    try
+                    {
+                        var driverId = Guid.Parse(item.Key.Trim());
+                        try
+                        {
+                            FirebaseDriver driverData = JsonConvert.DeserializeObject<JObject>(item.Value.ToString()).ToObject<FirebaseDriver>();// (FirebaseDriver)((JObject)item.Value);//JsonConvert.DeserializeObject<FirebaseDriver>(item.Value);
 
-                //Make sure driver node have actual data
-
-                var temp = Guid.Empty;
-
-                rawOnlineDrivers = rawOnlineDrivers.Where(kv => Guid.TryParse(kv.Key, out temp) == true).ToDictionary(kv => kv.Key, kv => kv.Value);
+                            if (string.IsNullOrEmpty(driverData.driverID) || driverData.location == null) //Driver inconsistent data
+                                await ForceFullyOfflineDriver(driverId.ToString(), driverData.vehicleID);
+                            else
+                                onlineDrivers.Add(item.Key, driverData);
+                        }
+                        catch (Exception ex)    //OnlineDriver child node have dirty data
+                        {
+                            await ForceFullyOfflineDriver(driverId.ToString(), "");
+                            Log.Error("Failed to parse OnlineDriver to FirebaseDriver !!", ex);
+                        }
+                    }
+                    catch (Exception ex)    //OnlineDriver node have dirty data
+                    {
+                        await FirebaseIntegration.Delete("OnlineDriver/" + item.Key);
+                        Log.Error("Dirty data in OnlineDriver !!", ex);
+                    }
+                }
             }
+            return onlineDrivers;
+        }
 
-            return rawOnlineDrivers;
+        public static async Task ForceFullyOfflineDriver(string driverId, string vehicleId)
+        {
+            await OfflineDriver(driverId);
+            DriverService.OnlineOfflineDriver(driverId, string.IsNullOrEmpty(vehicleId) ? "" : vehicleId, false, Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString()));
         }
 
         public static async Task<FirebaseDriver> GetOnlineDriverById(string driverId)
@@ -732,6 +755,17 @@ namespace Services
             await FirebaseIntegration.Write("Trips/" + tripId + "/TipAmount", tipAmount);
         }
 
+        public static async Task<string> GetTipAmount(string tripId)
+        {
+            var response = await FirebaseIntegration.Read("Trips/" + tripId + "/TipAmount");
+
+            if (!string.IsNullOrEmpty(response.Body) && !response.Body.Equals("null"))
+            {
+                return JsonConvert.DeserializeObject<string>(response.Body);
+            }
+            return "0";
+        }
+
         public static async Task DeleteTrip(string tripId)
         {
             await FirebaseIntegration.Delete("Trips/" + tripId);
@@ -945,18 +979,19 @@ namespace Services
 
         //    return "0";
         //}
-        //public Dictionary<string, LocationUpdate> getTripPolyLineDetails(string tripPath)
-        //{
-        //    client = new FireSharp.FirebaseClient(config);
-        //    var reponse = client.Get(tripPath);
-        //    if (!string.IsNullOrEmpty(reponse.Body) && !reponse.Body.Equals("null"))
-        //    {
-        //        //Key: RandomID, Value: Location Properties
-        //        return JsonConvert.DeserializeObject<Dictionary<string, LocationUpdate>>(reponse.Body);
-        //    }
 
-        //    return new Dictionary<string, LocationUpdate>();
-        //}
+        public static async Task<Dictionary<string, LocationUpdate>> GetTripPolyLineDetails(string tripId, string driverId)
+        {
+            var reponse = await FirebaseIntegration.Read("Trips/" + tripId + "/" + driverId + "/" + "polyline");
+         
+            if (!string.IsNullOrEmpty(reponse.Body) && !reponse.Body.Equals("null"))
+            {
+                //Key: RandomID, Value: Location Properties
+                return JsonConvert.DeserializeObject<Dictionary<string, LocationUpdate>>(reponse.Body);
+            }
+
+            return new Dictionary<string, LocationUpdate>();
+        }
 
         //#endregion
 

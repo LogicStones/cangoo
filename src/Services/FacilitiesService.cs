@@ -30,16 +30,15 @@ namespace Services
 
         public static async Task<List<PassengerFacilityDTO>> GetPassengerFacilitiesDetailByIds(string subscribedFacilities)
         {
-
+            var requiredIds = subscribedFacilities.Split(',');
             using (var context = new CangooEntities())
             {
                 var resellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
                 var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
 
-                var facilities = await context.Facilities
-                    .Where(f => f.ResellerID.ToString().Equals(resellerId)
+                var facilities = await context.Facilities.Where(f => f.ResellerID.ToString().Equals(resellerId)
                     && f.ApplicationID.ToString().Equals(applicationId)
-                    && f.FacilityID.ToString().Contains(subscribedFacilities)
+                    && requiredIds.Contains(f.FacilityID.ToString())
                     && f.isActive == true).ToListAsync();
 
                 return AutoMapperConfig._mapper.Map<List<Facility>, List<PassengerFacilityDTO>>(facilities);

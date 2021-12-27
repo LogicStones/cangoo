@@ -20,30 +20,37 @@ namespace Services
                 var query = dbContext.Database.SqlQuery<PromoCodeDetails>("exec spGetUserPromos @passengerId,@active",
                                                                                                         new SqlParameter("@passengerId", passengerId),
                                                                                                         new SqlParameter("@active", true));
-                var result = await query.ToListAsync();
-                var lstPromoCodeDetails = new List<PromoCodeDetails>();
-                if (result != null)
-                {
-                    foreach (var item in result)
-                    {
-                        if (DateTime.Compare(DateTime.Parse((Convert.ToDateTime(item.ExpiryDate).ToString())), DateTime.Parse(DateTime.UtcNow.ToString())) > 0)
-                        {
-                            lstPromoCodeDetails.Add(new PromoCodeDetails
-                            {
-                                UserPromoCodeId = item.UserPromoCodeId,
-                                PromoCode = item.PromoCode,
-                                NoOfUsage = item.NoOfUsage,
-                                PromoCodeId = item.PromoCodeId,
-                                StartDate = item.StartDate,
-                                ExpiryDate = item.ExpiryDate,
-                                Amount = item.Amount,
-                                PaymentType = item.PaymentType,
-                                AllowedRepetitions = item.AllowedRepetitions
-                            });
-                        }
-                    }
-                }
-                return lstPromoCodeDetails;
+
+                return await query.ToListAsync();
+                //var lstUserPromos = await query.ToListAsync();
+
+                //lstUserPromos.Select(up => { up.StartDate = DateTime.Parse(up.StartDate).ToString(Formats.DateFormat); return up; }).ToList();
+                //lstUserPromos.Select(up => { up.ExpiryDate = DateTime.Parse(up.ExpiryDate).ToString(Formats.DateFormat); return up; }).ToList();
+
+                //return lstUserPromos;
+                //var lstPromoCodeDetails = new List<PromoCodeDetails>();
+                //if (result != null)
+                //{
+                //    foreach (var item in result)
+                //    {
+                //        if (DateTime.Compare(DateTime.Parse((Convert.ToDateTime(item.ExpiryDate).ToString())), DateTime.Parse(DateTime.UtcNow.ToString())) > 0)
+                //        {
+                //            lstPromoCodeDetails.Add(new PromoCodeDetails
+                //            {
+                //                UserPromoCodeId = item.UserPromoCodeId,
+                //                PromoCode = item.PromoCode,
+                //                NoOfUsage = item.NoOfUsage,
+                //                PromoCodeId = item.PromoCodeId,
+                //                StartDate = item.StartDate,
+                //                ExpiryDate = item.ExpiryDate,
+                //                Amount = item.Amount,
+                //                PaymentType = item.PaymentType,
+                //                AllowedRepetitions = item.AllowedRepetitions
+                //            });
+                //        }
+                //    }
+                //}
+                //return lstPromoCodeDetails;
             }
         }
 

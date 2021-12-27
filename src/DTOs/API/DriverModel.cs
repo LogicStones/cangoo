@@ -40,7 +40,7 @@ namespace DTOs.API
             //!string.IsNullOrEmpty(model.walletTotalAmount) && !string.IsNullOrEmpty(model.voucherUsedAmount) &&
             //!string.IsNullOrEmpty(model.promoDiscountAmount) && !string.IsNullOrEmpty(model.totalFare))
 
-    public class CreditCardPaymentRequest
+    public class MobilePaymentRequest
     {
         [Required]
         [DefaultValue("e5cece85-c6b7-4c37-bf02-573b4b3607e5")]
@@ -53,10 +53,25 @@ namespace DTOs.API
         [Required]
         [DefaultValue("02179f6-167e-4cd9-9ce8-701b92771f97")]
         public string driverID { get; set; }
-              
-        [Required]
-        [DefaultValue("dcd1d468-e032-49d4-9711-02715b3c4c5e")]
-        public string vehicleID { get; set; }
+
+        //[Required]
+        [DefaultValue("0.00")]
+        public string promoDiscountAmount { get; set; }
+
+        //[Required]
+        [DefaultValue("0.00")]
+        public string walletUsedAmount { get; set; }
+
+        //[Required]
+        [DefaultValue("0.00")]
+        public string totalFare { get; set; }
+
+        //[Required]
+        //[DefaultValue("dcd1d468-e032-49d4-9711-02715b3c4c5e")]
+        //public string vehicleID { get; set; }
+
+        //[DefaultValue("0.00")]
+        //public string tipAmount { get; set; }
 
         //[Required]
         //[DefaultValue("false")]
@@ -83,20 +98,6 @@ namespace DTOs.API
         //public string paymentMode { get; set; }
         //public string PaymentModeId { get; set; }
 
-        [Required]
-        [DefaultValue("0")]
-        public string promoDiscountAmount { get; set; }
-       
-        [Required]
-        [DefaultValue("0")]
-        public string walletUsedAmount { get; set; }
-       
-        [Required]
-        [DefaultValue("100")]
-        public string totalFare { get; set; }
-
-        [DefaultValue("20")]
-        public string tipAmount { get; set; }
     }
 
     public class GetDriverSettingsRequest

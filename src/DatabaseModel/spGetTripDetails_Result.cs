@@ -32,14 +32,18 @@ namespace DatabaseModel
         public string Complaint { get; set; }
         public string FacilityIds { get; set; }
         public string VehicleCategory { get; set; }
+        public string VehicleCategoryId { get; set; }
         public string PromoCode { get; set; }
         public string PaymentModeId { get; set; }
+        public string Brand { get; set; }
+        public string Last4Digits { get; set; }
         public string StatusId { get; set; }
         public string Distance { get; set; }
-        public string Fare { get; set; }
-        public string Tip { get; set; }
+        public string TipAmount { get; set; }
+        public string DiscountAmount { get; set; }
+        public string AmountPaid { get; set; }
+        public string TotalFare { get; set; }
         public string PromoID { get; set; }
-        public string PromoDiscount { get; set; }
         public string BookingDateTime { get; set; }
         public string ArrivalDateTime { get; set; }
         public string StartDateTime { get; set; }

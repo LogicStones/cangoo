@@ -174,7 +174,7 @@ namespace API.Controllers
                 return Request.CreateResponse(HttpStatusCode.Unauthorized, new ResponseWrapper { Message = ResponseKeys.authenticationFailed });
             }
 
-            if ((await UserService.GetProfileAsync(user.Id, ApplicationID, ResellerID)) == null)
+            if ((await UserService.GetProfileByIdAsync(user.Id, ApplicationID, ResellerID)) == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper { Message = ResponseKeys.userProfileNotFound });
             }
@@ -227,7 +227,7 @@ namespace API.Controllers
             IdentityUser user = await userManager.FindAsync(model.PhoneNumber, model.CurrentPassword);
             if (user == null)
             {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.failedToResetPassword });
+                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper { Message = ResponseKeys.inCorrectCurrentPassword });
             }
 
             string hashedNewPassword = userManager.PasswordHasher.HashPassword(model.NewPassword);
@@ -253,9 +253,9 @@ namespace API.Controllers
         [Route("verify-device-token")]
         public async Task<HttpResponseMessage> VerifyDeviceToken([FromBody] PassengerVerifyDeviceTokenRequest model)
         {
-            var userProfile = await UserService.GetProfileAsync(model.PassengerId, ApplicationID, ResellerID);
+            var userProfile = await UserService.GetProfileByIdAsync(model.PassengerId, ApplicationID, ResellerID);
 
-            if ((await UserService.GetProfileAsync(model.PassengerId, ApplicationID, ResellerID)) == null)
+            if ((await UserService.GetProfileByIdAsync(model.PassengerId, ApplicationID, ResellerID)) == null)
             {
                 return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper { Message = ResponseKeys.userProfileNotFound });
             }
@@ -278,6 +278,7 @@ namespace API.Controllers
         {
             return Request.CreateResponse(HttpStatusCode.OK);
         }
+        
         #endregion
 
         #region Profile
@@ -812,23 +813,7 @@ namespace API.Controllers
         [Route("update-trip-payment-method")]
         public async Task<HttpResponseMessage> UpdateTripPaymentMethod([FromBody] UpdateTripPaymentMethodRequest model)
         {
-            var result = await TripsManagerService.UpdateTripPaymentMode(model);
-
-            if (result == 0)
-            {
-                return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper
-                {
-                    Message = ResponseKeys.failedToUpdate
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess
-                });
-            }
+            return Request.CreateResponse(HttpStatusCode.OK, await TripsManagerService.UpdateTripPaymentMode(model));
         }
 
         [HttpPost]
@@ -869,14 +854,12 @@ namespace API.Controllers
         [Route("get-promo-codes")]
         public async Task<HttpResponseMessage> GetPromoCodesList([FromUri] GetPassengerPromoRequest model)
         {
-            var lstPromoCodes = await PromoCodeService.GetPromoCodes(model.PassengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
-                Data = lstPromoCodes
+                Data = await PromoCodeService.GetPromoCodes(model.PassengerId)
             });
-
         }
 
         [HttpPost]
@@ -910,7 +893,7 @@ namespace API.Controllers
         [Route("get-wallet")]
         public async Task<HttpResponseMessage> GetWalletDetails([FromUri] WalletDetailsRequest model)
         {
-            var response = await WalletServices.GetUserWalletDetails(model.PassengerId, ApplicationID, ResellerID);
+            var response = await PaymentsServices.GetUserWalletDetails(model.PassengerId, ApplicationID, ResellerID);
 
             if (response.Message.Equals(ResponseKeys.paymentGetwayError))
                 return Request.CreateResponse(HttpStatusCode.NoContent, response);
@@ -922,72 +905,30 @@ namespace API.Controllers
         [Route("redeem-coupon-code")]
         public async Task<HttpResponseMessage> RedeemCouponCode([FromBody] RedeemCouponCodeRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK, await WalletServices.AddCouponCode(model.PassengerId, model.CouponCode));
+            return Request.CreateResponse(HttpStatusCode.OK, await PaymentsServices.RedeemCouponCode(model.PassengerId, model.CouponCode));
         }
 
         [HttpPost]
         [Route("check-application-user")]
         public async Task<HttpResponseMessage> CheckApplicationUser([FromBody] CheckAppUserRequest model)
         {
-            var AppUser = await WalletServices.IsAppUserExist(model.ReceiverMobileNo);
-            if (AppUser != null)
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                    Data = AppUser,
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = true,
-                    Message = ResponseKeys.userNotFound,
-                });
-            }
+            return Request.CreateResponse(HttpStatusCode.OK, await UserService.IsAppUserExist(model.ReceiverMobileNo));
         }
 
         [HttpPost]
         [Route("transfer-wallet-balance")]
         public async Task<HttpResponseMessage> TransferWalletBalance([FromBody] ShareWalletBalanceRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-            {
-                Error = false,
-                Message = ResponseKeys.msgSuccess,
-                Data = await WalletServices.TransferUsingMobile(model)
-            });
+            return Request.CreateResponse(HttpStatusCode.OK, await PaymentsServices.TransferUsingMobile(model));
         }
 
+        //Recharge using Card | Apple Pay | Google Pay
         [HttpPost]
         [Route("mobile-payment-wallet-recharge")]
         public async Task<HttpResponseMessage> CardsWalletRecharge([FromBody] MobilePaymentWalletRechargeRequest model)
         {
-            var CardsWalletAmount = await WalletServices.CardsWalletRecharge(model);
-            if (CardsWalletAmount != null)
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                    Data = CardsWalletAmount,
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = true,
-                    Message = ResponseKeys.notFound,
-                });
-            }
+            return Request.CreateResponse(HttpStatusCode.OK, await PaymentsServices.MobilePaymentWalletRecharge(model));
         }
-
-        //Recharge using Card | Apple Pay | Google Pay
-
-        //Make Payment
 
         #endregion
 
@@ -1004,7 +945,7 @@ namespace API.Controllers
                 Data = new StripeClientSecretResponse
                 {
 
-                    ClientSecret = await WalletServices.GetSetupIntentSecret(model.CustomerId, model.Email, model.PassengerId)
+                    ClientSecret = await PaymentsServices.GetSetupIntentSecret(model.CustomerId, model.Email, model.PassengerId)
                 }
             });
         }
@@ -1020,66 +961,9 @@ namespace API.Controllers
         [Route("delete-credit-card")]
         public async Task<HttpResponseMessage> DeleteCreditCard([FromBody] DeleteCreditCardRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK, WalletServices.DeleteCreditCard(model.CardToken, model.CustomerId)) ;
+            return Request.CreateResponse(HttpStatusCode.OK, PaymentsServices.DeleteCreditCard(model.CardToken, model.CustomerId)) ;
             
             
-        }
-
-        //[AllowAnonymous]
-        //[HttpPost]
-        //[Route("authorize-credit-card-payment")]
-        //public async Task<HttpResponseMessage> AuthorizeCreditCardPayment([FromBody] AuthorizeCreditCardPaymentRequest model)
-        //{
-        //    var details = await WalletServices.AuthoizeCreditCardPayment(model.CustomerId, model.CardId, model.FareAmount);
-
-        //    if (details.Status.Equals("requires_capture"))
-        //        return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-        //        {
-        //            Error = false,
-        //            Data = details,
-        //            Message = ResponseKeys.msgSuccess
-        //        });
-        //    else
-        //    {
-        //        return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-        //        {
-        //            Data = details,
-        //            Message = ResponseKeys.paymentGetwayError
-        //        });
-        //    }
-        //}
-
-        [AllowAnonymous]
-        [HttpPost]  
-        [Route("cancel-authorized-payment")]
-        public async Task<HttpResponseMessage> CancelAuthorizedPayment([FromBody] CancelAuthorizedCreditCardPaymentRequest model)
-        {
-            return Request.CreateResponse(HttpStatusCode.OK, await WalletServices.CancelAuthorizedPayment(model.PaymentIntentId));
-        }
-
-        //[AllowAnonymous]
-        //[HttpPost]
-        //[Route("update-authorized-payment")]
-        //public async Task<HttpResponseMessage> UpdateAuthorizedPayment([FromBody] UpdateCreditCardPaymentRequest model)
-        //{
-        //    return Request.CreateResponse(HttpStatusCode.OK, await WalletServices.UpdateAuthorizedPayment(model.PaymentIntentId, model.FareAmount));
-        //}
-
-
-        [AllowAnonymous]
-        [HttpPost]  
-        [Route("capture-authorized-payment-partially")]
-        public async Task<HttpResponseMessage> CaptureAuthorizedPaymentPartially([FromBody] AdjustCreditCardPaymentRequest model)
-        {
-            return Request.CreateResponse(HttpStatusCode.OK, await WalletServices.CaptureAuthorizedPaymentPartially(model.PaymentIntentId, model.FareAmount));
-        }
-
-        [AllowAnonymous]
-        [HttpPost]  
-        [Route("capture-credit-card-payment")]
-        public async Task<HttpResponseMessage> CaptureCreditCardPayment([FromBody] CaptureCreditCardPaymentRequest model)
-        {
-            return Request.CreateResponse(HttpStatusCode.OK, await WalletServices.CaptureAuthorizedPayment(model.PaymentIntentId));
         }
 
         #endregion
@@ -1295,21 +1179,12 @@ namespace API.Controllers
         [Route("recent-locations")]
         public async Task<HttpResponseMessage> GetRecentLocations([FromUri] RecentLocationsListRequest model)
         {
-            if (model.PassengerId != string.Empty)
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
-                var lstLocation = await PassengerPlacesService.GetRecentTripsLocations(model.PassengerId);
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                    Data = lstLocation
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper { Message = ResponseKeys.invalidParameters });
-            }
-
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = await PassengerPlacesService.GetRecentTripsLocations(model.PassengerId)
+            });
         }
 
         [HttpPost]
@@ -1370,25 +1245,9 @@ namespace API.Controllers
 
         [HttpPost]
         [Route("submit-feedback")]
-        public async Task<HttpResponseMessage> SubmitFeedback([FromBody] UpdateTripUserFeedback model)
+        public async Task<HttpResponseMessage> SubmitFeedback([FromBody] UpdateTripUserFeedbackRequest model)
         {
-            var result = await TripsManagerService.UserSubmitFeedback(model);
-
-            if (result == 0)
-            {
-                return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper
-                {
-                    Message = ResponseKeys.failedToUpdate
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                });
-            }
+            return Request.CreateResponse(HttpStatusCode.OK, await TripsManagerService.UserSubmitFeedback(model));
         }
 
         [HttpGet]

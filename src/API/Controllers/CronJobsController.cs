@@ -67,21 +67,21 @@ namespace API.Controllers
 
                 if (string.IsNullOrEmpty(driver.driverID)) //Dirty data
                 {
-                    await SetDriverOffline(od.Key, driver.vehicleID);
+                    await FirebaseService.ForceFullyOfflineDriver(od.Key, driver.vehicleID);
                 }
                 //Cushion for new online drivers - wait for location update
                 else if ((DateTime.UtcNow - DateTime.Parse(driver.onlineSince)).TotalSeconds > applicationSettings.CaptainAllowedIdleTimeInSeconds)
                 {
                     if (string.IsNullOrEmpty(driver.lastUpdated))
                     {
-                        await SetDriverOffline(driver.driverID, driver.vehicleID);
+                        await FirebaseService.ForceFullyOfflineDriver(driver.driverID, driver.vehicleID);
                     }
                     else
                     {
                         DateTime currentLocationUpdateTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(driver.lastUpdated)).UtcDateTime;
                         if ((DateTime.UtcNow - currentLocationUpdateTime).TotalSeconds > applicationSettings.CaptainAllowedIdleTimeInSeconds)
                         {
-                            await SetDriverOffline(driver.driverID, driver.vehicleID);
+                            await FirebaseService.ForceFullyOfflineDriver(driver.driverID, driver.vehicleID);
                         }
                     }
                 }
@@ -133,6 +133,7 @@ namespace API.Controllers
             });
         }
 
+
         [HttpGet]
         [Route("UpdatePendingLaterBookings")]
         public async Task<HttpResponseMessage> UpdatePendingLaterBookings()
@@ -150,16 +151,20 @@ namespace API.Controllers
                     {
                         tp.TripStatusID = (int)TripStatuses.TimeOut;
 
-                        var user = await UserService.GetProfileAsync(booking.Value.userID, ApplicationID, ResellerID);
+                        var user = await UserService.GetProfileByIdAsync(booking.Value.userID, ApplicationID, ResellerID);
 
                         //user will be null if ride is booked by hotel / company.No need to send notifications on portals.
                         string deviceToken = user != null ? user.DeviceToken : "";
 
                         if (tp.PaymentModeId == (int)PaymentModes.CreditCard)
-                            await WalletServices.CancelAuthorizedPayment(tp.CreditCardPaymentIntent);
-
-                        //Refund voucher amount
-                        else if (user == null && tp.BookingModeID == (int)BookingModes.Voucher)
+                        {
+                            await PaymentsServices.CancelAuthorizedPayment(tp.CreditCardPaymentIntent);
+                        }
+                        else if (tp.PaymentModeId == (int)PaymentModes.Wallet)  //Refund wallet amount
+                        {
+                            await PaymentsServices.ReleaseWalletScrewedAmount(booking.Value.userID, await FareManagerService.GetTripCalculatedFare(tp.TripID.ToString()));
+                        }
+                        else if (user == null && tp.BookingModeID == (int)BookingModes.Voucher) //Refund voucher amount
                         {
                             VoucherService.RefundFullVoucherAmount(tp);
                         }
@@ -420,15 +425,5 @@ namespace API.Controllers
             #endregion
         }
 
-
-        #region Helper Function
-
-        private async Task SetDriverOffline(string driverID, string vehicleID)
-        {
-            await FirebaseService.OfflineDriver(driverID);
-            DriverService.OnlineOfflineDriver(driverID, string.IsNullOrEmpty(vehicleID) ? "" : vehicleID, false, Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString()));
-        }
-
-        #endregion
     }
 }

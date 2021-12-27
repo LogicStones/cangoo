@@ -40,13 +40,16 @@ namespace Services
                     OriginalPicture = "",
                     Rating = 5,
                     Spendings = 0,
-                    WalletBalance = 0,
-                    PreferredPaymentMethod = "Cash",
-                    CountryCode = countryCode,
                     NumberDriverFavourites = 0,
                     NoOfTrips = 0,
-                    CreditCardCustomerID = "",
                     isWalletPreferred = false,
+                    WalletBalance = 0,
+                    AvailableWalletBalance = 0,
+                    RewardPoints = 0,
+                    LanguageID = (int)Languages.German,
+                    PreferredPaymentMethod = "Cash",
+                    CountryCode = countryCode,
+                    CreditCardCustomerID = "",
                     isCoWorker = false,
                     DeviceToken = deviceToken,
                     IsActive = true,
@@ -62,7 +65,7 @@ namespace Services
             }
         }
 
-        public static async Task<PassengerProfileDTO> GetProfileAsync(string userId, string applicationId, string resellerId)
+        public static async Task<PassengerProfileDTO> GetProfileByIdAsync(string userId, string applicationId, string resellerId)
         {
             using (var dbContext = new CangooEntities())
             {
@@ -74,13 +77,13 @@ namespace Services
             }
         }
         
-        public static async Task UpdateUserWalletBalance(string lastRechargeAt,string walletBalance, string passengerId)
-        {
-            using (var dbcontext=new CangooEntities())
-            {
-                await dbcontext.Database.ExecuteSqlCommandAsync("Update Userprofile Set LastRechargedAt = {0}, WalletBalance = {1} Where UserId = {2}", lastRechargeAt, walletBalance, passengerId);
-            }
-        }
+        //public static async Task UpdateUserWalletBalance(string lastRechargeAt,string walletBalance, string passengerId)
+        //{
+        //    using (var dbcontext=new CangooEntities())
+        //    {
+        //        await dbcontext.Database.ExecuteSqlCommandAsync("Update Userprofile Set LastRechargedAt = {0}, WalletBalance = {1} Where UserId = {2}", lastRechargeAt, walletBalance, passengerId);
+        //    }
+        //}
 
         public static async Task UpdateStripeCustomerId(string customerId, string passengerId)
         {
@@ -198,7 +201,7 @@ Update Userprofile Set CountryCode = {1} where UserID = {2};", phoneNumber, coun
         {
             using (var context = new CangooEntities())
             {
-                var userProfile = await GetProfileAsync(userId, applicationId, resellerId);
+                var userProfile = await GetProfileByIdAsync(userId, applicationId, resellerId);
 
                 if (isExistingUser)
                 {
@@ -276,6 +279,39 @@ Update Userprofile Set CountryCode = {1} where UserID = {2};", phoneNumber, coun
                     Error = false,
                     Message = ResponseKeys.msgSuccess,
                     Data = passengerModel
+                };
+            }
+        }
+
+        public static async Task<ResponseWrapper> IsAppUserExist(string ReciverMobileNumber)
+        {
+            using (CangooEntities dbcontext = new CangooEntities())
+            {
+                var user = await (from anu in dbcontext.AspNetUsers
+                                  join up in dbcontext.UserProfiles on anu.Id equals up.UserID
+                                  where anu.UserName.ToLower().Equals(ReciverMobileNumber.ToLower())
+                                  select new
+                                  { up.FirstName, up.LastName, anu.Id, anu.PhoneNumber }).FirstOrDefaultAsync();
+
+                if (user == null)
+                {
+                    return new ResponseWrapper
+                    {
+                        Message = ResponseKeys.userNotFound
+                    };
+                }
+
+                return new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    Data = new CheckAppUserResponse
+                    {
+                        PassengerId = user.Id,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        PhoneNumber = user.PhoneNumber
+                    }
                 };
             }
         }

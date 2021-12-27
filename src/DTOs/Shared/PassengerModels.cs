@@ -26,6 +26,7 @@ namespace DTOs.Shared
         public string LastName { get; set; }
         public string CountryCode { get; set; }
         public Nullable<decimal> WalletBalance { get; set; }
+        public Nullable<decimal> AvailableWalletBalance { get; set; }
         public Nullable<double> Rating { get; set; }
         public string PhoneVerificationCode { get; set; }
         public Nullable<int> NumberDriverFavourites { get; set; }

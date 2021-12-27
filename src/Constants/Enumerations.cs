@@ -17,6 +17,13 @@ namespace Constants
 		ApplicationAdmin
 	}
 
+	public enum Languages
+	{
+		German = 1,
+		Turkish,
+		English
+	}
+
 	public enum TripStatuses
 	{
 		Completed = 1,  //Payment Received
@@ -45,7 +52,8 @@ namespace Constants
 		Comfort,
 		Premium,
 		Grossraum,//XL
-		GreenTaxi
+		GreenTaxi,
+		Logistic
 	}
 
 	public enum FareManagerShifts

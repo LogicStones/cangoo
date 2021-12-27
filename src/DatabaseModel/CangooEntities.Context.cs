@@ -95,7 +95,6 @@ namespace DatabaseModel
         public virtual DbSet<SubscriptionType> SubscriptionTypes { get; set; }
         public virtual DbSet<Transaction> Transactions { get; set; }
         public virtual DbSet<TripRequestLog> TripRequestLogs { get; set; }
-        public virtual DbSet<Trip> Trips { get; set; }
         public virtual DbSet<TripStatu> TripStatus { get; set; }
         public virtual DbSet<TrustedContact> TrustedContacts { get; set; }
         public virtual DbSet<UserFavoriteCaptain> UserFavoriteCaptains { get; set; }
@@ -107,6 +106,7 @@ namespace DatabaseModel
         public virtual DbSet<VehicleMake> VehicleMakes { get; set; }
         public virtual DbSet<VehicleModel> VehicleModels { get; set; }
         public virtual DbSet<WalletTransfer> WalletTransfers { get; set; }
+        public virtual DbSet<Trip> Trips { get; set; }
     
         public virtual int AddApplication(Nullable<System.Guid> resellerID, Nullable<System.Guid> applicationID, string ownerName, string companyName, string logo, string originalLogo, string contractFile, string originalContractFile, string authorizedArea, Nullable<double> percentagePayable, Nullable<double> percentageReceiveable, Nullable<int> subscriptionPlanID, Nullable<System.DateTime> subscriptionDate, Nullable<System.DateTime> paymentDueDate, Nullable<int> subscriptionTypeID, Nullable<int> paymentModeID, Nullable<int> paymentTypeID, Nullable<int> paymentStatusID, string paypalAccountNumber, string address, string taxNumber, string subscribedModules, string paypalEmail, string paypalNationalNumber, string paypalCountryCode, string paypalPhoneExt, Nullable<System.Guid> transactionID, Nullable<System.DateTime> dateTime, Nullable<System.Guid> debitFrom, Nullable<System.Guid> creditTo, string reference, Nullable<decimal> amount)
         {
@@ -2635,71 +2635,6 @@ namespace DatabaseModel
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<rpt_GetTripsOverviewInDateRange_Result>("rpt_GetTripsOverviewInDateRange", datetimeFromParameter, datetimeToParameter);
         }
     
-        public virtual ObjectResult<spAfterMobilePayment_Result> spAfterMobilePayment(Nullable<bool> isOverride, string tripID, string paypalTransID, Nullable<int> tripStatusID, string pID, string resellerID, string amount, string voucherUsedAmount, string promoDiscountAmount, string walletUsedAmount, string paymentTip, Nullable<System.DateTime> trnsDate, Nullable<int> paymentModeID, Nullable<int> paymentStatusID, string fleetID)
-        {
-            var isOverrideParameter = isOverride.HasValue ?
-                new ObjectParameter("isOverride", isOverride) :
-                new ObjectParameter("isOverride", typeof(bool));
-    
-            var tripIDParameter = tripID != null ?
-                new ObjectParameter("tripID", tripID) :
-                new ObjectParameter("tripID", typeof(string));
-    
-            var paypalTransIDParameter = paypalTransID != null ?
-                new ObjectParameter("paypalTransID", paypalTransID) :
-                new ObjectParameter("paypalTransID", typeof(string));
-    
-            var tripStatusIDParameter = tripStatusID.HasValue ?
-                new ObjectParameter("tripStatusID", tripStatusID) :
-                new ObjectParameter("tripStatusID", typeof(int));
-    
-            var pIDParameter = pID != null ?
-                new ObjectParameter("pID", pID) :
-                new ObjectParameter("pID", typeof(string));
-    
-            var resellerIDParameter = resellerID != null ?
-                new ObjectParameter("resellerID", resellerID) :
-                new ObjectParameter("resellerID", typeof(string));
-    
-            var amountParameter = amount != null ?
-                new ObjectParameter("amount", amount) :
-                new ObjectParameter("amount", typeof(string));
-    
-            var voucherUsedAmountParameter = voucherUsedAmount != null ?
-                new ObjectParameter("voucherUsedAmount", voucherUsedAmount) :
-                new ObjectParameter("voucherUsedAmount", typeof(string));
-    
-            var promoDiscountAmountParameter = promoDiscountAmount != null ?
-                new ObjectParameter("promoDiscountAmount", promoDiscountAmount) :
-                new ObjectParameter("promoDiscountAmount", typeof(string));
-    
-            var walletUsedAmountParameter = walletUsedAmount != null ?
-                new ObjectParameter("walletUsedAmount", walletUsedAmount) :
-                new ObjectParameter("walletUsedAmount", typeof(string));
-    
-            var paymentTipParameter = paymentTip != null ?
-                new ObjectParameter("paymentTip", paymentTip) :
-                new ObjectParameter("paymentTip", typeof(string));
-    
-            var trnsDateParameter = trnsDate.HasValue ?
-                new ObjectParameter("trnsDate", trnsDate) :
-                new ObjectParameter("trnsDate", typeof(System.DateTime));
-    
-            var paymentModeIDParameter = paymentModeID.HasValue ?
-                new ObjectParameter("paymentModeID", paymentModeID) :
-                new ObjectParameter("paymentModeID", typeof(int));
-    
-            var paymentStatusIDParameter = paymentStatusID.HasValue ?
-                new ObjectParameter("paymentStatusID", paymentStatusID) :
-                new ObjectParameter("paymentStatusID", typeof(int));
-    
-            var fleetIDParameter = fleetID != null ?
-                new ObjectParameter("fleetID", fleetID) :
-                new ObjectParameter("fleetID", typeof(string));
-    
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spAfterMobilePayment_Result>("spAfterMobilePayment", isOverrideParameter, tripIDParameter, paypalTransIDParameter, tripStatusIDParameter, pIDParameter, resellerIDParameter, amountParameter, voucherUsedAmountParameter, promoDiscountAmountParameter, walletUsedAmountParameter, paymentTipParameter, trnsDateParameter, paymentModeIDParameter, paymentStatusIDParameter, fleetIDParameter);
-        }
-    
         public virtual ObjectResult<spCaptainLaterTrips_Result> spCaptainLaterTrips(Nullable<System.DateTime> currentDateTime, string captainID, Nullable<int> tripStatusID, Nullable<int> pageNumber, Nullable<int> pageSize)
         {
             var currentDateTimeParameter = currentDateTime.HasValue ?
@@ -3989,15 +3924,6 @@ namespace DatabaseModel
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetPassengerScheduledTrips_Result>("spGetPassengerScheduledTrips", passengerIDParameter, offSetParameter, limitParameter);
         }
     
-        public virtual ObjectResult<spGetTripDetails_Result> spGetTripDetails(Nullable<System.Guid> tripID)
-        {
-            var tripIDParameter = tripID.HasValue ?
-                new ObjectParameter("tripID", tripID) :
-                new ObjectParameter("tripID", typeof(System.Guid));
-    
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetTripDetails_Result>("spGetTripDetails", tripIDParameter);
-        }
-    
         public virtual int spUpdatePassengerPlaces(Nullable<int> type, Nullable<int> id, string name, string address, string latitude, string longitutde)
         {
             var typeParameter = type.HasValue ?
@@ -4063,19 +3989,6 @@ namespace DatabaseModel
                 new ObjectParameter("companyID", typeof(string));
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetCompanyVehicle_Result>("spGetCompanyVehicle", companyIDParameter);
-        }
-    
-        public virtual ObjectResult<spGetUserPromos_Result> spGetUserPromos(Nullable<System.Guid> passengerId, Nullable<bool> active)
-        {
-            var passengerIdParameter = passengerId.HasValue ?
-                new ObjectParameter("passengerId", passengerId) :
-                new ObjectParameter("passengerId", typeof(System.Guid));
-    
-            var activeParameter = active.HasValue ?
-                new ObjectParameter("active", active) :
-                new ObjectParameter("active", typeof(bool));
-    
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetUserPromos_Result>("spGetUserPromos", passengerIdParameter, activeParameter);
         }
     
         public virtual ObjectResult<spVehicleBookedUnBooked_Result> spVehicleBookedUnBooked(string captainID, string deviceToken, string vehicleID, Nullable<System.DateTime> logIndateTime, Nullable<bool> status)
@@ -4190,35 +4103,6 @@ namespace DatabaseModel
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<FetchAllCoupons_Result>("FetchAllCoupons", displayLengthParameter, displayStartParameter, sortColParameter, sortOrderParameter, searchParameter, applicationIDParameter);
         }
     
-        public virtual ObjectResult<spGetUpdateTripDataOnAcceptRide_Result> spGetUpdateTripDataOnAcceptRide(string tripID, string driverID, Nullable<int> tripStatusID, string vehicleID, Nullable<int> isLaterBooking, Nullable<System.DateTime> pickUpDateTime)
-        {
-            var tripIDParameter = tripID != null ?
-                new ObjectParameter("tripID", tripID) :
-                new ObjectParameter("tripID", typeof(string));
-    
-            var driverIDParameter = driverID != null ?
-                new ObjectParameter("driverID", driverID) :
-                new ObjectParameter("driverID", typeof(string));
-    
-            var tripStatusIDParameter = tripStatusID.HasValue ?
-                new ObjectParameter("tripStatusID", tripStatusID) :
-                new ObjectParameter("tripStatusID", typeof(int));
-    
-            var vehicleIDParameter = vehicleID != null ?
-                new ObjectParameter("vehicleID", vehicleID) :
-                new ObjectParameter("vehicleID", typeof(string));
-    
-            var isLaterBookingParameter = isLaterBooking.HasValue ?
-                new ObjectParameter("isLaterBooking", isLaterBooking) :
-                new ObjectParameter("isLaterBooking", typeof(int));
-    
-            var pickUpDateTimeParameter = pickUpDateTime.HasValue ?
-                new ObjectParameter("pickUpDateTime", pickUpDateTime) :
-                new ObjectParameter("pickUpDateTime", typeof(System.DateTime));
-    
-            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetUpdateTripDataOnAcceptRide_Result>("spGetUpdateTripDataOnAcceptRide", tripIDParameter, driverIDParameter, tripStatusIDParameter, vehicleIDParameter, isLaterBookingParameter, pickUpDateTimeParameter);
-        }
-    
         public virtual ObjectResult<spGetDriverVehicleDetail_Result> spGetDriverVehicleDetail(string driverID, string vehicleID, string userID, Nullable<bool> ishotel)
         {
             var driverIDParameter = driverID != null ?
@@ -4271,6 +4155,122 @@ namespace DatabaseModel
                 new ObjectParameter("rideCancelDateTime", typeof(System.DateTime));
     
             return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spCaptainCancelRide_Result>("spCaptainCancelRide", tripIDParameter, driverIDParameter, tripStatusIDParameter, cancelIDParameter, isWebParameter, isAtPickupLocationParameter, rideCancelDateTimeParameter);
+        }
+    
+        public virtual ObjectResult<spGetUserPromos_Result> spGetUserPromos(Nullable<System.Guid> passengerId, Nullable<bool> active)
+        {
+            var passengerIdParameter = passengerId.HasValue ?
+                new ObjectParameter("passengerId", passengerId) :
+                new ObjectParameter("passengerId", typeof(System.Guid));
+    
+            var activeParameter = active.HasValue ?
+                new ObjectParameter("active", active) :
+                new ObjectParameter("active", typeof(bool));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetUserPromos_Result>("spGetUserPromos", passengerIdParameter, activeParameter);
+        }
+    
+        public virtual ObjectResult<spGetTripDetails_Result> spGetTripDetails(Nullable<System.Guid> tripID)
+        {
+            var tripIDParameter = tripID.HasValue ?
+                new ObjectParameter("tripID", tripID) :
+                new ObjectParameter("tripID", typeof(System.Guid));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetTripDetails_Result>("spGetTripDetails", tripIDParameter);
+        }
+    
+        public virtual ObjectResult<spAfterMobilePayment_Result> spAfterMobilePayment(Nullable<bool> isOverride, string tripID, string paypalTransID, Nullable<int> tripStatusID, string pID, string resellerID, string amount, string voucherUsedAmount, string promoDiscountAmount, string walletUsedAmount, string paymentTip, Nullable<System.DateTime> trnsDate, Nullable<int> paymentModeID, Nullable<int> paymentStatusID, string fleetID)
+        {
+            var isOverrideParameter = isOverride.HasValue ?
+                new ObjectParameter("isOverride", isOverride) :
+                new ObjectParameter("isOverride", typeof(bool));
+    
+            var tripIDParameter = tripID != null ?
+                new ObjectParameter("tripID", tripID) :
+                new ObjectParameter("tripID", typeof(string));
+    
+            var paypalTransIDParameter = paypalTransID != null ?
+                new ObjectParameter("paypalTransID", paypalTransID) :
+                new ObjectParameter("paypalTransID", typeof(string));
+    
+            var tripStatusIDParameter = tripStatusID.HasValue ?
+                new ObjectParameter("tripStatusID", tripStatusID) :
+                new ObjectParameter("tripStatusID", typeof(int));
+    
+            var pIDParameter = pID != null ?
+                new ObjectParameter("pID", pID) :
+                new ObjectParameter("pID", typeof(string));
+    
+            var resellerIDParameter = resellerID != null ?
+                new ObjectParameter("resellerID", resellerID) :
+                new ObjectParameter("resellerID", typeof(string));
+    
+            var amountParameter = amount != null ?
+                new ObjectParameter("amount", amount) :
+                new ObjectParameter("amount", typeof(string));
+    
+            var voucherUsedAmountParameter = voucherUsedAmount != null ?
+                new ObjectParameter("voucherUsedAmount", voucherUsedAmount) :
+                new ObjectParameter("voucherUsedAmount", typeof(string));
+    
+            var promoDiscountAmountParameter = promoDiscountAmount != null ?
+                new ObjectParameter("promoDiscountAmount", promoDiscountAmount) :
+                new ObjectParameter("promoDiscountAmount", typeof(string));
+    
+            var walletUsedAmountParameter = walletUsedAmount != null ?
+                new ObjectParameter("walletUsedAmount", walletUsedAmount) :
+                new ObjectParameter("walletUsedAmount", typeof(string));
+    
+            var paymentTipParameter = paymentTip != null ?
+                new ObjectParameter("paymentTip", paymentTip) :
+                new ObjectParameter("paymentTip", typeof(string));
+    
+            var trnsDateParameter = trnsDate.HasValue ?
+                new ObjectParameter("trnsDate", trnsDate) :
+                new ObjectParameter("trnsDate", typeof(System.DateTime));
+    
+            var paymentModeIDParameter = paymentModeID.HasValue ?
+                new ObjectParameter("paymentModeID", paymentModeID) :
+                new ObjectParameter("paymentModeID", typeof(int));
+    
+            var paymentStatusIDParameter = paymentStatusID.HasValue ?
+                new ObjectParameter("paymentStatusID", paymentStatusID) :
+                new ObjectParameter("paymentStatusID", typeof(int));
+    
+            var fleetIDParameter = fleetID != null ?
+                new ObjectParameter("fleetID", fleetID) :
+                new ObjectParameter("fleetID", typeof(string));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spAfterMobilePayment_Result>("spAfterMobilePayment", isOverrideParameter, tripIDParameter, paypalTransIDParameter, tripStatusIDParameter, pIDParameter, resellerIDParameter, amountParameter, voucherUsedAmountParameter, promoDiscountAmountParameter, walletUsedAmountParameter, paymentTipParameter, trnsDateParameter, paymentModeIDParameter, paymentStatusIDParameter, fleetIDParameter);
+        }
+    
+        public virtual ObjectResult<spGetUpdateTripDataOnAcceptRide_Result> spGetUpdateTripDataOnAcceptRide(string tripID, string driverID, Nullable<int> tripStatusID, string vehicleID, Nullable<int> isLaterBooking, Nullable<System.DateTime> pickUpDateTime)
+        {
+            var tripIDParameter = tripID != null ?
+                new ObjectParameter("tripID", tripID) :
+                new ObjectParameter("tripID", typeof(string));
+    
+            var driverIDParameter = driverID != null ?
+                new ObjectParameter("driverID", driverID) :
+                new ObjectParameter("driverID", typeof(string));
+    
+            var tripStatusIDParameter = tripStatusID.HasValue ?
+                new ObjectParameter("tripStatusID", tripStatusID) :
+                new ObjectParameter("tripStatusID", typeof(int));
+    
+            var vehicleIDParameter = vehicleID != null ?
+                new ObjectParameter("vehicleID", vehicleID) :
+                new ObjectParameter("vehicleID", typeof(string));
+    
+            var isLaterBookingParameter = isLaterBooking.HasValue ?
+                new ObjectParameter("isLaterBooking", isLaterBooking) :
+                new ObjectParameter("isLaterBooking", typeof(int));
+    
+            var pickUpDateTimeParameter = pickUpDateTime.HasValue ?
+                new ObjectParameter("pickUpDateTime", pickUpDateTime) :
+                new ObjectParameter("pickUpDateTime", typeof(System.DateTime));
+    
+            return ((IObjectContextAdapter)this).ObjectContext.ExecuteFunction<spGetUpdateTripDataOnAcceptRide_Result>("spGetUpdateTripDataOnAcceptRide", tripIDParameter, driverIDParameter, tripStatusIDParameter, vehicleIDParameter, isLaterBookingParameter, pickUpDateTimeParameter);
         }
     }
 }

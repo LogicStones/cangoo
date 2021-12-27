@@ -11,8 +11,11 @@ namespace DTOs.API
     public class RedeemCouponCodeRequest
     {
         [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string PassengerId { get; set; }
+
         [Required]
+        [DefaultValue("")]
         public string CouponCode { get; set; }
     }
 
@@ -25,6 +28,7 @@ namespace DTOs.API
     public class CheckAppUserRequest
     {
         [Required]
+        [DefaultValue("+923117803648")]
         public string ReceiverMobileNo { get; set; }
     }
 
@@ -39,33 +43,43 @@ namespace DTOs.API
     public class ShareWalletBalanceRequest
     {
         [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string SenderId { get; set; }
+
         [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string ReceiverId { get; set; }
+        
         [Required]
-        public string TotalWalletBalance { get; set; }
-        [Required]
+        [DefaultValue("10.23")]
         public string ShareAmount { get; set; }
     }
 
     public class ShareWalletBalanceResponse
     {
         public string WalletBalance { get; set; }
+        public string AvailableWalletBalance { get; set; }
         public string TransferedAmount { get; set; }
         public string FirstName { get; set; }
         public string LastName { get; set; }
     }
 
-
     public class MobilePaymentWalletRechargeRequest
     {
         [Required]
+        [DefaultValue("Test-Stripe-Payment-IntentId")]
         public string TransactionId { get; set; }
+
         [Required]
+        [DefaultValue("GooglePay, ApplePay, CreditCard, PayPal")]
         public string Method { get; set; }
+        
         [Required]
+        [DefaultValue("10.20")]
         public string Amount { get; set; }
+        
         [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string PassengerId { get; set; }
     }
 
@@ -77,6 +91,7 @@ namespace DTOs.API
     public class WalletDetailsRequest
     {
         [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string PassengerId { get; set; }
     }
 
@@ -95,9 +110,14 @@ namespace DTOs.API
     public class StripeClientSecretRequest
     {
         [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string PassengerId { get; set; }
+
         [Required]
+        [DefaultValue("test.logicstones@gmail.com")]
         public string Email { get; set; }
+
+        [DefaultValue("")]
         public string CustomerId { get; set; }
     }
 
@@ -106,13 +126,53 @@ namespace DTOs.API
         public string ClientSecret { get; set; } = "";
     }
 
-    public class UpdateDefaultCreditCardRequest
+    public class DeleteCreditCardRequest
     {
         [Required]
+        [DefaultValue("")]
         public string CardToken { get; set; }
+
         [Required]
+        [DefaultValue("")]
         public string CustomerId { get; set; }
     }
+
+    public class DeleteCreditCardResponse
+    {
+        public string CustomerId { get; set; }
+        public string DefaultSourceId { get; set; }
+        public List<StripeCard> CardsList { get; set; } = new List<StripeCard>();
+    }
+
+    public class CreditCardPaymentInent
+    {
+        public string PaymentIntentId { get; set; }
+        public string Status { get; set; }
+        public string ClientSecret { get; set; }
+        public string Description { get; set; }
+        //public string Brand { get; set; }
+        //public string Last4Digits { get; set; }
+    }
+
+    public class StripeCard
+    {
+        public string CardId { get; set; }
+        public string Brand { get; set; }
+        public string ExpiryMonth { get; set; }
+        public string ExpiryYear { get; set; }
+        public string Last4Digits { get; set; }
+        public string CardHolderName { get; set; }
+        public string CardDescription { get; set; } //addressline1 on stripe response
+    }
+
+    //public class UpdateDefaultCreditCardRequest
+    //{
+    //    [Required]
+    //    public string CardToken { get; set; }
+
+    //    [Required]
+    //    public string CustomerId { get; set; }
+    //}
 
     public class UpdateDefaultCreditCardResponse
     {
@@ -121,66 +181,52 @@ namespace DTOs.API
         public List<StripeCard> CardsList { get; set; } = new List<StripeCard>();
     }
 
-    public class DeleteCreditCardRequest
-    {
-        [Required]
-        public string CardToken { get; set; }
-        [Required]
-        public string CustomerId { get; set; }
-    }
-    public class DeleteCreditCardResponse
-    {
-        public string CustomerId { get; set; }
-        public string DefaultSourceId { get; set; }
-        public List<StripeCard> CardsList { get; set; } = new List<StripeCard>();
-    }
+    //public class AuthorizeCreditCardPaymentRequest
+    //{
+    //    [Required]
+    //    [DefaultValue("EUR")]
+    //    public string Currency { get; set; }
 
-    public class AuthorizeCreditCardPaymentRequest
-    {
-        [Required]
-        [DefaultValue("EUR")]
-        public string Currency { get; set; }
+    //    [Required]
+    //    [DefaultValue("cus_Ki0HplO99Pjr5L")]
+    //    public string CustomerId { get; set; }
 
-        [Required]
-        [DefaultValue("cus_Ki0HplO99Pjr5L")]
-        public string CustomerId { get; set; }
+    //    [Required]
+    //    [DefaultValue("card_1K2g2vJeFP4nLZjMXR3F3fDr")]
+    //    public string CardId { get; set; }
 
-        [Required]
-        [DefaultValue("card_1K2g2vJeFP4nLZjMXR3F3fDr")]
-        public string CardId { get; set; }
+    //    [Required]
+    //    [DefaultValue("16.23")]
+    //    public string FareAmount { get; set; }
 
-        [Required]
-        [DefaultValue("16.23")]
-        public string FareAmount { get; set; }
+    //    [Required]
+    //    [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
+    //    public string PassengerID { get; set; }
 
-        [Required]
-        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
-        public string PassengerID { get; set; }
-        
-        //[Required]
-        [DefaultValue("False")]
-        public string IsPaidClientSide { get; set; }
+    //    //[Required]
+    //    [DefaultValue("False")]
+    //    public string IsPaidClientSide { get; set; }
 
-        public string PaymentId { get; set; }
-    }
+    //    public string PaymentId { get; set; }
+    //}
 
-    public class CancelAuthorizedCreditCardPaymentRequest
-    {
-        [Required]
-        [DefaultValue("pi_3K2y80JeFP4nLZjM1OzIRdrY")]
-        public string PaymentIntentId { get; set; }
-    }
+    //public class CancelAuthorizedCreditCardPaymentRequest
+    //{
+    //    [Required]
+    //    [DefaultValue("pi_3K2y80JeFP4nLZjM1OzIRdrY")]
+    //    public string PaymentIntentId { get; set; }
+    //}
 
-    public class AdjustCreditCardPaymentRequest
-    {
-        [Required]
-        [DefaultValue("pi_3K2y80JeFP4nLZjM1OzIRdrY")]
-        public string PaymentIntentId { get; set; }
+    //public class AdjustCreditCardPaymentRequest
+    //{
+    //    [Required]
+    //    [DefaultValue("pi_3K2y80JeFP4nLZjM1OzIRdrY")]
+    //    public string PaymentIntentId { get; set; }
 
-        [Required]
-        [DefaultValue("16.23")]
-        public string FareAmount { get; set; }
-    }
+    //    [Required]
+    //    [DefaultValue("16.23")]
+    //    public string FareAmount { get; set; }
+    //}
 
     //public class UpdateCreditCardPaymentRequest
     //{
@@ -194,12 +240,12 @@ namespace DTOs.API
     //    public string FareAmount { get; set; }
     //}
 
-    public class CaptureCreditCardPaymentRequest
-    {
-        [Required]
-        [DefaultValue("pi_3K2y80JeFP4nLZjM1OzIRdrY")]
-        public string PaymentIntentId { get; set; }
-    }
+    //public class CaptureCreditCardPaymentRequest
+    //{
+    //    [Required]
+    //    [DefaultValue("pi_3K2y80JeFP4nLZjM1OzIRdrY")]
+    //    public string PaymentIntentId { get; set; }
+    //}
 
     //public class CreditCardPaymentRequest
     //{
@@ -229,22 +275,4 @@ namespace DTOs.API
     //    public string PaymentId { get; set; }
     //}
 
-    public class CreditCardPaymentInent
-    {
-        public string PaymentIntentId { get; set; }
-        public string Status { get; set; }
-        public string ClientSecret { get; set; }
-        public string Description { get; set; }
-    }
-
-    public class StripeCard
-    {
-        public string CardId { get; set; }
-        public string Brand { get; set; }
-        public string ExpiryMonth { get; set; }
-        public string ExpiryYear { get; set; }
-        public string Last4Digits { get; set; }
-        public string CardHolderName { get; set; }
-        public string CardDescription { get; set; } //addressline1 on stripe response
-    }
 }

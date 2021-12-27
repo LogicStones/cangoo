@@ -16,6 +16,7 @@ namespace DatabaseModel
         public Nullable<int> ArrivedTime { get; set; }
         public Nullable<double> RequestWaitingTime { get; set; }
         public Nullable<System.Guid> UserID { get; set; }
+        public Nullable<int> VehicleCategoryId { get; set; }
         public string VehicleCategory { get; set; }
         public Nullable<decimal> TotalFare { get; set; }
         public string PickupLocationLatitude { get; set; }
