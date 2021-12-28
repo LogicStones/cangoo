@@ -175,6 +175,27 @@ namespace Services
 
                 dbContext.SaveChanges();
 
+                var fbPaymentModeDetails = new TripPaymentMode {
+                    PaymentModeId = trip.PaymentModeId.ToString(),
+                    PaymentMethod = trip.TripPaymentMode
+                };
+
+                switch (trip.PaymentModeId)
+                {
+                    case (int)PaymentModes.Wallet:
+                        fbPaymentModeDetails.WalletBalance = userProfile.WalletBalance.ToString();
+                        fbPaymentModeDetails.AvailableWalletBalance = userProfile.AvailableWalletBalance.ToString();
+                        break;
+
+                    case (int)PaymentModes.CreditCard:
+                        fbPaymentModeDetails.Brand = trip.CreditCardBrand;
+                        fbPaymentModeDetails.Last4Digits = trip.CreditCardLast4Digits;
+                        fbPaymentModeDetails.CustomerId = userProfile.CreditCardCustomerID;
+                        break;
+                }
+
+                await FirebaseService.UpdateTripPaymentMode(trip.TripID.ToString(), trip.UserID.ToString(), trip.CaptainID == null ? "" : trip.CaptainID.ToString(), fbPaymentModeDetails);
+
                 return new ResponseWrapper
                 {
                     Error = false,
@@ -327,7 +348,8 @@ namespace Services
                     CardId = model.CardId,
                     Brand = model.Brand,
                     Last4Digits = model.Last4Digits,
-                    WalletBalance = model.WalletBalance
+                    WalletBalance = model.WalletBalance,
+                    AvailableWalletBalance = model.AvailableWalletBalance
 
                     //IsWeb = false,
                     //REFACTOR - Remove this flag

@@ -23,6 +23,7 @@ namespace DTOs.API
     {
         public string RechargedAmount { get; set; }
         public string WalletBalance { get; set; }
+        public string AvailableWalletBalance { get; set; }
     }
 
     public class CheckAppUserRequest
@@ -98,7 +99,7 @@ namespace DTOs.API
     public class WalletDetailsResponse
     {
         public string PassengerId { get; set; }
-        public string TotalWalletBalance { get; set; } = "0.00";
+        public string WalletBalance { get; set; } = "0.00";
         public string AvailableWalletBalance { get; set; } = "0.00";
         public string CustomerId { get; set; } = "";
         public string DefaultCardId { get; set; } = "";

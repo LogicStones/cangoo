@@ -726,7 +726,9 @@ namespace API.Controllers
                     DropOffLocation = arm.dropOffLocation,
                     SeatingCapacity = arm.numberOfPerson,
                     VehicleCategory = arm.vehicleCategory,
+                    VehicleCategoryId = detail.VehicleCategoryId.ToString(),
 
+                    VehicleNumber = driverVehiclDetail.PlateNumber,
                     DriverName = driverVehiclDetail.Name.Split(' ')[0],
                     DriverContactNumber = driverVehiclDetail.ContactNumber,
                     DriverRating = driverVehiclDetail.Rating.ToString(),
@@ -737,15 +739,15 @@ namespace API.Controllers
                     Color= driverVehiclDetail.Color,
                     FleetAddress= driverVehiclDetail.FleetAddress,
                     FleetName = driverVehiclDetail.FleetName,
-                    VehicleNumber = driverVehiclDetail.PlateNumber,
-                    VehicleCategoryId = detail.VehicleCategoryId.ToString(),
 
                     PaymentModeId = fbPassenger.PaymentModeId,
+                    PaymentMethod = fbPassenger.PaymentMethod,
                     CustomerId = fbPassenger.CustomerId,
                     CardId = fbPassenger.CardId,
                     Brand = fbPassenger.Brand,
                     Last4Digits = fbPassenger.Last4Digits,
                     WalletBalance = fbPassenger.WalletBalance,
+                    AvailableWalletBalance = fbPassenger.AvailableWalletBalance,
 
                     CancelReasons = await CancelReasonsService.GetPassengerCancelReasons(!arm.isLaterBooking, arm.isLaterBooking, false),
                     Facilities = await FacilitiesService.GetPassengerFacilitiesDetailByIds(trip.facilities)
@@ -1245,9 +1247,14 @@ namespace API.Controllers
 
                     PaymentPendingPassenger pp = new PaymentPendingPassenger()
                     {
-                        isPaymentRequested = false,
+                        isPaymentRequested = edr.isPaymentRequested,
                         isFareChangePermissionGranted = edr.isFareChangePermissionGranted,
-                        PaymentMode = edr.paymentMethod
+                        PaymentMode = edr.paymentMethod,
+
+                        //IsPaymentRequested = edr.isPaymentRequested.ToString(),
+                        //IsFareChangePermissionGranted = edr.isFareChangePermissionGranted.ToString(),
+                        //PaymentMethod = edr.paymentMethod,
+                        PaymentModeId = edr.paymentModeId
                     };
 
                     //user data

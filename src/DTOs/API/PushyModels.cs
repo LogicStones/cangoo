@@ -13,7 +13,7 @@ namespace DTOs.API
 		public string DeviceToken { get; set; }
 	}
 
-	public class PassengerRequestAcceptedNotification
+	public class PassengerRequestAcceptedNotification : TripPaymentMode
 	{
 		public string TripId { get; set; }
 		public string PickUpLatitude { get; set; }
@@ -49,12 +49,6 @@ namespace DTOs.API
 		public string VoucherCode { get; set; }
 		public string VoucherAmount { get; set; }
 		public string TotalFare { get; set; }
-		public string PaymentModeId { get; set; }
-		public string CustomerId { get; set; }
-		public string CardId { get; set; }
-		public string Brand { get; set; }
-		public string Last4Digits { get; set; }
-		public string WalletBalance { get; set; }
 
 		public List<PassengerCancelReasonsDTO> CancelReasons = new List<PassengerCancelReasonsDTO>();
 		public List<PassengerFacilityDTO> Facilities = new List<PassengerFacilityDTO>();
@@ -120,12 +114,11 @@ namespace DTOs.API
 		public string amount { get; set; }
 	}
 
-	public class DriverBookingRequestNotification //: DiscountTypeDTO
+	public class DriverBookingRequestNotification : TripPaymentMode //: DiscountTypeDTO
 	{
 		public string tripID { get; set; }
 		public string lat { get; set; } // To be replaced with pickUplatitude while revamping driver app
 		public string lan { get; set; } // To be replaced with pickUplongitude while revamping driver app
-		public string paymentMethod { get; set; }
 		public bool fav { get; set; }
 		public bool isWeb { get; set; }
 		public string dropOfflatitude { get; set; }
@@ -140,7 +133,6 @@ namespace DTOs.API
 		public string dispatcherID { get; set; } = "";
 		public bool isReRouteRequest { get; set; }
 		public string estimatedPrice { get; set; }
-		public string bookingMode { get; set; }
 
 		//Only Aforementioned properties are being consumed from notification in driver app
 
@@ -156,16 +148,12 @@ namespace DTOs.API
 		public string deviceToken { get; set; } = "";
 		public string pickUpLocation { get; set; }
 		public string dropOffLocation { get; set; }
+		public string paymentMethod { get; set; }
+		public string bookingMode { get; set; }
+		public string BookingModeId { get; set; }
 		public string MidwayStop1Latitude { get; set; }
 		public string MidwayStop1Longitude { get; set; }
 		public string MidwayStop1Location { get; set; }
-		public string BookingModeId { get; set; }
-		public string PaymentModeId { get; set; }
-		public string CustomerId { get; set; }
-		public string CardId { get; set; }
-		public string Brand { get; set; }
-		public string Last4Digits { get; set; }
-		public string WalletBalance { get; set; }
 	}
 
 	public class DriverCancelRequestNotification

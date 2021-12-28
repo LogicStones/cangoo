@@ -75,11 +75,13 @@ namespace Services.Automapper
 
 
                 .ForMember(dest => dest.WalletBalance, opt => opt.MapFrom(src => src.WalletBalance))
+                .ForMember(dest => dest.AvailableWalletBalance, opt => opt.MapFrom(src => src.AvailableWalletBalance))
                 .ForMember(dest => dest.CustomerId, opt => opt.MapFrom(src => src.CustomerId))
                 .ForMember(dest => dest.CardId, opt => opt.MapFrom(src => src.CardId))
                 .ForMember(dest => dest.Last4Digits, opt => opt.MapFrom(src => src.Last4Digits))
                 .ForMember(dest => dest.Brand, opt => opt.MapFrom(src => src.Brand))
                 .ForMember(dest => dest.PaymentModeId, opt => opt.MapFrom(src => src.PaymentModeId))
+                .ForMember(dest => dest.PaymentMethod, opt => opt.MapFrom(src => src.PaymentMethod))
 
                 .ForMember(dest => dest.Facilities, opt => opt.MapFrom(src => src.facilities))
                 .ForMember(dest => dest.CancelReasons, opt => opt.MapFrom(src => src.lstCancel)).ReverseMap();

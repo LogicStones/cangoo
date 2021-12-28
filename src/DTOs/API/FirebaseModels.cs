@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DTOs.API
 {
-	public class FirebasePassenger //: DiscountTypeDTO
+	public class FirebasePassenger : TripPaymentMode//: DiscountTypeDTO
 	{
 		public string TripId { get; set; }
 		public string PickUpLatitude { get; set; }
@@ -29,8 +29,6 @@ namespace DTOs.API
 		public string VoucherCode { get; set; }
 		public string VoucherAmount { get; set; }
 		public string TotalFare { get; set; }
-		public string PaymentModeId { get; set; }
-		public string PaymentMethod { get; set; }
 		public string IsFavorite { get; set; }
 		public string DiscountType { get; set; } = Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Normal).ToLower();
 		public string DiscountAmount { get; set; } = "0.00";
@@ -41,11 +39,6 @@ namespace DTOs.API
 		public string ReRouteRequestTime { get; set; }
 		public string BookingMode { get; set; }
 		public string BookingModeId { get; set; }
-		public string CustomerId { get; set; }
-		public string CardId { get; set; }
-		public string Brand { get; set; }
-		public string Last4Digits { get; set; }
-		public string WalletBalance { get; set; }
 		public List<PassengerCancelReasonsDTO> CancelReasons { get; set; } = new List<PassengerCancelReasonsDTO>();
 		public List<PassengerFacilityDTO> Facilities { get; set; } = new List<PassengerFacilityDTO>();
 
@@ -234,12 +227,27 @@ namespace DTOs.API
 		public string bookingMode { get; set; }
 	}
 
-	public class PaymentPendingPassenger
+	public class PaymentPendingPassenger : TripPaymentMode
 	{
-		public bool isPaymentRequested { get; set; }
 		public string PaymentMode { get; set; }
+		public bool isPaymentRequested { get; set; }
 		public bool isFareChangePermissionGranted { get; set; }
+		//public string IsPaymentRequested { get; set; }
+		//public string IsFareChangePermissionGranted { get; set; }
 	}
+
+	public class TripPaymentMode
+	{
+		public string PaymentMethod { get; set; } = "";
+		public string PaymentModeId { get; set; } = "";
+		public string CustomerId { get; set; } = "";
+		public string CardId { get; set; } = "";
+		public string Brand { get; set; } = "";
+		public string Last4Digits { get; set; } = "";
+		public string WalletBalance { get; set; } = "0.00";
+		public string AvailableWalletBalance { get; set; } = "0.00";
+	}
+
 	public class MobilePayment
 	{
 		public string estmateFare { get; set; }

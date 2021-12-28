@@ -467,19 +467,7 @@ namespace Services
 
             if (!string.IsNullOrEmpty(trip.Body) && !trip.Body.Equals("null"))
             {
-                var passenger = JsonConvert.DeserializeObject<FirebasePassenger>(trip.Body);
-
-                return new FirebasePassenger
-                {
-                    Brand = passenger.Brand,
-                    CardId = passenger.CardId,
-                    CustomerId = passenger.CustomerId,
-                    Last4Digits = passenger.Last4Digits,
-                    PaymentModeId = passenger.PaymentModeId,
-                    WalletBalance = passenger.WalletBalance
-                };
-
-                //UpdateDiscountTypeAndAmount(false, tripId, temp["discount"]["amount"].ToString(), temp["discount"]["type"].ToString(), temp["isDispatchedRide"]);
+                return JsonConvert.DeserializeObject<FirebasePassenger>(trip.Body);
             }
             return new FirebasePassenger();
         }
@@ -712,6 +700,14 @@ namespace Services
         public static async Task UpdateTripPassengerDetailsOnAccepted(PassengerRequestAcceptedNotification data, string passengerId)
         {
             await FirebaseIntegration.Write("Trips/" + data.TripId + "/" + passengerId, data);
+        }
+
+        public static async Task UpdateTripPaymentMode(string tripId, string passengerId, string driverId, TripPaymentMode data)
+        {
+            await FirebaseIntegration.Update("Trips/" + tripId + "/" + passengerId, data);
+
+            if (!string.IsNullOrEmpty(driverId))
+                await FirebaseIntegration.Update("Trips/" + tripId + "/" + driverId, data);
         }
 
         public static async Task UpdateTripPassengerDetailsOnEnd(PaymentPendingPassenger data, string tripId, string passengerId)

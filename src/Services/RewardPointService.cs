@@ -57,13 +57,15 @@ namespace Services
                     });
                     user.RewardPoints -= int.Parse(model.Deduction);
                     user.WalletBalance += decimal.Parse(model.RedeemAmount);
+                    user.AvailableWalletBalance += decimal.Parse(model.RedeemAmount);
                     user.LastRechargedAt = DateTime.UtcNow;
                     await dbContext.SaveChangesAsync();
                 }
                 return new PassengerReedemRewardResponse
                 {
                     RewardPoint = user.RewardPoints.ToString(),
-                    WalletAmount = user.WalletBalance.ToString()
+                    WalletBalance = user.WalletBalance.ToString(),
+                    AvailableWalletBalance = user.AvailableWalletBalance.ToString()
                 };
             }
         }

@@ -719,7 +719,8 @@ namespace API.Controllers
                 Data = new PassengerReedemRewardResponse
                 {
                     RewardPoint = result.RewardPoint,
-                    WalletAmount = result.WalletAmount
+                    WalletBalance = result.WalletBalance,
+                    AvailableWalletBalance = result.AvailableWalletBalance
                 }
             });
         }

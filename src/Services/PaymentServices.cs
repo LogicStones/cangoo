@@ -23,7 +23,7 @@ namespace Services
                 var response = new WalletDetailsResponse()
                 {
                     PassengerId = passengerId,
-                    TotalWalletBalance = profile.WalletBalance.ToString(),
+                    WalletBalance = profile.WalletBalance.ToString(),
                     AvailableWalletBalance = profile.AvailableWalletBalance.ToString()
                 };
 
@@ -41,16 +41,6 @@ namespace Services
                             Error = false,
                             Message = ResponseKeys.msgSuccess,
                             Data = response
-                            //new WalletDetailsResponse
-                            //{
-                            //    PassengerId = passengerId,
-                            //    AvailableWalletBalance = profile.AvailableWalletBalance.ToString(),
-                            //    TotalWalletBalance = profile.WalletBalance.ToString(),
-
-                            //    CustomerId = profile.CreditCardCustomerID,
-                            //    DefaultCardId = customer.InvoiceSettings.DefaultPaymentMethodId,
-                            //    CardsList = StripeIntegration.GetCardsList(customer.Id)
-                            //}
                         };
                     }
                     else
@@ -59,15 +49,6 @@ namespace Services
                         {
                             Message = ResponseKeys.paymentGetwayError,
                             Data = response
-                            //new WalletDetailsResponse()
-                            //{
-                            //    PassengerId = passengerId,
-                            //    TotalWalletBalance = profile.WalletBalance.ToString(),
-                            //    AvailableWalletBalance = profile.AvailableWalletBalance.ToString(),
-
-                            //    CustomerId = "",
-                            //    DefaultCardId = "",// customer.InvoiceSettings.DefaultPaymentMethodId,
-                            //}
                         };
                     }
                 }
@@ -78,13 +59,6 @@ namespace Services
                         Error = false,
                         Message = ResponseKeys.msgSuccess,
                         Data = response
-                        //new WalletDetailsResponse()
-                        //{
-                        //    PassengerId = passengerId,
-                        //    TotalWalletBalance = profile.WalletBalance.ToString(),
-                        //    AvailableWalletBalance = profile.AvailableWalletBalance.ToString(),
-                        //    CustomerId = "",
-                        //}
                     };
                 }
             }
@@ -345,6 +319,7 @@ namespace Services
                         {
                             RechargedAmount = couponDetails.Amount.ToString("0.00"),
                             WalletBalance = userProfile.WalletBalance.ToString(),
+                            AvailableWalletBalance = userProfile.WalletBalance.ToString()
                         }
                     };
                 }

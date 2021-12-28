@@ -48,6 +48,7 @@ namespace Services
                     {
                         userProfile.LastRechargedAt = DateTime.UtcNow;
                         userProfile.WalletBalance += 10;
+                        userProfile.AvailableWalletBalance += 10;
                     }
 
                     dbcontext.UserInvites.Add(userInvite);

@@ -41,7 +41,8 @@ namespace DTOs.API
     public class PassengerReedemRewardResponse
     {
         public string RewardPoint { get; set; } = "";
-        public string WalletAmount { get; set; } = "";
+        public string WalletBalance { get; set; } = "";
+        public string AvailableWalletBalance { get; set; } = "";
     }
 
     public class PassengerEarnedRewardRespose

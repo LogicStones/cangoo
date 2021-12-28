@@ -230,6 +230,9 @@ namespace DTOs.API
         [DefaultValue("0.00")]
         public string WalletBalance { get; set; }
 
+        [DefaultValue("0.00")]
+        public string AvailableWalletBalance { get; set; }
+
         //credit card payment related
 
         [DefaultValue("cus_KjxHHoj7dM4wh2")]
