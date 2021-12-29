@@ -46,6 +46,7 @@
     <Compile Include="NotificationKeys.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResponseKeys.cs" />
+    <Compile Include="TransactionStatus.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

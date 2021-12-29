@@ -80,7 +80,7 @@ namespace Services
                 if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.Cash &&
                     int.Parse(model.NewPaymentModeId) == (int)PaymentModes.CreditCard)
                 {
-                    response = await PaymentsServices.SetCreditCardPaymentMethod(model.IsPaidClientSide, model.StripePaymentIntentId, model.CustomerId, model.CardId, model.TotalFare);
+                    response = await PaymentsServices.SetCreditCardPaymentMethod(model.IsPaidClientSide, model.StripePaymentIntentId, model.CustomerId, model.CardId, model.TotalFare, "Booking Request : " + model.TripId.ToString());
 
                     if (response.Error)
                         return response;
@@ -138,7 +138,7 @@ namespace Services
                 else if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.Wallet &&
                     int.Parse(model.NewPaymentModeId) == (int)PaymentModes.CreditCard)
                 {
-                    response = await PaymentsServices.SetCreditCardPaymentMethod(model.IsPaidClientSide, model.StripePaymentIntentId, model.CustomerId, model.CardId, model.TotalFare);
+                    response = await PaymentsServices.SetCreditCardPaymentMethod(model.IsPaidClientSide, model.StripePaymentIntentId, model.CustomerId, model.CardId, model.TotalFare, "Booking Request : " + model.TripId.ToString());
 
                     if (response.Error)
                         return response;
@@ -208,7 +208,11 @@ namespace Services
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var trip = await dbContext.Trips.Where(t => t.TripID.ToString() == model.TripId).FirstOrDefaultAsync();
+                var resellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
+                var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
+
+                var trip = await GetTripById(model.TripId);
+                var userProfile = await UserService.GetProfileByIdAsync(model.PassengerId, applicationId, resellerId);
 
                 trip.DriverRating = Convert.ToInt32(Convert.ToDouble(model.Rating));
                 trip.VehicleRating = Convert.ToInt32(Convert.ToDouble(model.Rating));
@@ -218,26 +222,37 @@ namespace Services
 
                 if (trip.PaymentModeId == (int)PaymentModes.CreditCard)
                 {
-                    //attempt stripe payment
-                    isTipPaid = true;
+                    var paymentIntent = await PaymentsServices.CaptureTipFromTripCreditCard("Tip : " + trip.TripID.ToString(), userProfile.CreditCardCustomerID, (long)(decimal.Parse(model.TipAmount) * 100), trip.CreditCardPaymentIntent);
+
+                    if (paymentIntent.Status.Equals(TransactionStatus.succeeded))
+                    {
+                        trip.Tip = decimal.Parse(model.TipAmount);
+                        isTipPaid = true;
+                    }
                 }
                 else if (trip.PaymentModeId == (int)PaymentModes.Wallet)
                 {
-                    //attempt wallet payment
-                    isTipPaid = true;
-                }
-                else if (trip.PaymentModeId == (int)PaymentModes.Paypal)
-                {
-                    isTipPaid = true;
+                    if (userProfile.AvailableWalletBalance >= decimal.Parse(model.TipAmount))
+                    {
+                        isTipPaid = true;
+                        trip.Tip = decimal.Parse(model.TipAmount);
+                        userProfile.WalletBalance -= decimal.Parse(model.TipAmount);
+                        userProfile.AvailableWalletBalance -= decimal.Parse(model.TipAmount);
+                    }
                 }
 
-                    var captain = dbContext.Captains.Where(c => c.CaptainID == trip.CaptainID).FirstOrDefault();
+                var captain = await DriverService.GetDriverById(trip.CaptainID.ToString()); //dbContext.Captains.Where(c => c.CaptainID == trip.CaptainID).FirstOrDefault();
                 int captainTrips = (int)((captain.NoOfTrips == null ? 0 : captain.NoOfTrips) + (captain.NoOfTripsMobilePay == null ? 0 : captain.NoOfTripsMobilePay));
                 captain.Rating = Math.Round((double)((((captain.Rating == null ? 0 : captain.Rating) * (captainTrips - 1)) + trip.DriverRating) / captainTrips), 1, MidpointRounding.ToEven);
 
-                var vehicle = dbContext.Vehicles.Where(v => v.VehicleID == trip.VehicleID).FirstOrDefault();
+                var vehicle = await VehiclesService.GetVehicleById(trip.VehicleID.ToString());
                 int vehicleTrips = (int)(vehicle.TotalRides == null ? 0 : vehicle.TotalRides);
                 vehicle.Rating = Math.Round((double)((((vehicle.Rating == null ? 0 : vehicle.Rating) * (vehicleTrips - 1)) + trip.VehicleRating) / vehicleTrips), 1, MidpointRounding.ToEven);
+
+                dbContext.Entry(AutoMapperConfig._mapper.Map<PassengerProfileDTO, UserProfile>(userProfile)).State = EntityState.Modified;
+                dbContext.Entry(trip).State = EntityState.Modified;
+                dbContext.Entry(captain).State = EntityState.Modified;
+                dbContext.Entry(vehicle).State = EntityState.Modified;
 
                 dbContext.SaveChanges();
 
@@ -247,10 +262,6 @@ namespace Services
                     {
                         Error = false,
                         Message = ResponseKeys.msgSuccess
-                        //Data = new UpdateTripUserFeedbackResponse
-                        //{
-                        //    IsTipPaid = isTipPaid.ToString()
-                        //}
                     };
                 }
                 else
@@ -259,15 +270,8 @@ namespace Services
                     {
                         Error = isTipPaid ? false : true,
                         Message = isTipPaid ? ResponseKeys.msgSuccess : ResponseKeys.tipNotPaid
-                        //Data = new UpdateTripUserFeedbackResponse
-                        //{
-                        //    IsTipPaid = isTipPaid.ToString()
-                        //}
                     };
                 }
-                //return await dbcontext.Database.ExecuteSqlCommandAsync("UPDATE Trips SET UserSubmittedFeedback = @userfeedback WHERE TripID = @tripId",
-                //                                                                      new SqlParameter("@userfeedback", model.UserFeedBack),
-                //                                                                      new SqlParameter("@tripId", model.TripId));
             }
         }
 
@@ -440,9 +444,9 @@ namespace Services
                                     };
                                 }
 
-                                var details = await PaymentsServices.AuthoizeCreditCardPayment(model.CustomerId, model.CardId, model.TotalFare);
+                                var details = await PaymentsServices.AuthoizeCreditCardPayment(model.CustomerId, model.CardId, model.TotalFare, "Booking Request : " + tp.TripID.ToString());
 
-                                if (!details.Status.Equals("requires_capture"))
+                                if (!details.Status.Equals(TransactionStatus.requiresCapture))
                                 {
                                     return new ResponseWrapper
                                     {

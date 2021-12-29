@@ -144,7 +144,7 @@ namespace Services
             }
         }
 
-        public static async Task<ResponseWrapper> SetCreditCardPaymentMethod(string isPaidClientSide, string stripePaymentIntentId, string customerId, string cardId, string totalFare)
+        public static async Task<ResponseWrapper> SetCreditCardPaymentMethod(string isPaidClientSide, string stripePaymentIntentId, string customerId, string cardId, string totalFare, string description)
         {
             if (string.IsNullOrEmpty(customerId) || string.IsNullOrEmpty(cardId) || string.IsNullOrEmpty(totalFare))
             {
@@ -163,14 +163,14 @@ namespace Services
                     Data = new CreditCardPaymentInent
                     {
                         PaymentIntentId = stripePaymentIntentId,
-                        Status = "requires_capture"
+                        Status = TransactionStatus.requiresCapture
                     }
                 };
             }
 
-            var details = await AuthoizeCreditCardPayment(customerId, cardId, totalFare);
+            var details = await AuthoizeCreditCardPayment(customerId, cardId, totalFare, description);
 
-            if (!details.Status.Equals("requires_capture"))
+            if (!details.Status.Equals(TransactionStatus.requiresCapture))
             {
                 return new ResponseWrapper
                 {
@@ -207,11 +207,11 @@ namespace Services
             }
         }
 
-        public static async Task<CreditCardPaymentInent> AuthoizeCreditCardPayment(string customerId, string cardId, string fareAmount)
+        public static async Task<CreditCardPaymentInent> AuthoizeCreditCardPayment(string customerId, string cardId, string fareAmount, string description)
         {
             //await UpdateDefaultCreditCard(cardId, customerId);
 
-            var paymentIntent = StripeIntegration.AuthorizePayment(customerId, cardId, (long)(float.Parse(fareAmount) * 100));
+            var paymentIntent = StripeIntegration.AuthorizePayment(customerId, cardId, (long)(float.Parse(fareAmount) * 100), description);
             return new CreditCardPaymentInent
             {
                 PaymentIntentId = paymentIntent.Id,
@@ -243,9 +243,11 @@ namespace Services
             };
         }
 
-        public static async Task<CreditCardPaymentInent> CaptureAuthorizedPayment(string paymentIntentId)
+        public static async Task<CreditCardPaymentInent> CaptureTipFromTripCreditCard(string description, string customerId, long amount, string paymentIntentId)
         {
-            var paymentIntent = StripeIntegration.CaptureAuthorizedPayment(paymentIntentId);
+            var usedPaymentIntent = StripeIntegration.GetPaymentIntentDetails(paymentIntentId);
+
+            var paymentIntent = StripeIntegration.CreatePaymentIntent(description, customerId, amount, usedPaymentIntent.PaymentMethodId);
             return new CreditCardPaymentInent
             {
                 PaymentIntentId = paymentIntent.Id,

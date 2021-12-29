@@ -150,7 +150,7 @@ namespace Integrations
             }
         }
 
-        public static PaymentIntent AuthorizePayment(string customerId, string cardId, long amount)
+        public static PaymentIntent AuthorizePayment(string customerId, string cardId, long amount, string description)
         {
             try
             {
@@ -160,6 +160,7 @@ namespace Integrations
                 var service = new PaymentIntentService();
                 var options = new PaymentIntentCreateOptions
                 {
+                    Description = description,
                     Customer = customer.Id,
                     //SetupFutureUsage = "on_session",
                     Amount = amount,
@@ -197,14 +198,6 @@ namespace Integrations
             }
         }
 
-        public static PaymentIntent GetPaymentIntentDetails(string paymentIntentId)
-        {
-            SetStripAPIKey();
-
-            var service = new PaymentIntentService();
-            return service.Get(paymentIntentId);
-        }
-
         public static PaymentIntent CancelAuthorizedPayment(string paymentIntentId)
         {
             SetStripAPIKey();
@@ -237,6 +230,7 @@ namespace Integrations
             SetStripAPIKey();
             var options = new PaymentIntentCaptureOptions
             {
+                
                 AmountToCapture = amount,
             };
 
@@ -251,6 +245,53 @@ namespace Integrations
             var service = new PaymentIntentService();
             return service.Capture(paymentIntentId);
         }
-    
+
+        public static PaymentIntent GetPaymentIntentDetails(string paymentIntentId)
+        {
+            SetStripAPIKey();
+
+            var service = new PaymentIntentService();
+            return service.Get(paymentIntentId);
+        }
+
+        public static PaymentIntent CreatePaymentIntent(string description, string customerId, long amount, string cardId)
+        {
+            try
+            {
+                SetStripAPIKey();
+                var customer = GetCustomer(customerId);
+
+                var service = new PaymentIntentService();
+                var options = new PaymentIntentCreateOptions
+                {
+                    Description = description,
+                    Customer = customer.Id,
+                    //SetupFutureUsage = "on_session",
+                    Amount = amount,
+                    Currency = "eur",
+                    //PaymentMethod = customer.InvoiceSettings.DefaultPaymentMethodId,
+                    PaymentMethod = cardId,
+                    Confirm = true,
+                    OffSession = true,
+                };
+
+                return service.Create(options);
+            }
+            catch (StripeException e)
+            {
+                switch (e.StripeError.Type)
+                {
+                    case "card_error":
+                        // Error code will be authentication_required if authentication is needed
+                        var paymentIntentId = e.StripeError.PaymentIntent.Id;
+                        var service = new PaymentIntentService();
+                        //var paymentIntent = service.Get(paymentIntentId);
+                        break;
+                    default:
+                        break;
+                }
+                return e.StripeError.PaymentIntent;
+            }
+        }
     }
 }

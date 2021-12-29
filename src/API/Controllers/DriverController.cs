@@ -1478,7 +1478,7 @@ namespace API.Controllers
                 {
                     var paymentDetails = await PaymentsServices.CaptureAuthorizedPaymentPartially(trip.CreditCardPaymentIntent, chargeblePayment.ToString());
 
-                    if (paymentDetails.Status.Equals("succeeded"))
+                    if (paymentDetails.Status.Equals(TransactionStatus.succeeded))
                     {
                         context.SaveChanges();
 

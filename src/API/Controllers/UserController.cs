@@ -867,21 +867,8 @@ namespace API.Controllers
         [Route("apply-trip-promo-code")]
         public async Task<HttpResponseMessage> ApplyTripPromoCode([FromBody] ApplyPromoCodeRequest model)
         {
-            if (await PromoCodeService.UpdateTripPromo(model.PromoCodeId, model.TripId, model.PassengerId) == 0)
-            {
-                return Request.CreateResponse(HttpStatusCode.NotFound, new ResponseWrapper
-                {
-                    Message = ResponseKeys.failedToUpdate
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess
-                });
-            }
+            return Request.CreateResponse(HttpStatusCode.OK,
+                await PromoCodeService.UpdateTripPromo(model.PromoCodeId, model.TripId, model.PassengerId));
         }
 
         #endregion

@@ -137,14 +137,26 @@ namespace Services
             }
         }
 
-        public static async Task<int> UpdateTripPromo(string promoCodeId, string tripId, string passengerId)
+        public static async Task<ResponseWrapper> UpdateTripPromo(string promoCodeId, string tripId, string passengerId)
         {
             using (CangooEntities dbcontext = new CangooEntities())
             {
-                return await dbcontext.Database.ExecuteSqlCommandAsync("UPDATE Trips SET PromoCodeID = @promocodeid WHERE TripID = @tripId AND UserID = @passengerId",
+                var result = await dbcontext.Database.ExecuteSqlCommandAsync("UPDATE Trips SET PromoCodeID = @promocodeid WHERE TripID = @tripId AND UserID = @passengerId",
                                                                                       new SqlParameter("@promocodeid", promoCodeId),
                                                                                       new SqlParameter("@tripId", tripId),
                                                                                       new SqlParameter("@passengerId", passengerId));
+
+                if (result == 0)
+                    return new ResponseWrapper
+                    {
+                        Message = ResponseKeys.failedToUpdate
+                    };
+                else
+                    return new ResponseWrapper
+                    {
+                        Error = false,
+                        Message = ResponseKeys.msgSuccess
+                    };
             }
         }
 

@@ -18,6 +18,14 @@ namespace Services
 {
     public class VehiclesService
     {
+        public static async Task<Vehicle> GetVehicleById(string vehicleId)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                return await dbContext.Vehicles.Where(v => v.VehicleID.ToString().Equals(vehicleId)).FirstOrDefaultAsync();
+            }
+        }
+
         public static string GetETAByCategoryId(Dictionary<string, FirebaseDriver> onlineDrivers, string categoryId, string pickUpLatitude, string pickUpLongitude)
         {
             double minDistance = 0;
