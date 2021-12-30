@@ -20,6 +20,8 @@ namespace DatabaseModel
         public string CustomerName { get; set; }
         public string PassengerDeviceToken { get; set; }
         public string UserID { get; set; }
+        public Nullable<decimal> WalletBalance { get; set; }
+        public Nullable<decimal> AvailableWalletBalance { get; set; }
         public string FleetName { get; set; }
         public string FleetATUNumber { get; set; }
         public string FleetAddress { get; set; }
@@ -29,6 +31,7 @@ namespace DatabaseModel
         public string InvoiceNumber { get; set; }
         public System.Guid TripID { get; set; }
         public string PickUpLocation { get; set; }
+        public string MidwayStop1Location { get; set; }
         public string DropOffLocation { get; set; }
         public Nullable<System.DateTime> TripEndDatetime { get; set; }
         public string TripDate { get; set; }

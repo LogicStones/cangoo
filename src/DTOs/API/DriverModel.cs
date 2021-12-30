@@ -34,37 +34,37 @@ namespace DTOs.API
         public string vehicleID { get; set; }
     }
 
-            //    if (model != null && !string.IsNullOrEmpty(model.isOverride) && model.driverID != string.Empty && model.estimatedFare != string.Empty &&
-            //model.duration != string.Empty && model.distance != string.Empty && model.tripID != string.Empty && model.fleetID != string.Empty &&
-            //model.paymentMode != string.Empty && model.vehicleID != string.Empty && !string.IsNullOrEmpty(model.walletUsedAmount) &&
-            //!string.IsNullOrEmpty(model.walletTotalAmount) && !string.IsNullOrEmpty(model.voucherUsedAmount) &&
-            //!string.IsNullOrEmpty(model.promoDiscountAmount) && !string.IsNullOrEmpty(model.totalFare))
+    //    if (model != null && !string.IsNullOrEmpty(model.isOverride) && model.driverID != string.Empty && model.estimatedFare != string.Empty &&
+    //model.duration != string.Empty && model.distance != string.Empty && model.tripID != string.Empty && model.fleetID != string.Empty &&
+    //model.paymentMode != string.Empty && model.vehicleID != string.Empty && !string.IsNullOrEmpty(model.walletUsedAmount) &&
+    //!string.IsNullOrEmpty(model.walletTotalAmount) && !string.IsNullOrEmpty(model.voucherUsedAmount) &&
+    //!string.IsNullOrEmpty(model.promoDiscountAmount) && !string.IsNullOrEmpty(model.totalFare))
 
     public class MobilePaymentRequest
     {
         [Required]
-        [DefaultValue("e5cece85-c6b7-4c37-bf02-573b4b3607e5")]
-        public string fleetID { get; set; }
-      
-        [Required]
         [DefaultValue("")]
         public string tripID { get; set; }
-       
+
         [Required]
         [DefaultValue("02179f6-167e-4cd9-9ce8-701b92771f97")]
         public string driverID { get; set; }
 
         //[Required]
-        [DefaultValue("0.00")]
-        public string promoDiscountAmount { get; set; }
-
-        //[Required]
-        [DefaultValue("0.00")]
-        public string walletUsedAmount { get; set; }
-
-        //[Required]
-        [DefaultValue("0.00")]
+        [DefaultValue("10.00")]
         public string totalFare { get; set; }
+
+        //[Required]
+        //[DefaultValue("0.00")]
+        //public string promoDiscountAmount { get; set; }
+
+        //[Required]
+        //[DefaultValue("0.00")]
+        //public string walletUsedAmount { get; set; }
+
+        //[Required]
+        //[DefaultValue("e5cece85-c6b7-4c37-bf02-573b4b3607e5")]
+        //public string fleetID { get; set; }
 
         //[Required]
         //[DefaultValue("dcd1d468-e032-49d4-9711-02715b3c4c5e")]
@@ -97,13 +97,12 @@ namespace DTOs.API
         //[DefaultValue("CreditCard")]
         //public string paymentMode { get; set; }
         //public string PaymentModeId { get; set; }
-
     }
 
     public class GetDriverSettingsRequest
     {
         [Required]
-        [DefaultValue("")]
+        [DefaultValue("902179f6-167e-4cd9-9ce8-701b92771f97")]
         public string captainID { get; set; }
     }
 
@@ -111,11 +110,11 @@ namespace DTOs.API
     public class GetDriverStatsRequest
     {
         [Required]
-        [DefaultValue("")]
+        [DefaultValue("902179f6-167e-4cd9-9ce8-701b92771f97")]
         public string captainID { get; set; }
 
         [Required]
-        [DefaultValue("")]
+        [DefaultValue("dcd1d468-e032-49d4-9711-02715b3c4c5e")]
         public string vehicleID { get; set; }
     }
 
@@ -137,15 +136,15 @@ namespace DTOs.API
     public class GetDriverBookingHistoryRequest
     {
         [Required]
-        [DefaultValue("")]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string captainID { get; set; }
 
         [Required]
-        [DefaultValue("")]
+        [DefaultValue("0")]
         public string pageNo { get; set; }
 
         [Required]
-        [DefaultValue("")]
+        [DefaultValue("10")]
         public string pageSize { get; set; }
 
         [Required]
@@ -215,11 +214,15 @@ namespace DTOs.API
         [Required]
         [DefaultValue("902179f6-167e-4cd9-9ce8-701b92771f97")]
         public string driverID { get; set; }
-        
+
         [Required]
         [DefaultValue("dcd1d468-e032-49d4-9711-02715b3c4c5e")]
         public string vehicleID { get; set; }
-        
+
+        [Required]
+        [DefaultValue("e5cece85-c6b7-4c37-bf02-573b4b3607e5")]
+        public string fleetID { get; set; }
+
         [Required]
         [DefaultValue(false)]
         public bool isAccept { get; set; }

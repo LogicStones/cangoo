@@ -112,14 +112,14 @@ namespace API.Controllers
                     //make sure priortiy hour is active
                     if (!(driver.isPriorityHoursActive != true))
                     {
-                        if (DateTime.Compare(DateTime.Parse(driver.priorityHourEndTime), DateTime.Parse(DateTime.UtcNow.ToString(Formats.DateFormat))) <= 0)
+                        if (DateTime.Compare(DateTime.Parse(driver.priorityHourEndTime), DateTime.Parse(DateTime.UtcNow.ToString(Formats.DateTimeFormat))) <= 0)
                         {
                             await FirebaseService.SetPriorityHourStatus(false, "", driver.driverID, "",
                                 (await DriverService.UpdatePriorityHourLog(Guid.Parse(driver.driverID))).ToString());
                         }
                         else
                         {
-                            var priorityHourRemainingTime = ((int)(DateTime.Parse(driver.priorityHourEndTime).Subtract(DateTime.Parse(DateTime.UtcNow.ToString(Formats.DateFormat))).TotalMinutes)).ToString();
+                            var priorityHourRemainingTime = ((int)(DateTime.Parse(driver.priorityHourEndTime).Subtract(DateTime.Parse(DateTime.UtcNow.ToString(Formats.DateTimeFormat))).TotalMinutes)).ToString();
                             await FirebaseService.UpdatePriorityHourTime(driver.driverID, priorityHourRemainingTime);
                         }
                     }
@@ -267,7 +267,7 @@ namespace API.Controllers
                     UpcomingLaterBooking lb = new UpcomingLaterBooking
                     {
                         tripID = laterBooking.TripID.ToString(),
-                        pickUpDateTime = Convert.ToDateTime(laterBooking.PickUpBookingDateTime).ToString(Formats.DateFormat),
+                        pickUpDateTime = Convert.ToDateTime(laterBooking.PickUpBookingDateTime).ToString(Formats.DateTimeFormat),
                         seatingCapacity = Convert.ToInt32(laterBooking.Noofperson),
                         pickUplatitude = laterBooking.PickupLocationLatitude,
                         pickUplongitude = laterBooking.PickupLocationLongitude,

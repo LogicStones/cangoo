@@ -2225,21 +2225,14 @@
           <Parameter Name="datetimeTo" Type="datetime" Mode="In" />
         </Function>
         <Function Name="spAfterMobilePayment" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
-          <Parameter Name="isOverride" Type="bit" Mode="In" />
           <Parameter Name="tripID" Type="varchar" Mode="In" />
-          <Parameter Name="paypalTransID" Type="varchar" Mode="In" />
+          <Parameter Name="transactionID" Type="varchar" Mode="In" />
           <Parameter Name="tripStatusID" Type="int" Mode="In" />
           <Parameter Name="pID" Type="varchar" Mode="In" />
-          <Parameter Name="resellerID" Type="varchar" Mode="In" />
+          <Parameter Name="applicationID" Type="varchar" Mode="In" />
           <Parameter Name="amount" Type="varchar" Mode="In" />
-          <Parameter Name="voucherUsedAmount" Type="varchar" Mode="In" />
-          <Parameter Name="promoDiscountAmount" Type="varchar" Mode="In" />
-          <Parameter Name="walletUsedAmount" Type="varchar" Mode="In" />
-          <Parameter Name="paymentTip" Type="varchar" Mode="In" />
           <Parameter Name="trnsDate" Type="datetime" Mode="In" />
-          <Parameter Name="paymentModeID" Type="int" Mode="In" />
           <Parameter Name="paymentStatusID" Type="int" Mode="In" />
-          <Parameter Name="fleetID" Type="varchar" Mode="In" />
         </Function>
         <Function Name="spCaptainCancelRide" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
           <Parameter Name="tripID" Type="varchar" Mode="In" />
@@ -2423,6 +2416,7 @@
           <Parameter Name="tripStatusID" Type="int" Mode="In" />
           <Parameter Name="vehicleID" Type="varchar" Mode="In" />
           <Parameter Name="isLaterBooking" Type="int" Mode="In" />
+          <Parameter Name="fleetID" Type="varchar" Mode="In" />
           <Parameter Name="pickUpDateTime" Type="datetime" Mode="In" />
         </Function>
         <Function Name="spGetUpdateTripOnCaptainArrived" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="false" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo">
@@ -3942,21 +3936,14 @@
           </FunctionImport>
           <EntitySet Name="Trips" EntityType="CangooModel.Trip" />
           <FunctionImport Name="spAfterMobilePayment" ReturnType="Collection(CangooModel.spAfterMobilePayment_Result)">
-            <Parameter Name="isOverride" Mode="In" Type="Boolean" />
             <Parameter Name="tripID" Mode="In" Type="String" />
-            <Parameter Name="paypalTransID" Mode="In" Type="String" />
+            <Parameter Name="transactionID" Mode="In" Type="String" />
             <Parameter Name="tripStatusID" Mode="In" Type="Int32" />
             <Parameter Name="pID" Mode="In" Type="String" />
-            <Parameter Name="resellerID" Mode="In" Type="String" />
+            <Parameter Name="applicationID" Mode="In" Type="String" />
             <Parameter Name="amount" Mode="In" Type="String" />
-            <Parameter Name="voucherUsedAmount" Mode="In" Type="String" />
-            <Parameter Name="promoDiscountAmount" Mode="In" Type="String" />
-            <Parameter Name="walletUsedAmount" Mode="In" Type="String" />
-            <Parameter Name="paymentTip" Mode="In" Type="String" />
             <Parameter Name="trnsDate" Mode="In" Type="DateTime" />
-            <Parameter Name="paymentModeID" Mode="In" Type="Int32" />
             <Parameter Name="paymentStatusID" Mode="In" Type="Int32" />
-            <Parameter Name="fleetID" Mode="In" Type="String" />
           </FunctionImport>
           <FunctionImport Name="spGetUpdateTripDataOnAcceptRide" ReturnType="Collection(CangooModel.spGetUpdateTripDataOnAcceptRide_Result)">
             <Parameter Name="tripID" Mode="In" Type="String" />
@@ -3964,6 +3951,7 @@
             <Parameter Name="tripStatusID" Mode="In" Type="Int32" />
             <Parameter Name="vehicleID" Mode="In" Type="String" />
             <Parameter Name="isLaterBooking" Mode="In" Type="Int32" />
+            <Parameter Name="fleetID" Mode="In" Type="String" />
             <Parameter Name="pickUpDateTime" Mode="In" Type="DateTime" />
           </FunctionImport>
           </EntityContainer>
@@ -7516,6 +7504,8 @@
           <Property Type="String" Name="CustomerName" Nullable="true" MaxLength="101" />
           <Property Type="String" Name="PassengerDeviceToken" Nullable="true" />
           <Property Type="String" Name="UserID" Nullable="false" MaxLength="256" />
+          <Property Type="Decimal" Name="WalletBalance" Nullable="true" Precision="19" />
+          <Property Type="Decimal" Name="AvailableWalletBalance" Nullable="true" Precision="19" />
           <Property Type="String" Name="FleetName" Nullable="true" MaxLength="200" />
           <Property Type="String" Name="FleetATUNumber" Nullable="true" MaxLength="50" />
           <Property Type="String" Name="FleetAddress" Nullable="true" MaxLength="250" />
@@ -7525,6 +7515,7 @@
           <Property Type="String" Name="InvoiceNumber" Nullable="true" MaxLength="8" />
           <Property Type="Guid" Name="TripID" Nullable="false" />
           <Property Type="String" Name="PickUpLocation" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="MidwayStop1Location" Nullable="true" MaxLength="1000" />
           <Property Type="String" Name="DropOffLocation" Nullable="true" MaxLength="500" />
           <Property Type="DateTime" Name="TripEndDatetime" Nullable="true" Precision="23" />
           <Property Type="String" Name="TripDate" Nullable="true" MaxLength="30" />
@@ -11734,6 +11725,8 @@
                 <ScalarProperty Name="CustomerName" ColumnName="CustomerName" />
                 <ScalarProperty Name="PassengerDeviceToken" ColumnName="PassengerDeviceToken" />
                 <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="WalletBalance" ColumnName="WalletBalance" />
+                <ScalarProperty Name="AvailableWalletBalance" ColumnName="AvailableWalletBalance" />
                 <ScalarProperty Name="FleetName" ColumnName="FleetName" />
                 <ScalarProperty Name="FleetATUNumber" ColumnName="FleetATUNumber" />
                 <ScalarProperty Name="FleetAddress" ColumnName="FleetAddress" />
@@ -11743,6 +11736,7 @@
                 <ScalarProperty Name="InvoiceNumber" ColumnName="InvoiceNumber" />
                 <ScalarProperty Name="TripID" ColumnName="TripID" />
                 <ScalarProperty Name="PickUpLocation" ColumnName="PickUpLocation" />
+                <ScalarProperty Name="MidwayStop1Location" ColumnName="MidwayStop1Location" />
                 <ScalarProperty Name="DropOffLocation" ColumnName="DropOffLocation" />
                 <ScalarProperty Name="TripEndDatetime" ColumnName="TripEndDatetime" />
                 <ScalarProperty Name="TripDate" ColumnName="TripDate" />

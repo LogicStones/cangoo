@@ -80,10 +80,6 @@ namespace DTOs.API
 
 	public class CashPaymentNotification
 	{
-		//public string CollectedAmount { get; set; }
-		//public string VoucherUsedAmount { get; set; }
-		//public string WalletAmountUsed { get; set; }
-		//public string PromoDiscountAmount { get; set; }
 		public string TripId { get; set; }
 		public string SelectedTipAmount { get; set; }
 		public string DriverId { get; set; }
@@ -94,10 +90,6 @@ namespace DTOs.API
 
 	public class MobilePaymentNotification
 	{
-		//public string CollectedAmount { get; set; }
-		//public string VoucherUsedAmount { get; set; }
-		//public string WalletAmountUsed { get; set; }
-		//public string PaymentModeId { get; set; }
 		public string TripId { get; set; }
 		public string SelectedTipAmount { get; set; }
 		public string PromoDiscountAmount { get; set; }
@@ -105,6 +97,10 @@ namespace DTOs.API
 		public string TotalFare { get; set; }
 		public string DriverId { get; set; }
 		public string IsDriverFavorite { get; set; }
+		public string Brand { get; set; }
+		public string Last4Digits { get; set; }
+		public string WalletBalance { get; set; }
+		public string AvailableWalletBalance { get; set; }
 	}
 
 	public class CreditCardPaymentNotification

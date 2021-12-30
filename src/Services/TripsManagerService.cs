@@ -320,7 +320,7 @@ namespace Services
                 int timeOut = await ApplicationSettingService.GetRequestTimeOut(applicationId);
 
                 //Object to be used to populate captains FCM object
-                DriverBookingRequestNotification bookingRN = new DriverBookingRequestNotification
+                DriverBookingRequestNotification brNotificationPayload = new DriverBookingRequestNotification
                 {
                     lat = model.PickUpLatitude,
                     lan = model.PickUpLongitude,
@@ -331,19 +331,13 @@ namespace Services
                     requiredFacilities = model.RequiredFacilities,
                     isReRouteRequest = bool.Parse(model.IsReRouteRequest),
                     description = string.IsNullOrEmpty(model.Description) ? "" : model.Description,
-                    requestTimeOut = timeOut,// double.Parse(timeOut.ToString()),
-                    isDispatchedRide = false.ToString(),
-                    fav = false,
-                    facilities = await FacilitiesService.GetDriverFacilitiesDetailByIds(model.RequiredFacilities),
-                    lstCancel = await CancelReasonsService.GetDriverCancelReasons(true, false, false),
 
                     BookingModeId = model.BookingModeId,
                     bookingMode = Enum.GetName(typeof(BookingModes), int.Parse(model.BookingModeId)).ToLower(),
 
-                    discountType = Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Normal).ToLower(),
-                    discountAmount = "0.0",
+                    discountType = model.DiscountType,// Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Normal).ToLower(),
+                    discountAmount = model.DiscountAmount,// "0.0",
 
-                    dispatcherID = "",
                     estimatedPrice = model.TotalFare,
 
                     PaymentModeId = model.PaymentModeId,
@@ -353,7 +347,14 @@ namespace Services
                     Brand = model.Brand,
                     Last4Digits = model.Last4Digits,
                     WalletBalance = model.WalletBalance,
-                    AvailableWalletBalance = model.AvailableWalletBalance
+                    AvailableWalletBalance = model.AvailableWalletBalance,
+
+                    facilities = await FacilitiesService.GetDriverFacilitiesDetailByIds(model.RequiredFacilities),
+                    lstCancel = await CancelReasonsService.GetDriverCancelReasons(true, false, false),
+                    requestTimeOut = timeOut,// double.Parse(timeOut.ToString()),
+                    isDispatchedRide = false.ToString(),
+                    fav = false,
+                    dispatcherID = ""
 
                     //IsWeb = false,
                     //REFACTOR - Remove this flag
@@ -374,7 +375,7 @@ namespace Services
                         //pr.isLaterBookingStarted = tp.TripStatusID != (int)TripStatus.Waiting ? true : false;
 
                         tp.TripStatusID = (int)TripStatuses.RequestSent;
-                        bookingRN.pickUpDateTime = (DateTime)tp.PickUpBookingDateTime;
+                        brNotificationPayload.pickUpDateTime = (DateTime)tp.PickUpBookingDateTime;
                     }
 
                     await LogReRoutedTrip(model, applicationId, tp);
@@ -382,12 +383,12 @@ namespace Services
                     if (tp.VoucherID != null)
                     {
                         var voucher = await GetVoucherDetails((Guid)tp.VoucherID);
-                        bookingRN.voucherAmount = voucher.Amount.ToString();
-                        bookingRN.voucherCode = voucher.VoucherCode;
+                        brNotificationPayload.voucherAmount = voucher.Amount.ToString();
+                        brNotificationPayload.voucherCode = voucher.VoucherCode;
                     }
 
-                    bookingRN.description = tp.Description;
-                    bookingRN.previousCaptainId = model.DriverId;
+                    brNotificationPayload.description = tp.Description;
+                    brNotificationPayload.previousCaptainId = model.DriverId;
                     //bookingRN.DeviceToken = model.DeviceToken;
 
                     await dbContext.SaveChangesAsync();
@@ -403,30 +404,30 @@ namespace Services
                         tp.TripID = Guid.Parse(model.KarhooTripId);
                         tp.BookingModeID = (int)BookingModes.Karhoo;
 
-                        bookingRN.isWeb = true;
-                        bookingRN.isDispatchedRide = false.ToString();
-                        bookingRN.BookingModeId = ((int)BookingModes.Karhoo).ToString();
-                        bookingRN.bookingMode = Enum.GetName(typeof(BookingModes), (int)BookingModes.Karhoo).ToLower();
+                        brNotificationPayload.isWeb = true;
+                        brNotificationPayload.isDispatchedRide = false.ToString();
+                        brNotificationPayload.BookingModeId = ((int)BookingModes.Karhoo).ToString();
+                        brNotificationPayload.bookingMode = Enum.GetName(typeof(BookingModes), (int)BookingModes.Karhoo).ToLower();
                     }
                     else if (int.Parse(model.BookingModeId) == (int)BookingModes.Dispatcher)
                     {
                         tp.TripID = Guid.NewGuid();
                         tp.BookingModeID = (int)BookingModes.Dispatcher;
 
-                        bookingRN.isWeb = true;
-                        bookingRN.isDispatchedRide = true.ToString();
-                        bookingRN.BookingModeId = ((int)BookingModes.Dispatcher).ToString();
-                        bookingRN.bookingMode = Enum.GetName(typeof(BookingModes), (int)BookingModes.Dispatcher).ToLower();
+                        brNotificationPayload.isWeb = true;
+                        brNotificationPayload.isDispatchedRide = true.ToString();
+                        brNotificationPayload.BookingModeId = ((int)BookingModes.Dispatcher).ToString();
+                        brNotificationPayload.bookingMode = Enum.GetName(typeof(BookingModes), (int)BookingModes.Dispatcher).ToLower();
                     }
                     else//if (string.IsNullOrEmpty(model.BookingModeId))
                     {
                         tp.TripID = Guid.NewGuid();
                         tp.BookingModeID = (int)BookingModes.UserApplication;
 
-                        bookingRN.isWeb = false;
-                        bookingRN.isDispatchedRide = false.ToString();
-                        bookingRN.BookingModeId = ((int)BookingModes.UserApplication).ToString();
-                        bookingRN.bookingMode = Enum.GetName(typeof(BookingModes), (int)BookingModes.UserApplication).ToLower();
+                        brNotificationPayload.isWeb = false;
+                        brNotificationPayload.isDispatchedRide = false.ToString();
+                        brNotificationPayload.BookingModeId = ((int)BookingModes.UserApplication).ToString();
+                        brNotificationPayload.bookingMode = Enum.GetName(typeof(BookingModes), (int)BookingModes.UserApplication).ToLower();
 
                         if (model.PaymentModeId.Equals(((int)PaymentModes.CreditCard).ToString()))
                         {
@@ -542,13 +543,22 @@ namespace Services
                     tp.BookingFare = decimal.Parse(model.BookingFare);
                     tp.WaitingFare = 0;// decimal.Parse(model.WaitingFare);
                     tp.PerKMFare = 0;
-                    tp.PromoDiscount = 0;
 
                     tp.FareManagerID = model.InBoundRSFMId;
                     tp.DropOffFareMangerID = Guid.Parse(model.OutBoundRSFMId);
 
+                    tp.PromoDiscount = decimal.Parse(model.DiscountAmount);// 0;
+                    tp.isSpecialPromotionApplied = model.DiscountType.Equals(Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Special).ToLower());
+
                     if (!string.IsNullOrEmpty(model.PromoCodeId))
+                    {
                         tp.PromoCodeID = Guid.Parse(model.PromoCodeId);
+
+                        if (!(model.DiscountType.Equals(DiscountTypes.Special) || model.DiscountType.Equals(DiscountTypes.Normal)) && !string.IsNullOrEmpty(model.UserPromoCodeId))
+                        {
+                            await PromoCodeService.ApplyTripPromoCode(model.UserPromoCodeId);
+                        }
+                    }
 
                     if (bool.Parse(model.IsLaterBooking))
                     {
@@ -560,13 +570,12 @@ namespace Services
                             tp.PickUpBookingDateTime = Convert.ToDateTime(model.LaterBookingDate);
 
                         //pr.pickUpDateTime = Convert.ToDateTime(model.laterBookingDate).AddSeconds(-Convert.ToDouble(model.timeZoneOffset));
-                        bookingRN.pickUpDateTime = ((DateTime)tp.PickUpBookingDateTime);//.ToString(Formats.DateFormat);
+                        brNotificationPayload.pickUpDateTime = ((DateTime)tp.PickUpBookingDateTime);//.ToString(Formats.DateFormat);
 
-                        await FirebaseService.AddPendingLaterBookings(tp.UserID.ToString(), tp.TripID.ToString(), ((DateTime)tp.PickUpBookingDateTime).ToString(Formats.DateFormat), bookingRN.numberOfPerson.ToString());
+                        await FirebaseService.AddPendingLaterBookings(tp.UserID.ToString(), tp.TripID.ToString(), ((DateTime)tp.PickUpBookingDateTime).ToString(Formats.DateTimeFormat), brNotificationPayload.numberOfPerson.ToString());
                         await FirebaseService.SetPassengerLaterBookingCancelReasons();
                     }
 
-                    tp.isSpecialPromotionApplied = model.DiscountType.Equals(Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Special).ToLower());
 
                     dbContext.Trips.Add(tp);
                     await dbContext.SaveChangesAsync();
@@ -603,24 +612,24 @@ namespace Services
                 //    //bookingRN.DiscountAmount = string.IsNullOrEmpty(model.PromoDiscountAmount) ? "0.00" : model.PromoDiscountAmount;
                 //}
 
-                bookingRN.discountType = model.DiscountType;
-                bookingRN.discountAmount = model.DiscountAmount;
+                brNotificationPayload.discountType = model.DiscountType;
+                brNotificationPayload.discountAmount = model.DiscountAmount;
 
-                bookingRN.tripID = tp.TripID.ToString();
-                bookingRN.lat = tp.PickupLocationLatitude;
-                bookingRN.lan = tp.PickupLocationLongitude;
-                bookingRN.pickUpLocation = tp.PickUpLocation;
+                brNotificationPayload.tripID = tp.TripID.ToString();
+                brNotificationPayload.lat = tp.PickupLocationLatitude;
+                brNotificationPayload.lan = tp.PickupLocationLongitude;
+                brNotificationPayload.pickUpLocation = tp.PickUpLocation;
 
-                bookingRN.MidwayStop1Latitude = tp.MidwayStop1Latitude;
-                bookingRN.MidwayStop1Longitude = tp.MidwayStop1Longitude;
-                bookingRN.MidwayStop1Location = tp.MidwayStop1Location;
+                brNotificationPayload.MidwayStop1Latitude = tp.MidwayStop1Latitude;
+                brNotificationPayload.MidwayStop1Longitude = tp.MidwayStop1Longitude;
+                brNotificationPayload.MidwayStop1Location = tp.MidwayStop1Location;
 
-                bookingRN.dropOfflatitude = tp.DropOffLocationLatitude;
-                bookingRN.dropOfflongitude = tp.DropOffLocationLongitude;
-                bookingRN.dropOffLocation = tp.DropOffLocation;
+                brNotificationPayload.dropOfflatitude = tp.DropOffLocationLatitude;
+                brNotificationPayload.dropOfflongitude = tp.DropOffLocationLongitude;
+                brNotificationPayload.dropOffLocation = tp.DropOffLocation;
 
-                bookingRN.paymentMethod = tp.TripPaymentMode;
-                bookingRN.PaymentModeId = tp.PaymentModeId.ToString();
+                brNotificationPayload.paymentMethod = tp.TripPaymentMode;
+                brNotificationPayload.PaymentModeId = tp.PaymentModeId.ToString();
 
                 //Send FCM of new / updated trip to online drivers
                 //string tripId, string passengerId, int reqSeatingCapacity, DriverBookingRequestNotification bookingRN, dynamic hotelSetting
@@ -628,7 +637,7 @@ namespace Services
                 //Explicitly create new thread to return API response.
                 var task = Task.Run(async () =>
                 {
-                    await FirebaseService.SendRideRequestToOnlineDrivers(bookingRN.tripID, model.PassengerId, model.CategoryId.ToString(), int.Parse(model.SeatingCapacity), bookingRN);
+                    await FirebaseService.SendRideRequestToOnlineDrivers(brNotificationPayload.tripID, model.PassengerId, model.CategoryId.ToString(), int.Parse(model.SeatingCapacity), brNotificationPayload);
                 });
 
                 return new ResponseWrapper

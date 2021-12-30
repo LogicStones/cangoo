@@ -17,7 +17,7 @@ namespace Constants
         public const string pas_rideStarted = "pas_rideStarted";
         public const string pas_endRideDetail = "pas_endRideDetail";
         public const string pas_CashPaymentPaid = "pas_CashPaymentPaid";
-        public const string pas_MobilePaymentPaid = "pas_CashPaymentPaid";
+        public const string pas_MobilePaymentPaid = "pas_MobilePaymentPaid";
         public const string pas_LaterBookingTimeOut = "pas_LaterBookingTimeOut";
         public const string pas_30MinutesLeft = "pas_30MinutesLeft";
         public const string pas_20MinutesLeft = "pas_20MinutesLeft";

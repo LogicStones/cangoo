@@ -133,9 +133,9 @@ namespace Services
                 isBusy = false.ToString(),
                 isPriorityHoursActive = isPriorityHoursActive != true ? false : true,
                 priorityHourEndTime = priorityHourEndTime,
-                onlineSince = DateTime.UtcNow.ToString(Formats.DateFormat),
+                onlineSince = DateTime.UtcNow.ToString(Formats.DateTimeFormat),
                 earningPoints = string.IsNullOrEmpty(earningPoints) ? "0.0" : earningPoints,
-                priorityHourRemainingTime = isPriorityHoursActive == true ? ((int)(DateTime.Parse(priorityHourEndTime).Subtract(DateTime.Parse(DateTime.UtcNow.ToString(Formats.DateFormat))).TotalMinutes)).ToString() : "0",
+                priorityHourRemainingTime = isPriorityHoursActive == true ? ((int)(DateTime.Parse(priorityHourEndTime).Subtract(DateTime.Parse(DateTime.UtcNow.ToString(Formats.DateTimeFormat))).TotalMinutes)).ToString() : "0",
                 lastUpdated = "",
                 OngoingRide = "",
 
@@ -175,7 +175,7 @@ namespace Services
                 {
                     if (!bookingRN.isLaterBooking)
                     {
-                        bookingRN.reRouteRequestTime = DateTime.UtcNow.ToString(Formats.DateFormat);
+                        bookingRN.reRouteRequestTime = DateTime.UtcNow.ToString(Formats.DateTimeFormat);
 
                         await WriteTripPassengerDetails(AutoMapperConfig._mapper.Map<DriverBookingRequestNotification, FirebasePassenger>(bookingRN), passengerId);
                         await SetTripStatus(tripId, Enum.GetName(typeof(TripStatuses), TripStatuses.ReRouting));
@@ -837,7 +837,7 @@ namespace Services
 
         public static async Task SetCurrentTime()
         {
-            await FirebaseIntegration.Write("CurenntDateTime/", DateTime.UtcNow.ToString(Formats.DateFormat));
+            await FirebaseIntegration.Write("CurenntDateTime/", DateTime.UtcNow.ToString(Formats.DateTimeFormat));
         }
 
         public static async Task SetGlobalSettings()

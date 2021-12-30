@@ -23,6 +23,7 @@ namespace DTOs.API
         public string CaptainUserName { get; set; }
         public string VehicleNumber { get; set; }
         public string PickUpAddress { get; set; }
+        public string MidwayStop1Address { get; set; }
         public string DropOffAddress { get; set; }
         public string Distance { get; set; }
         public string TotalAmount { get; set; }

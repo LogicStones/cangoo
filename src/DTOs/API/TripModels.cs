@@ -13,10 +13,15 @@ namespace DTOs.API
     public class PassengerTripsListRequest
     {
         [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string PassengerId { get; set; }
+
         [Required]
+        [DefaultValue("1")]
         public string OffSet { get; set; }
+
         [Required]
+        [DefaultValue("10")]
         public string Limit { get; set; }
     }
 
@@ -41,6 +46,7 @@ namespace DTOs.API
     public class PassengerTripDetailRequest
     {
         [Required]
+        [DefaultValue("")]
         public string TripId { get; set; }
     }
 
@@ -207,6 +213,9 @@ namespace DTOs.API
         public string PromoCodeId { get; set; }
 
         [DefaultValue("")]
+        public string UserPromoCodeId { get; set; }
+
+        [DefaultValue("")]
         public string LaterBookingDate { get; set; }
         
         [DefaultValue("")]
@@ -290,8 +299,11 @@ namespace DTOs.API
     public class TripTimeOutRequest
     {
         [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string PassengerId { get; set; }
+        
         [Required]
+        [DefaultValue("")]
         public string TripId { get; set; }
     }
 
@@ -327,15 +339,31 @@ namespace DTOs.API
     public class ApplyPromoCodeRequest
     {
         [Required]
+        [DefaultValue("")]
         public string TripId { get; set; }
+
         [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string PassengerId { get; set; }
+
         [Required]
+        [DefaultValue("")]
+        public string NewUserPromoCodeId { get; set; }
+
+        [Required]
+        [DefaultValue("")]
         public string PromoCodeId { get; set; }
+
+        [DefaultValue("")]
+        public string CurrentUserPromoCodeId { get; set; }
     }
 
     public class UpdateTripPaymentMethodRequest
     {
+        [Required]
+        [DefaultValue("")]
+        public string TripId { get; set; } = "";
+
         [Required]
         [DefaultValue("1")]
         public string CurrentPaymentModeId { get; set; } = "";
@@ -345,11 +373,7 @@ namespace DTOs.API
         public string NewPaymentModeId { get; set; } = "";
 
         [Required]
-        [DefaultValue("")]
-        public string TripId { get; set; } = "";
-
-        [Required]
-        [DefaultValue("")]
+        [DefaultValue("50.60")]
         public string TotalFare { get; set; } = "";
 
         [Required]
@@ -409,7 +433,6 @@ namespace DTOs.API
         [DefaultValue("5")]
         public string Rating { get; set; }
 
-        //[Required]
         [DefaultValue("Ride was fucking good :D")]
         public string UserFeedBack { get; set; }
     }

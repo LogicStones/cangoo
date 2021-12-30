@@ -248,6 +248,16 @@ namespace Services
             var usedPaymentIntent = StripeIntegration.GetPaymentIntentDetails(paymentIntentId);
 
             var paymentIntent = StripeIntegration.CreatePaymentIntent(description, customerId, amount, usedPaymentIntent.PaymentMethodId);
+            if (paymentIntent == null)
+                return new CreditCardPaymentInent
+                {
+                    Status = "",
+                    ClientSecret = "",
+                    Description = "",
+                    PaymentIntentId = ""
+                };
+
+
             return new CreditCardPaymentInent
             {
                 PaymentIntentId = paymentIntent.Id,

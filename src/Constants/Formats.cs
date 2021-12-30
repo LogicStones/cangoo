@@ -8,6 +8,8 @@ namespace Constants
 {
     public static class Formats
     {
-        public const string DateFormat = "MM/dd/yyyy HH:mm:ss";
+        public const string DateTimeFormat = "MM/dd/yyyy HH:mm:ss";
+        public const string TimeFormat = "hh:mm tt";
+        public const string DateFormat = "dd MM yyyy";
     }
 }

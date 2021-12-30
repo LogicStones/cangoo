@@ -69,12 +69,12 @@ namespace Services
         }
 
         public static async Task<spGetUpdateTripDataOnAcceptRide_Result> GetUpdatedTripDataOnAcceptRide(
-            string tripId, string driverId, string vehicleId, int isLaterBooking)
+            string tripId, string driverId, string vehicleId, string fleetId, int isLaterBooking)
         {
             using (var dbContext = new CangooEntities())
             {
                 return dbContext.spGetUpdateTripDataOnAcceptRide(tripId, driverId, (int)TripStatuses.OnTheWay, vehicleId,  
-                    isLaterBooking, DateTime.UtcNow).FirstOrDefault();
+                    isLaterBooking, fleetId, DateTime.UtcNow).FirstOrDefault();
             }
         }
 
@@ -113,7 +113,7 @@ namespace Services
                     return new UpcomingLaterBooking
                     {
                         tripID = upcoming.TripID.ToString(),
-                        pickUpDateTime = Convert.ToDateTime(upcoming.PickUpBookingDateTime).ToString(Formats.DateFormat),
+                        pickUpDateTime = Convert.ToDateTime(upcoming.PickUpBookingDateTime).ToString(Formats.DateTimeFormat),
                         seatingCapacity = Convert.ToInt32(upcoming.Noofperson),
                         pickUplatitude = upcoming.PickupLocationLatitude,
                         pickUplongitude = upcoming.PickupLocationLongitude,

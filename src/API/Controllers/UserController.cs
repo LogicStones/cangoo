@@ -868,7 +868,7 @@ namespace API.Controllers
         public async Task<HttpResponseMessage> ApplyTripPromoCode([FromBody] ApplyPromoCodeRequest model)
         {
             return Request.CreateResponse(HttpStatusCode.OK,
-                await PromoCodeService.UpdateTripPromo(model.PromoCodeId, model.TripId, model.PassengerId));
+                await PromoCodeService.UpdateTripPromo(model.CurrentUserPromoCodeId, model.NewUserPromoCodeId, model.PromoCodeId, model.TripId, model.PassengerId));
         }
 
         #endregion
@@ -1210,9 +1210,6 @@ namespace API.Controllers
             if (response.Message.Equals(ResponseKeys.invalidParameters))
                 return Request.CreateResponse(HttpStatusCode.Forbidden, response);
 
-            else if (response.Message.Equals(ResponseKeys.invalidParameters))
-                return Request.CreateResponse(HttpStatusCode.OK, response);
-
             else
                 return Request.CreateResponse(HttpStatusCode.OK, response);
         }
@@ -1248,7 +1245,7 @@ namespace API.Controllers
                 Message = ResponseKeys.msgSuccess,
                 Data = new Dictionary<dynamic, dynamic>
                             {
-                                {"currentDateTime", DateTime.UtcNow.ToString(Formats.DateFormat) }
+                                {"currentDateTime", DateTime.UtcNow.ToString(Formats.DateTimeFormat) }
                             }
             });
         }

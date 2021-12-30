@@ -235,7 +235,7 @@ namespace API.Controllers
                                 EarningPoints = captain.EarningPoints == null ? "0.0" : captain.EarningPoints.ToString(),
                                 Email = captain.Email,
                                 IsPriorityHoursActive = captain.IsPriorityHoursActive != true ? false : true,
-                                priorityHourEndTime = captain.LastPriorityHourEndTime != null ? DateTime.Parse(captain.LastPriorityHourEndTime.ToString()).ToString(Formats.DateFormat) : "",
+                                priorityHourEndTime = captain.LastPriorityHourEndTime != null ? DateTime.Parse(captain.LastPriorityHourEndTime.ToString()).ToString(Formats.DateTimeFormat) : "",
                                 NumberOfFavoriteUser = captain.NumberOfFavoriteUser == null ? "0" : captain.NumberOfFavoriteUser.ToString(),
                                 TotalOnlineHours = captain.TotalOnlineHours == null ? "0.0" : captain.TotalOnlineHours.ToString(),
                                 ShareCode = captain.ShareCode,
@@ -564,7 +564,7 @@ namespace API.Controllers
                     {
                         dic = new Dictionary<dynamic, dynamic>
                                 {
-                                    { "alreadyBooked", DateTime.Parse(conf.pickUpDateTime).ToString(Formats.DateFormat) }
+                                    { "alreadyBooked", DateTime.Parse(conf.pickUpDateTime).ToString(Formats.DateTimeFormat) }
                                 };
                         response.data = dic;
                         response.error = false;
@@ -643,7 +643,7 @@ namespace API.Controllers
             model.isWeb = trip.BookingModeID == (int)BookingModes.UserApplication ? false : true;
 
             //Update trip status in database
-            var detail = await DriverService.GetUpdatedTripDataOnAcceptRide(model.tripID, model.driverID, model.vehicleID, model.isLaterBooking == true ? 1 : 0);
+            var detail = await DriverService.GetUpdatedTripDataOnAcceptRide(model.tripID, model.driverID, model.vehicleID, model.fleetID, model.isLaterBooking == true ? 1 : 0);
 
             if (detail != null)
             {
@@ -677,7 +677,7 @@ namespace API.Controllers
                     passengerName = detail.PassengerName,
                     phone = detail.PhoneNumber,
                     lstCancel = driverCancelReasons,
-                    laterBookingPickUpDateTime = Convert.ToDateTime(detail.PickUpBookingDateTime).ToString(Formats.DateFormat),
+                    laterBookingPickUpDateTime = Convert.ToDateTime(detail.PickUpBookingDateTime).ToString(Formats.DateTimeFormat),
                     distanceTraveled = "0.00",
                     isReRouteRequest = detail.isReRouted.ToString(),
                     description = detail.description,
@@ -796,7 +796,7 @@ namespace API.Controllers
                                         { "phone", detail.PhoneNumber },
                                         { "tripID", model.tripID },
                                         { "isWeb", model.isWeb },
-                                        { "laterBookingPickUpDateTime", Convert.ToDateTime(detail.PickUpBookingDateTime).ToString(Formats.DateFormat) },
+                                        { "laterBookingPickUpDateTime", Convert.ToDateTime(detail.PickUpBookingDateTime).ToString(Formats.DateTimeFormat) },
                                         { "isLaterBooking", model.isLaterBooking },
                                         { "cancel_reasons", driverCancelReasons },
                                         { "passengerName",  detail.PassengerName},
@@ -893,7 +893,7 @@ namespace API.Controllers
                 if (model.isLaterBooking)
                 {
                     //Step 1: Refresh pending later bookings (not accepted by any driver) node on firebase
-                    await FirebaseService.AddPendingLaterBookings(tp.UserID.ToString(), tp.TripID.ToString(), ((DateTime)tp.PickUpBookingDateTime).ToString(Formats.DateFormat), tp.NoOfPerson.ToString());
+                    await FirebaseService.AddPendingLaterBookings(tp.UserID.ToString(), tp.TripID.ToString(), ((DateTime)tp.PickUpBookingDateTime).ToString(Formats.DateTimeFormat), tp.NoOfPerson.ToString());
 
                     //Step 2: Refresh current driver upcoming later booking on firebase
                     await FirebaseService.DeleteUpcomingLaterBooking(model.driverID);
@@ -1282,8 +1282,10 @@ namespace API.Controllers
                                 TotalRewardPoints = (trp.RewardPoints + (int.Parse(model.distance) / 500)).ToString(),
                                 TripRewardPoints = (int.Parse(model.distance) / 500).ToString(),
                                 Distance = model.distance,
-                                Date = string.Format("{0:dd MM yyyy}", trp.BookingDateTime),
-                                Time = string.Format("{0:hh:mm tt}", trp.BookingDateTime),
+                                //Date = string.Format("{0:dd MM yyyy}", trp.BookingDateTime),
+                                //Time = string.Format("{0:hh:mm tt}", trp.BookingDateTime),
+                                Date = ((DateTime)trp.BookingDateTime).ToString(Formats.DateFormat),
+                                Time = ((DateTime)trp.BookingDateTime).ToString(Formats.TimeFormat),
                                 PaymentMode = edr.paymentMethod,
                                 PaymentModeId = ((int)Enum.Parse(typeof(PaymentModes), edr.paymentMethod)).ToString(),
                                 IsFavorite = trp.favorite == 1 ? true.ToString() : false.ToString()
@@ -1457,20 +1459,22 @@ namespace API.Controllers
 
                 decimal chargeblePayment = decimal.Parse(model.totalFare);
 
-                if (trip.isSpecialPromotionApplied == false && trip.PromoCodeID != null)
-                {
-                    trip.PromoDiscount = context.PromoManagers.Where(pm => pm.PromoID == trip.PromoCodeID && pm.isSpecialPromo == false).FirstOrDefault().Amount;
+                //if (trip.isSpecialPromotionApplied == false && trip.PromoCodeID != null)
+                //{
+                //    trip.PromoDiscount = context.PromoManagers.Where(pm => pm.PromoID == trip.PromoCodeID && pm.isSpecialPromo == false).FirstOrDefault().Amount;
 
-                    var userPromo = context.UserPromos.Where(up => up.PromoID.ToString().Equals(trip.PromoCodeID.ToString())
-                    && up.UserID.ToString().ToLower().Equals(trip.UserID.ToString().ToLower())).FirstOrDefault();
+                //    var userPromo = context.UserPromos.Where(up => up.PromoID.ToString().Equals(trip.PromoCodeID.ToString())
+                //    && up.UserID.ToString().ToLower().Equals(trip.UserID.ToString().ToLower())).FirstOrDefault();
 
-                    if (userPromo != null)
-                    {
-                        userPromo.NoOfUsage += 1;
-                    }
+                //    if (userPromo != null)
+                //    {
+                //        userPromo.NoOfUsage += 1;
+                //    }
 
-                    chargeblePayment -= (decimal)trip.PromoDiscount;
-                }
+                //    chargeblePayment -= (decimal)trip.PromoDiscount;
+                //}
+
+                chargeblePayment -= (decimal)trip.PromoDiscount;
 
                 var transactionId = "";
 
@@ -1499,6 +1503,7 @@ namespace API.Controllers
                 }
                 else if (trip.PaymentModeId == (int)PaymentModes.Wallet)
                 {
+                    //Can be moved to spAfterMobilePayment sp
                     var userProfile = await context.UserProfiles.Where(up => up.UserID.Equals(trip.UserID.ToString())).FirstOrDefaultAsync();
                     userProfile.WalletBalance -= chargeblePayment;
                     userProfile.AvailableWalletBalance += (decimal.Parse(model.totalFare) - chargeblePayment);
@@ -1511,27 +1516,32 @@ namespace API.Controllers
 
 
                 //If already paid, trip will not update the trip data but returns required info.
-                var updatedTrip = context.spAfterMobilePayment(false,//Convert.ToBoolean(model.isOverride), 
-                    model.tripID,
-                    transactionId,
-                    (int)TripStatuses.Completed,
-                    trip.UserID.ToString(),
-                    ApplicationID,
-                    model.totalFare,
-                    "0",//VoucherUsedAmount
-                    model.promoDiscountAmount,
-                    "0",//model.walletUsedAmount,
-                    "0",//model.tipAmount.ToString(),
-                    DateTime.UtcNow,
-                    (int)PaymentModes.CreditCard,
-                    (int)PaymentStatuses.Paid,
-                    model.fleetID).FirstOrDefault();
+                //var updatedTrip = context.spAfterMobilePayment(false,//Convert.ToBoolean(model.isOverride), 
+                //    model.tripID,
+                //    transactionId,
+                //    (int)TripStatuses.Completed,
+                //    trip.UserID.ToString(),
+                //    ApplicationID,
+                //    model.totalFare,
+                //    "0",//VoucherUsedAmount
+                //    trip.PromoDiscount.ToString(),// model.promoDiscountAmount,
+                //    "0",//model.walletUsedAmount,
+                //    "0",//model.tipAmount.ToString(),
+                //    DateTime.UtcNow,
+                //    trip.PaymentModeId,//(int)PaymentModes.CreditCard,
+                //    (int)PaymentStatuses.Paid,
+                //    model.fleetID).FirstOrDefault();
+
+                var updatedTrip = context.spAfterMobilePayment(//Convert.ToBoolean(model.isOverride), 
+                   model.tripID, transactionId, (int)TripStatuses.Completed, trip.UserID.ToString(), ApplicationID,
+                   model.totalFare, DateTime.UtcNow, (int)PaymentStatuses.Paid).FirstOrDefault();
+
 
                 dic = new Dictionary<dynamic, dynamic>
                                         {
                                             { "tripID", model.tripID },
                                             { "tip", "0.00" },
-                                            { "amount", string.Format("{0:0.00}", Convert.ToDouble(model.totalFare) + Convert.ToDouble(model.promoDiscountAmount)) }
+                                            { "amount", string.Format("{0:0.00}", Convert.ToDouble(model.totalFare)) }
                                             //{ "tip", model.tipAmount },
                                             //{ "amount", string.Format("{0:0.00}", Convert.ToDouble(model.totalFare) - Convert.ToDouble(model.tipAmount) + Convert.ToDouble(model.walletUsedAmount) + Convert.ToDouble(model.promoDiscountAmount)) }
                                         };
@@ -1545,15 +1555,16 @@ namespace API.Controllers
 
                     var notificationPayload = new MobilePaymentNotification()
                     {
-                        //CollectedAmount = model.totalFare,
-                        //VoucherUsedAmount = "0.00",  //In case of vouchered ride, user don't have passenger application
-                        //WalletAmountUsed = model.walletUsedAmount,
-                        PromoDiscountAmount = model.promoDiscountAmount,
+                        PromoDiscountAmount = trip.PromoDiscount.ToString(),
                         TotalFare = model.totalFare, //+ decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString(),
                         DriverId = model.driverID,
                         TripId = model.tripID,
                         PaymentModeId = trip.PaymentModeId.ToString(),
                         SelectedTipAmount = await FirebaseService.GetTipAmount(model.tripID),
+                        WalletBalance = ((decimal)updatedTrip.WalletBalance).ToString("0.00"), // "",
+                        AvailableWalletBalance = ((decimal)updatedTrip.AvailableWalletBalance).ToString("0.00"),
+                        Brand = trip.CreditCardBrand,
+                        Last4Digits = trip.CreditCardLast4Digits,
                         IsDriverFavorite = context.UserFavoriteCaptains.Any(ufc => ufc.CaptainID == trip.CaptainID && ufc.UserID.Equals(trip.UserID.ToString())).ToString()
                     };
 
@@ -1568,9 +1579,9 @@ namespace API.Controllers
                 await SendInvoice(new InvoiceModel
                 {
                     CustomerEmail = updatedTrip.CustomerEmail,// context.AspNetUsers.Where(u => u.Id.Equals(model.passengerID)).FirstOrDefault().Email,
-                    TotalAmount = (Convert.ToDouble(model.totalFare) + Convert.ToDouble(model.promoDiscountAmount)).ToString(),
+                    TotalAmount = (Convert.ToDouble(model.totalFare) + Convert.ToDouble(trip.PromoDiscount)).ToString(),
                     WalletUsedAmount = "0.00",// model.walletUsedAmount,
-                    PromoDiscountAmount = model.promoDiscountAmount,
+                    PromoDiscountAmount = trip.PromoDiscount.ToString(),
                     CashAmount = "0",
                     CaptainName = updatedTrip.CaptainName,
                     CustomerName = updatedTrip.CustomerName,
@@ -1583,6 +1594,7 @@ namespace API.Controllers
                     PostCode = updatedTrip.FleetPostalCode,
                     City = updatedTrip.FleetCity,
                     PickUpAddress = updatedTrip.PickUpLocation,
+                    MidwayStop1Address = updatedTrip.MidwayStop1Location ?? "",
                     DropOffAddress = updatedTrip.DropOffLocation,
                     CaptainUserName = updatedTrip.CaptainUserName,
                     Distance = updatedTrip.DistanceInKM.ToString("0.00"),
@@ -1743,7 +1755,7 @@ namespace API.Controllers
                     var priorityHourRemainingTime = ((int)(((DateTime)captain.LastPriorityHourEndTime).
                                                     Subtract((DateTime)captain.LastPriorityHourStartTime).TotalMinutes)).ToString();
 
-                    await FirebaseService.SetPriorityHourStatus(true, priorityHourRemainingTime, model.captainID, DateTime.Parse(captain.LastPriorityHourEndTime.ToString()).ToString(Formats.DateFormat), captain.EarningPoints.ToString());
+                    await FirebaseService.SetPriorityHourStatus(true, priorityHourRemainingTime, model.captainID, DateTime.Parse(captain.LastPriorityHourEndTime.ToString()).ToString(Formats.DateTimeFormat), captain.EarningPoints.ToString());
 
                     response.error = false;
                     response.message = ResponseKeys.msgSuccess;
@@ -1856,7 +1868,7 @@ namespace API.Controllers
                             passengerName = item.passengName,
                             rating = item.Rating.ToString(),
                             tripPaymentMode = item.TripPaymentMode,
-                            pickUpDateTime = Convert.ToDateTime(item.pickUpBookingDateTime).ToString(Formats.DateFormat),
+                            pickUpDateTime = Convert.ToDateTime(item.pickUpBookingDateTime).ToString(Formats.DateTimeFormat),
                             isFav = item.favorite != null ? (bool)item.favorite : false,
                             seatingCapacity = (int)item.NoOfPerson,
                             estimatedDistance = item.DistanceTraveled.ToString(),
@@ -1949,7 +1961,7 @@ namespace API.Controllers
                             rating = item.Rating.ToString(),
                             tripPaymentMode = item.TripPaymentMode,
                             isFav = item.favorite != null ? (bool)item.favorite : false,
-                            pickUpDateTime = Convert.ToDateTime(item.pickUpBookingDateTime).ToString(Formats.DateFormat),
+                            pickUpDateTime = Convert.ToDateTime(item.pickUpBookingDateTime).ToString(Formats.DateTimeFormat),
                             seatingCapacity = (int)item.NoOfPerson,
                             estimatedDistance = item.DistanceTraveled.ToString(),
                             facilities = lstTripFacilities,
@@ -2024,11 +2036,11 @@ namespace API.Controllers
                             dropOffLocationLatitude = temp.DropOffLocationLatitude,
                             dropOffLocationLongitude = temp.DropOffLocationLongitude,
                             dropOffLocation = temp.DropOffLocation,
-                            bookingDateTime = Convert.ToDateTime(temp.BookingDateTime).ToString(Formats.DateFormat),
-                            pickUpBookingDateTime = Convert.ToDateTime(temp.PickUpBookingDateTime).ToString(Formats.DateFormat),
-                            tripArrivalDatetime = Convert.ToDateTime(temp.ArrivalDateTime).ToString(Formats.DateFormat),
-                            tripStartDatetime = Convert.ToDateTime(temp.TripStartDatetime).ToString(Formats.DateFormat),
-                            tripEndDatetime = Convert.ToDateTime(temp.TripEndDatetime).ToString(Formats.DateFormat),
+                            bookingDateTime = Convert.ToDateTime(temp.BookingDateTime).ToString(Formats.DateTimeFormat),
+                            pickUpBookingDateTime = Convert.ToDateTime(temp.PickUpBookingDateTime).ToString(Formats.DateTimeFormat),
+                            tripArrivalDatetime = Convert.ToDateTime(temp.ArrivalDateTime).ToString(Formats.DateTimeFormat),
+                            tripStartDatetime = Convert.ToDateTime(temp.TripStartDatetime).ToString(Formats.DateTimeFormat),
+                            tripEndDatetime = Convert.ToDateTime(temp.TripEndDatetime).ToString(Formats.DateTimeFormat),
                             tripStatus = temp.Status,
                             facilities = lstTripFacilities,
                             tip = temp.Tip.ToString(),
@@ -2169,7 +2181,7 @@ namespace API.Controllers
                         cashEarning = string.Format("{0:0.00}", cap.CashEarning.ToString()),
                         mobilePayEarning = string.Format("{0:0.00}", cap.MobilePayEarning.ToString()),
                         favPassengers = cap.NumberOfFavoriteUser.ToString(),
-                        memberSince = DateTime.Parse(cap.MemberSince.ToString()).ToString(Formats.DateFormat),
+                        memberSince = DateTime.Parse(cap.MemberSince.ToString()).ToString(Formats.DateTimeFormat),
                         avgCashEarning = string.Format("{0:0.00}", cap.AverageCashEarning.ToString()),
                         avgMobilePayEarning = string.Format("{0:0.00}", cap.AverageMobilePayEarning.ToString()),
                         currentMonthAcceptanceRate = string.Format("{0:0.00}", cap.currentMonthAcceptanceRate),
@@ -2481,7 +2493,7 @@ namespace API.Controllers
             response.error = false;
             response.data = new Dictionary<dynamic, dynamic>
                             {
-                                {"currentDateTime", DateTime.UtcNow.ToString(Formats.DateFormat) }
+                                {"currentDateTime", DateTime.UtcNow.ToString(Formats.DateTimeFormat) }
                             };
             response.message = ResponseKeys.msgSuccess;
             return Request.CreateResponse(HttpStatusCode.OK, response);
