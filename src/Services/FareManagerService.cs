@@ -25,7 +25,7 @@ namespace Services
                 dt = isLaterBooking ? dt : DateTime.UtcNow;
 
                 var specialPromo = await dbContext.PromoManagers
-                    .Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == true && p.StartDate <= dt && p.ExpiryDate >= dt)
+                    .Where(p => p.ApplicationID.ToString() == applicationID && p.isSpecialPromo == true && p.IsActive == true && p.StartDate <= dt && p.ExpiryDate >= dt)
                     .ToListAsync();
 
                 var result = new DiscountTypeDTO();
@@ -63,100 +63,123 @@ namespace Services
 
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var areasCategoryFareList = await GetApplicationRideServicesAreaCategoryFareList(applicationId);
-
                 var onlineDrivers =  await FirebaseService.GetOnlineDrivers();
-                if (areasCategoryFareList.Any())
+
+                var specialPromoDetails = await IsSpecialPromotionApplicable(pickUpLatitude, pickUpLongitude, dropOffLatitude, dropOffLongitutde, applicationId);
+
+                if (decimal.Parse(specialPromoDetails.DiscountAmount) > 0)
                 {
-                    #region Step 1 : Identify Pickup / Midway / Dropoff areas
+                    result.Categories
+                       .Select(c =>
+                       {
+                           return SetVehicleCategoryFare(Guid.Empty, null, c, new FareBreakDownDTO(), specialPromoDetails.DiscountAmount);
+                       }).ToList();
 
-                    //TBD : Get only specified areas with ids (Optimization)
-                    var areasList = await GetApplicationRideServiceAreasList(applicationId);
+                    result.DiscountType = specialPromoDetails.DiscountType;
+                    result.PromoCodeId = specialPromoDetails.PromoCodeId;
+                    result.DiscountAmount = "0.00";
 
-                    RideServicesArea pickUpServiceArea = new RideServicesArea();
-                    RideServicesArea midWayServiceArea = new RideServicesArea();
-                    RideServicesArea dropOffServiceArea = new RideServicesArea();
-
-                    foreach (var area in areasList)
+                    foreach (var item in result.Categories)
                     {
-                        if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(area.AreaLatLong), pickUpLatitude, pickUpLongitude))
-                        {
-                            pickUpServiceArea = area;
-                        }
+                        item.ETA = VehiclesService.GetETAByCategoryId(onlineDrivers, item.CategoryId, pickUpLatitude, pickUpLongitude);
+                    }
+                }
+                else
+                {
 
-                        if (!string.IsNullOrEmpty(midwayStop1Latitude))
-                        {
+                    var areasCategoryFareList = await GetApplicationRideServicesAreaCategoryFareList(applicationId);
 
-                            if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(area.AreaLatLong), midwayStop1Latitude, midwayStop1Longitude))
+                    if (areasCategoryFareList.Any())
+                    {
+                        #region Step 1 : Identify Pickup / Midway / Dropoff areas
+
+                        //TBD : Get only specified areas with ids (Optimization)
+                        var areasList = await GetApplicationRideServiceAreasList(applicationId);
+
+                        RideServicesArea pickUpServiceArea = new RideServicesArea();
+                        RideServicesArea midWayServiceArea = new RideServicesArea();
+                        RideServicesArea dropOffServiceArea = new RideServicesArea();
+
+                        foreach (var area in areasList)
+                        {
+                            if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(area.AreaLatLong), pickUpLatitude, pickUpLongitude))
                             {
-                                midWayServiceArea = area;
+                                pickUpServiceArea = area;
+                            }
+
+                            if (!string.IsNullOrEmpty(midwayStop1Latitude))
+                            {
+
+                                if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(area.AreaLatLong), midwayStop1Latitude, midwayStop1Longitude))
+                                {
+                                    midWayServiceArea = area;
+                                }
+                            }
+
+                            if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(area.AreaLatLong), dropOffLatitude, dropOffLongitutde))
+                            {
+                                dropOffServiceArea = area;
+                            }
+
+                            if (string.IsNullOrEmpty(midwayStop1Latitude))
+                            {
+                                if (!pickUpServiceArea.AreaID.Equals(Guid.Empty) &&
+                                    !dropOffServiceArea.AreaID.Equals(Guid.Empty))
+                                {
+                                    break;
+                                }
+                            }
+                            else
+                            {
+                                if (!pickUpServiceArea.AreaID.Equals(Guid.Empty) &&
+                                    !midWayServiceArea.AreaID.Equals(Guid.Empty) &&
+                                    !dropOffServiceArea.AreaID.Equals(Guid.Empty))
+                                {
+                                    break;
+                                }
                             }
                         }
 
-                        if (PolygonService.IsLatLonExistsInPolygon(PolygonService.ConvertLatLonObjectsArrayToPolygonString(area.AreaLatLong), dropOffLatitude, dropOffLongitutde))
-                        {
-                            dropOffServiceArea = area;
-                        }
+                        #endregion
 
-                        if (string.IsNullOrEmpty(midwayStop1Latitude))
+                        //TBD : If a category is not added in an area
+
+                        //If all cases fails then it means either request area doesn't exist in system or algorithm failed to identify
+
+                        #region Step 2 : Calculate Vehicle Category fare in identified areas
+
+                        if (string.IsNullOrEmpty(midwayStop1PostalCode) && pickUpServiceArea.AreaID != Guid.Empty && dropOffServiceArea.AreaID != Guid.Empty)
                         {
-                            if (!pickUpServiceArea.AreaID.Equals(Guid.Empty) &&
-                                !dropOffServiceArea.AreaID.Equals(Guid.Empty))
+                            //No midway, so there will be no outbound fare calculation. outBoundFareManagerId will be null
+
+                            if (areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).Select(ac => ac.AreaID).Count() == 1) //All categories may have same fare manager for selected area
                             {
-                                break;
+                                //outBoundFareManagerId is set only in case of Midwaystop
+                                var inBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).FirstOrDefault().RSFMID;
+                                await SetFareBreakDownAndETA(onlineDrivers, result, inBoundFareManagerId, false, null, true, "", pickUpLatitude, pickUpLongitude);
+                            }
+                            else
+                            {
+                                await SetCategoryWiseFareDetails(onlineDrivers, result, areasCategoryFareList, pickUpServiceArea.AreaID, false, null, pickUpLatitude, pickUpLongitude);
                             }
                         }
-                        else
+                        else if (!string.IsNullOrEmpty(midwayStop1PostalCode) && pickUpServiceArea.AreaID != Guid.Empty && midWayServiceArea.AreaID != Guid.Empty && dropOffServiceArea.AreaID != Guid.Empty)
                         {
-                            if (!pickUpServiceArea.AreaID.Equals(Guid.Empty) &&
-                                !midWayServiceArea.AreaID.Equals(Guid.Empty) &&
-                                !dropOffServiceArea.AreaID.Equals(Guid.Empty))
+                            if (areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).Select(ac => ac.AreaID).Count() == 1 &&
+                                areasCategoryFareList.Where(ac => ac.AreaID == midWayServiceArea.AreaID).Select(ac => ac.AreaID).Count() == 1)
                             {
-                                break;
+                                var inBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).FirstOrDefault().RSFMID;
+                                var outBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == midWayServiceArea.AreaID).FirstOrDefault().RSFMID;
+                                await SetFareBreakDownAndETA(onlineDrivers, result, inBoundFareManagerId, true, outBoundFareManagerId, true, "", pickUpLatitude, pickUpLongitude);
+                            }
+                            else
+                            {
+                                await SetCategoryWiseFareDetails(onlineDrivers, result, areasCategoryFareList, pickUpServiceArea.AreaID, true, midWayServiceArea.AreaID, pickUpLatitude, pickUpLongitude);
                             }
                         }
+
+                        #endregion
                     }
-
-                    #endregion
-
-                    //TBD : Special Promotion
-                    //TBD : If a category is not added in an area
-
-                    //If all cases fails then it means either request area doesn't exist in system or algorithm failed to identify
-
-                    #region Step 2 : Calculate Vehicle Category fare in identified areas
-
-                    if (string.IsNullOrEmpty(midwayStop1PostalCode) && pickUpServiceArea.AreaID != Guid.Empty && dropOffServiceArea.AreaID != Guid.Empty)
-                    {
-                        //No midway, so there will be no outbound fare calculation. outBoundFareManagerId will be null
-
-                        if (areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).Select(ac => ac.AreaID).Count() == 1) //All categories may have same fare manager for selected area
-                        {   
-                            //outBoundFareManagerId is set only in case of Midwaystop
-                            var inBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).FirstOrDefault().RSFMID;
-                            await SetFareBreakDownAndETA(onlineDrivers, result, inBoundFareManagerId, false, null, false, "", pickUpLatitude, pickUpLongitude);
-                        }
-                        else
-                        {
-                            await SetCategoryWiseFareDetails(onlineDrivers, result, areasCategoryFareList, pickUpServiceArea.AreaID, false, null, pickUpLatitude, pickUpLongitude);
-                        }
-                    }
-                    else if (!string.IsNullOrEmpty(midwayStop1PostalCode) && pickUpServiceArea.AreaID != Guid.Empty && midWayServiceArea.AreaID != Guid.Empty && dropOffServiceArea.AreaID != Guid.Empty)
-                    {
-                        if (areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).Select(ac => ac.AreaID).Count() == 1 &&
-                            areasCategoryFareList.Where(ac => ac.AreaID == midWayServiceArea.AreaID).Select(ac => ac.AreaID).Count() == 1)
-                        {
-                            var inBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == pickUpServiceArea.AreaID).FirstOrDefault().RSFMID;
-                            var outBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == midWayServiceArea.AreaID).FirstOrDefault().RSFMID;
-                            await SetFareBreakDownAndETA(onlineDrivers, result, inBoundFareManagerId, true, outBoundFareManagerId, false, "", pickUpLatitude, pickUpLongitude);
-                        }
-                        else
-                        {
-                            await SetCategoryWiseFareDetails(onlineDrivers, result, areasCategoryFareList, pickUpServiceArea.AreaID, true, midWayServiceArea.AreaID, pickUpLatitude, pickUpLongitude);
-                        }
-                    }
-
-                    #endregion
                 }
 
                 var districtZonesList = await GetApplicationCourierServicesDistrictsZoneList(applicationId);
@@ -283,7 +306,7 @@ namespace Services
             var inBoundFareManagerId = (Guid)areasCategoryFareList.Where(ac => ac.AreaID == pickUpAreaId && ac.CategoryID == categoryId).FirstOrDefault().RSFMID;
             var outBoundFareManagerId = areasCategoryFareList.Where(ac => ac.AreaID == midWayAreaId && ac.CategoryID == categoryId).FirstOrDefault();
 
-            await SetFareBreakDownAndETA(onlineDrivers, result, inBoundFareManagerId, isOutBound, outBoundFareManagerId?.RSFMID, true, categoryId.ToString(), pickUpLatitude, pickUpLongitude);
+            await SetFareBreakDownAndETA(onlineDrivers, result, inBoundFareManagerId, isOutBound, outBoundFareManagerId?.RSFMID, false, categoryId.ToString(), pickUpLatitude, pickUpLongitude);
         }
 
         private static bool CheckShift(TimeSpan morningShiftStartTime, TimeSpan morningShiftEndTime)
@@ -303,19 +326,18 @@ namespace Services
             }
         }
 
-        private static async Task SetFareBreakDownAndETA(Dictionary<string, FirebaseDriver> onlineDrivers, EstimateFareResponse result, Guid inBoundFareManagerId, bool isOutBound, Guid? outBoundFareManagerId, bool isSingleCategory, string categoryId, string pickUpLatitude, string pickUpLongitude)
+        private static async Task SetFareBreakDownAndETA(Dictionary<string, FirebaseDriver> onlineDrivers, EstimateFareResponse result, Guid inBoundFareManagerId, bool isOutBound, Guid? outBoundFareManagerId, bool isSameFareForAllCategories, string categoryId, string pickUpLatitude, string pickUpLongitude)
         {
             FareBreakDownDTO fareDetails = new FareBreakDownDTO();
 
             fareDetails = await CalcuateFareBreakdown(inBoundFareManagerId, result.InBoundDistanceInMeters, result.InBoundTimeInSeconds, isOutBound, isOutBound ? outBoundFareManagerId : null, isOutBound ? result.OutBoundDistanceInMeters : "0", isOutBound ? result.OutBoundTimeInSeconds : "0");
 
-            if (!isSingleCategory)
+            if (isSameFareForAllCategories)
             {
-                //Same fare will be set for every category
                 result.Categories
                     .Select(c =>
                     {
-                        return SetVehicleCategoryFare(inBoundFareManagerId, outBoundFareManagerId, c, fareDetails);
+                        return SetVehicleCategoryFare(inBoundFareManagerId, outBoundFareManagerId, c, fareDetails, "");
                     }).ToList();
 
                 //Each catgeory will have different ETA
@@ -331,28 +353,34 @@ namespace Services
                   .Select(c =>
                   {
                       c.ETA = VehiclesService.GetETAByCategoryId(onlineDrivers, categoryId.ToString(), pickUpLatitude, pickUpLongitude);
-                      return SetVehicleCategoryFare(inBoundFareManagerId, outBoundFareManagerId, c, fareDetails);
+                      return SetVehicleCategoryFare(inBoundFareManagerId, outBoundFareManagerId, c, fareDetails, "");
                   }).ToList();
             }
         }
 
-        private static VehicleCategoryFareEstimate SetVehicleCategoryFare(Guid inBoundFareManagerId, Guid? outBoundFareManagerId, VehicleCategoryFareEstimate category, FareBreakDownDTO fareDetails)
+        private static VehicleCategoryFareEstimate SetVehicleCategoryFare(Guid inBoundFareManagerId, Guid? outBoundFareManagerId, VehicleCategoryFareEstimate category, FareBreakDownDTO fareDetails, string specialFare)
         {
-            category.TotalFare = fareDetails.TotalFare;
-            category.FormattingAdjustment = fareDetails.FormattingAdjustment;
+            if (!string.IsNullOrEmpty(specialFare))
+            {
+                category.BaseFare = category.TotalFare = specialFare;
+            }
+            else
+            {
+                category.TotalFare = fareDetails.TotalFare;
+                category.FormattingAdjustment = fareDetails.FormattingAdjustment;
 
-            category.InBoundRSFMId = inBoundFareManagerId.ToString();
-            category.BaseFare = fareDetails.BaseFare;
-            category.BookingFare = fareDetails.BookingFare;
-            category.WaitingFare = fareDetails.WaitingFare;
-            category.SurchargeAmount = fareDetails.SurchargeAmount;
-            category.InBoundDistanceFare = fareDetails.InBoundDistanceFare;
-            category.InBoundTimeFare = fareDetails.InBoundTimeFare;
+                category.InBoundRSFMId = inBoundFareManagerId.ToString();
+                category.BaseFare = fareDetails.BaseFare;
+                category.BookingFare = fareDetails.BookingFare;
+                category.WaitingFare = fareDetails.WaitingFare;
+                category.SurchargeAmount = fareDetails.SurchargeAmount;
+                category.InBoundDistanceFare = fareDetails.InBoundDistanceFare;
+                category.InBoundTimeFare = fareDetails.InBoundTimeFare;
 
-            category.OutBoundRSFMId = outBoundFareManagerId.ToString();
-            category.OutBoundDistanceFare = fareDetails.OutBoundDistanceFare;
-            category.OutBoundTimeFare = fareDetails.OutBoundTimeFare;
-
+                category.OutBoundRSFMId = outBoundFareManagerId.ToString();
+                category.OutBoundDistanceFare = fareDetails.OutBoundDistanceFare;
+                category.OutBoundTimeFare = fareDetails.OutBoundTimeFare;
+            }
             return category;
         }
 

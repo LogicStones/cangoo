@@ -1846,10 +1846,10 @@ namespace API.Controllers
                         var result = await FareManagerService.IsSpecialPromotionApplicable(item.pickupLocationLatitude, item.pickuplocationlongitude, item.DropOffLocationLatitude,
                              item.DropOffLocationLongitude, ApplicationID, true, item.pickUpBookingDateTime);
 
-                        dic = new Dictionary<dynamic, dynamic>() {
-                                    { "discountType", result.DiscountType },
-                                    { "discountAmount", result.DiscountAmount }
-                                };
+                        //dic = new Dictionary<dynamic, dynamic>() {
+                        //            { "discountType", result.DiscountType },
+                        //            { "discountAmount", result.DiscountAmount }
+                        //        };
 
                         var lstTripFacilities = await FacilitiesService.GetDriverFacilitiesDetailByIds(item.facilities);
                         //if (item.NoOfPerson <= vehicleSeatingCapacity)
@@ -1873,8 +1873,8 @@ namespace API.Controllers
                             seatingCapacity = (int)item.NoOfPerson,
                             estimatedDistance = item.DistanceTraveled.ToString(),
                             facilities = lstTripFacilities,
-                            discountType = dic["discountType"],
-                            discountAmount = dic["discountAmount"]
+                            discountType = result.DiscountType,// dic["discountType"],
+                            discountAmount = result.DiscountAmount// dic["discountAmount"]
                         };
                         lstSB.Add(sb);
                         //}
@@ -1933,10 +1933,10 @@ namespace API.Controllers
                         var result = await FareManagerService.IsSpecialPromotionApplicable(item.pickupLocationLatitude, item.pickuplocationlongitude, item.DropOffLocationLatitude,
                             item.DropOffLocationLongitude, ApplicationID, true, item.pickUpBookingDateTime);
 
-                        dic = new Dictionary<dynamic, dynamic>() {
-                                    { "discountType", result.DiscountType },
-                                    { "discountAmount", result.DiscountAmount }
-                                };
+                        //dic = new Dictionary<dynamic, dynamic>() {
+                        //            { "discountType", result.DiscountType },
+                        //            { "discountAmount", result.DiscountAmount }
+                        //        };
 
                         //dic = new Dictionary<dynamic, dynamic>() {
                         //        { "discountType", "normal"},
@@ -1966,8 +1966,8 @@ namespace API.Controllers
                             estimatedDistance = item.DistanceTraveled.ToString(),
                             facilities = lstTripFacilities,
                             isWeb = item.isWeb,
-                            discountType = dic["discountType"],
-                            discountAmount = dic["discountAmount"],
+                            discountType = result.DiscountType,//dic["discountType"],
+                            discountAmount = result.DiscountAmount,//dic["discountAmount"],
                             remainingTime = ((DateTime)item.pickUpBookingDateTime - DateTime.UtcNow).TotalSeconds
                         };
                         lstSB.Add(sb);
