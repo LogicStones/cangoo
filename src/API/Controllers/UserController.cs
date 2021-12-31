@@ -545,7 +545,7 @@ namespace API.Controllers
 
         #endregion
 
-        #region Favorites
+        #region Favorite Captain
 
         [HttpPost]
         [Route("search-drivers")]
@@ -873,9 +873,7 @@ namespace API.Controllers
 
         #endregion
 
-        #region Payment Methods
-
-        #region Wallet
+        #region Payment
 
         [HttpGet]
         [Route("get-wallet")]
@@ -889,12 +887,47 @@ namespace API.Controllers
             return Request.CreateResponse(HttpStatusCode.OK, response);
         }
 
+        #region Wallet Recharge
+
+        #region Coupon Code Recharge
+
         [HttpPost]
         [Route("redeem-coupon-code")]
         public async Task<HttpResponseMessage> RedeemCouponCode([FromBody] RedeemCouponCodeRequest model)
         {
             return Request.CreateResponse(HttpStatusCode.OK, await PaymentsServices.RedeemCouponCode(model.PassengerId, model.CouponCode));
         }
+
+        #endregion
+
+        #region Recharge using Card | Apple Pay | Google Pay
+
+        [HttpGet]   //Required to make payment on client side
+        [Route("get-payment-intent-client-secret")]
+        public async Task<HttpResponseMessage> GetStripePaymentIntentClientSecret([FromUri] StripePaymentIntentClientSecretRequest model)
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new StripeClientSecretResponse
+                {
+                    ClientSecret = await PaymentsServices.GetPaymentIntentSecret(model.Email, model.PassengerId, model.Amount)
+                }
+            });
+        }
+
+
+        [HttpPost]
+        [Route("mobile-payment-wallet-recharge")]
+        public async Task<HttpResponseMessage> CardsWalletRecharge([FromBody] MobilePaymentWalletRechargeRequest model)
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, await PaymentsServices.MobilePaymentWalletRecharge(model));
+        }
+
+        #endregion
+
+        #region In-App transfer
 
         [HttpPost]
         [Route("check-application-user")]
@@ -910,21 +943,15 @@ namespace API.Controllers
             return Request.CreateResponse(HttpStatusCode.OK, await PaymentsServices.TransferUsingMobile(model));
         }
 
-        //Recharge using Card | Apple Pay | Google Pay
-        [HttpPost]
-        [Route("mobile-payment-wallet-recharge")]
-        public async Task<HttpResponseMessage> CardsWalletRecharge([FromBody] MobilePaymentWalletRechargeRequest model)
-        {
-            return Request.CreateResponse(HttpStatusCode.OK, await PaymentsServices.MobilePaymentWalletRecharge(model));
-        }
+        #endregion
 
         #endregion
 
-        #region Credit/Debit Card
+        #region Add/Delete Cards
 
-        [HttpGet]   //To Add credit card on client side
+        [HttpGet]   //Required to add card on client side
         [Route("get-setup-intent-client-secret")]
-        public async Task<HttpResponseMessage> GetStripeSetupIntentClientSecret([FromUri] StripeClientSecretRequest model)
+        public async Task<HttpResponseMessage> GetStripeSetupIntentClientSecret([FromUri] StripeSetupIntentClientSecretRequest model)
         {
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
@@ -932,7 +959,6 @@ namespace API.Controllers
                 Message = ResponseKeys.msgSuccess,
                 Data = new StripeClientSecretResponse
                 {
-
                     ClientSecret = await PaymentsServices.GetSetupIntentSecret(model.CustomerId, model.Email, model.PassengerId)
                 }
             });
@@ -1115,7 +1141,7 @@ namespace API.Controllers
 
         #endregion  
 
-        #region Invite Code
+        #region Invitation
 
         [HttpPost]
         [Route("apply-invite-code")]

@@ -66,228 +66,11 @@ namespace Services
             }
         }
 
-        public static async Task<ResponseWrapper> UpdateTripPaymentMode(UpdateTripPaymentMethodRequest model)
-        {
-            using (CangooEntities dbContext = new CangooEntities())
-            {
-                var resellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
-                var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
-                ResponseWrapper response = new ResponseWrapper();
-
-                var trip = await GetTripById(model.TripId);
-                var userProfile = await UserService.GetProfileByIdAsync(model.PassengerId, applicationId, resellerId);
-
-                if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.Cash &&
-                    int.Parse(model.NewPaymentModeId) == (int)PaymentModes.CreditCard)
-                {
-                    response = await PaymentsServices.SetCreditCardPaymentMethod(model.IsPaidClientSide, model.StripePaymentIntentId, model.CustomerId, model.CardId, model.TotalFare, "Booking Request : " + model.TripId.ToString());
-
-                    if (response.Error)
-                        return response;
-
-                    trip.PaymentModeId = (int)PaymentModes.CreditCard;
-                    trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.NewPaymentModeId));
-
-                    var paymentIntentDetails = (CreditCardPaymentInent)response.Data;
-
-                    trip.CreditCardPaymentIntent = paymentIntentDetails.PaymentIntentId;
-                    trip.CreditCardBrand = model.Brand;
-                    trip.CreditCardLast4Digits = model.Last4Digits;
-                }
-
-                else if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.Cash &&
-                    int.Parse(model.NewPaymentModeId) == (int)PaymentModes.Wallet)
-                {
-                    response = await PaymentsServices.SetWalletPaymentMethod(userProfile, model.TotalFare);
-
-                    if (response.Error)
-                        return response;
-
-                    trip.PaymentModeId = (int)PaymentModes.Wallet;
-                    trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.NewPaymentModeId));
-                }
-
-                else if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.CreditCard &&
-                    int.Parse(model.NewPaymentModeId) == (int)PaymentModes.Cash)
-                {
-                    await PaymentsServices.CancelAuthorizedPayment(trip.CreditCardPaymentIntent);
-
-                    trip.PaymentModeId = (int)PaymentModes.Cash;
-                    trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.NewPaymentModeId));
-                    trip.CreditCardPaymentIntent = "";
-                    trip.CreditCardBrand = "";
-                    trip.CreditCardLast4Digits = "";
-                }
-
-                else if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.CreditCard &&
-                    int.Parse(model.NewPaymentModeId) == (int)PaymentModes.Wallet)
-                {
-                    response = await PaymentsServices.SetWalletPaymentMethod(userProfile, model.TotalFare);
-                    if (response.Error)
-                        return response;
-                    else
-                        await PaymentsServices.CancelAuthorizedPayment(trip.CreditCardPaymentIntent);
-
-                    trip.PaymentModeId = (int)PaymentModes.Wallet;
-                    trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.NewPaymentModeId));
-                    trip.CreditCardPaymentIntent = "";
-                    trip.CreditCardBrand = "";
-                    trip.CreditCardLast4Digits = "";
-                }
-
-                else if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.Wallet &&
-                    int.Parse(model.NewPaymentModeId) == (int)PaymentModes.CreditCard)
-                {
-                    response = await PaymentsServices.SetCreditCardPaymentMethod(model.IsPaidClientSide, model.StripePaymentIntentId, model.CustomerId, model.CardId, model.TotalFare, "Booking Request : " + model.TripId.ToString());
-
-                    if (response.Error)
-                        return response;
-                    else
-                        userProfile.AvailableWalletBalance += decimal.Parse(model.TotalFare);
-                    //await PaymentsServices.ReleaseWalletScrewedAmount(model.PassengerId, decimal.Parse(model.TotalFare));
-
-                    trip.PaymentModeId = (int)PaymentModes.CreditCard;
-                    trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.NewPaymentModeId));
-                    
-                    var paymentIntentDetails = (CreditCardPaymentInent)response.Data;
-
-                    trip.CreditCardPaymentIntent = paymentIntentDetails.PaymentIntentId;
-                    trip.CreditCardBrand = model.Brand;
-                    trip.CreditCardLast4Digits = model.Last4Digits;
-                }
-
-                else if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.Wallet &&
-                    int.Parse(model.NewPaymentModeId) == (int)PaymentModes.Cash)
-                {
-                    //await PaymentsServices.ReleaseWalletScrewedAmount(model.PassengerId, decimal.Parse(model.TotalFare));
-                    userProfile.AvailableWalletBalance += decimal.Parse(model.TotalFare);
-                    trip.PaymentModeId = (int)PaymentModes.Cash;
-                    trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.NewPaymentModeId));
-                }
-
-                //await dbcontext.Database.ExecuteSqlCommandAsync("UPDATE Trips SET PaymentModeId = @paymentmodeid WHERE TripID = @tripId AND UserID = @passengerId",
-                //                                                                      new SqlParameter("@paymentmodeid", model.NewPaymentModeId),
-                //                                                                      new SqlParameter("@tripId", model.TripId),
-                //                                                                      new SqlParameter("@passengerId", model.PassengerId)));
-
-                dbContext.Entry(AutoMapperConfig._mapper.Map<PassengerProfileDTO, UserProfile>(userProfile)).State = EntityState.Modified;
-                dbContext.Entry(trip).State = EntityState.Modified;
-
-                dbContext.SaveChanges();
-
-                var fbPaymentModeDetails = new TripPaymentMode {
-                    PaymentModeId = trip.PaymentModeId.ToString(),
-                    PaymentMethod = trip.TripPaymentMode
-                };
-
-                switch (trip.PaymentModeId)
-                {
-                    case (int)PaymentModes.Wallet:
-                        fbPaymentModeDetails.WalletBalance = userProfile.WalletBalance.ToString();
-                        fbPaymentModeDetails.AvailableWalletBalance = userProfile.AvailableWalletBalance.ToString();
-                        break;
-
-                    case (int)PaymentModes.CreditCard:
-                        fbPaymentModeDetails.Brand = trip.CreditCardBrand;
-                        fbPaymentModeDetails.Last4Digits = trip.CreditCardLast4Digits;
-                        fbPaymentModeDetails.CustomerId = userProfile.CreditCardCustomerID;
-                        break;
-                }
-
-                await FirebaseService.UpdateTripPaymentMode(trip.TripID.ToString(), trip.UserID.ToString(), trip.CaptainID == null ? "" : trip.CaptainID.ToString(), fbPaymentModeDetails);
-
-                return new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess
-                };
-            }
-        }
-
-        public static async Task<ResponseWrapper> UserSubmitFeedback(UpdateTripUserFeedbackRequest model)
-        {
-            using (CangooEntities dbContext = new CangooEntities())
-            {
-                var resellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
-                var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
-
-                var trip = await GetTripById(model.TripId);
-                var userProfile = await UserService.GetProfileByIdAsync(model.PassengerId, applicationId, resellerId);
-
-                trip.DriverRating = Convert.ToInt32(Convert.ToDouble(model.Rating));
-                trip.VehicleRating = Convert.ToInt32(Convert.ToDouble(model.Rating));
-                trip.UserSubmittedFeedback = model.UserFeedBack;
-
-                bool isTipPaid = false;
-
-                if (trip.PaymentModeId == (int)PaymentModes.CreditCard)
-                {
-                    var paymentIntent = await PaymentsServices.CaptureTipFromTripCreditCard("Tip : " + trip.TripID.ToString(), userProfile.CreditCardCustomerID, (long)(decimal.Parse(model.TipAmount) * 100), trip.CreditCardPaymentIntent);
-
-                    if (paymentIntent.Status.Equals(TransactionStatus.succeeded))
-                    {
-                        trip.Tip = decimal.Parse(model.TipAmount);
-                        isTipPaid = true;
-                    }
-                }
-                else if (trip.PaymentModeId == (int)PaymentModes.Wallet)
-                {
-                    if (userProfile.AvailableWalletBalance >= decimal.Parse(model.TipAmount))
-                    {
-                        isTipPaid = true;
-                        trip.Tip = decimal.Parse(model.TipAmount);
-                        userProfile.WalletBalance -= decimal.Parse(model.TipAmount);
-                        userProfile.AvailableWalletBalance -= decimal.Parse(model.TipAmount);
-                    }
-                }
-
-                var captain = await DriverService.GetDriverById(trip.CaptainID.ToString()); //dbContext.Captains.Where(c => c.CaptainID == trip.CaptainID).FirstOrDefault();
-                int captainTrips = (int)((captain.NoOfTrips == null ? 0 : captain.NoOfTrips) + (captain.NoOfTripsMobilePay == null ? 0 : captain.NoOfTripsMobilePay));
-                captain.Rating = Math.Round((double)((((captain.Rating == null ? 0 : captain.Rating) * (captainTrips - 1)) + trip.DriverRating) / captainTrips), 1, MidpointRounding.ToEven);
-
-                var vehicle = await VehiclesService.GetVehicleById(trip.VehicleID.ToString());
-                int vehicleTrips = (int)(vehicle.TotalRides == null ? 0 : vehicle.TotalRides);
-                vehicle.Rating = Math.Round((double)((((vehicle.Rating == null ? 0 : vehicle.Rating) * (vehicleTrips - 1)) + trip.VehicleRating) / vehicleTrips), 1, MidpointRounding.ToEven);
-
-                dbContext.Entry(AutoMapperConfig._mapper.Map<PassengerProfileDTO, UserProfile>(userProfile)).State = EntityState.Modified;
-                dbContext.Entry(trip).State = EntityState.Modified;
-                dbContext.Entry(captain).State = EntityState.Modified;
-                dbContext.Entry(vehicle).State = EntityState.Modified;
-
-                dbContext.SaveChanges();
-
-                if (trip.PaymentModeId == (int)PaymentModes.Cash)
-                {
-                    return new ResponseWrapper
-                    {
-                        Error = false,
-                        Message = ResponseKeys.msgSuccess
-                    };
-                }
-                else
-                {
-                    return new ResponseWrapper
-                    {
-                        Error = isTipPaid ? false : true,
-                        Message = isTipPaid ? ResponseKeys.msgSuccess : ResponseKeys.tipNotPaid
-                    };
-                }
-            }
-        }
-
         public static async Task<Trip> GetTripById(string tripId)
         {
             using (var dbContext = new CangooEntities())
             {
                 return await dbContext.Trips.Where(t => t.TripID.ToString().Equals(tripId)).FirstOrDefaultAsync();
-            }
-        }
-
-        private static async Task<Trip> GetPassengerTripById(string tripId, string passengerId)
-        {
-            using (var dbContext = new CangooEntities())
-            {
-                return await dbContext.Trips.Where(t => t.TripID.ToString().Equals(tripId) && t.UserID.ToString().Equals(passengerId)).FirstOrDefaultAsync();
             }
         }
 
@@ -783,11 +566,213 @@ namespace Services
             }
         }
 
-        private static async Task<CompanyVoucher> GetVoucherDetails(Guid voucherId)
+        public static async Task<ResponseWrapper> UpdateTripPaymentMode(UpdateTripPaymentMethodRequest model)
         {
-            using (var dbContext = new CangooEntities())
+            using (CangooEntities dbContext = new CangooEntities())
             {
-                return await dbContext.CompanyVouchers.Where(cv => cv.VoucherID == voucherId && cv.isUsed == false).FirstOrDefaultAsync();
+                var resellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
+                var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
+                ResponseWrapper response = new ResponseWrapper();
+
+                var trip = await GetTripById(model.TripId);
+                var userProfile = await UserService.GetProfileByIdAsync(model.PassengerId, applicationId, resellerId);
+
+                if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.Cash &&
+                    int.Parse(model.NewPaymentModeId) == (int)PaymentModes.CreditCard)
+                {
+                    response = await SetCreditCardPaymentMethod(model.IsPaidClientSide, model.StripePaymentIntentId, model.CustomerId, model.CardId, model.TotalFare, "Booking Request : " + model.TripId.ToString());
+
+                    if (response.Error)
+                        return response;
+
+                    trip.PaymentModeId = (int)PaymentModes.CreditCard;
+                    trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.NewPaymentModeId));
+
+                    var paymentIntentDetails = (CreditCardPaymentInent)response.Data;
+
+                    trip.CreditCardPaymentIntent = paymentIntentDetails.PaymentIntentId;
+                    trip.CreditCardBrand = model.Brand;
+                    trip.CreditCardLast4Digits = model.Last4Digits;
+                }
+
+                else if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.Cash &&
+                    int.Parse(model.NewPaymentModeId) == (int)PaymentModes.Wallet)
+                {
+                    response = await SetWalletPaymentMethod(userProfile, model.TotalFare);
+
+                    if (response.Error)
+                        return response;
+
+                    trip.PaymentModeId = (int)PaymentModes.Wallet;
+                    trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.NewPaymentModeId));
+                }
+
+                else if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.CreditCard &&
+                    int.Parse(model.NewPaymentModeId) == (int)PaymentModes.Cash)
+                {
+                    await PaymentsServices.CancelAuthorizedPayment(trip.CreditCardPaymentIntent);
+
+                    trip.PaymentModeId = (int)PaymentModes.Cash;
+                    trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.NewPaymentModeId));
+                    trip.CreditCardPaymentIntent = "";
+                    trip.CreditCardBrand = "";
+                    trip.CreditCardLast4Digits = "";
+                }
+
+                else if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.CreditCard &&
+                    int.Parse(model.NewPaymentModeId) == (int)PaymentModes.Wallet)
+                {
+                    response = await SetWalletPaymentMethod(userProfile, model.TotalFare);
+                    if (response.Error)
+                        return response;
+                    else
+                        await PaymentsServices.CancelAuthorizedPayment(trip.CreditCardPaymentIntent);
+
+                    trip.PaymentModeId = (int)PaymentModes.Wallet;
+                    trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.NewPaymentModeId));
+                    trip.CreditCardPaymentIntent = "";
+                    trip.CreditCardBrand = "";
+                    trip.CreditCardLast4Digits = "";
+                }
+
+                else if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.Wallet &&
+                    int.Parse(model.NewPaymentModeId) == (int)PaymentModes.CreditCard)
+                {
+                    response = await SetCreditCardPaymentMethod(model.IsPaidClientSide, model.StripePaymentIntentId, model.CustomerId, model.CardId, model.TotalFare, "Booking Request : " + model.TripId.ToString());
+
+                    if (response.Error)
+                        return response;
+                    else
+                        userProfile.AvailableWalletBalance += decimal.Parse(model.TotalFare);
+                    //await PaymentsServices.ReleaseWalletScrewedAmount(model.PassengerId, decimal.Parse(model.TotalFare));
+
+                    trip.PaymentModeId = (int)PaymentModes.CreditCard;
+                    trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.NewPaymentModeId));
+
+                    var paymentIntentDetails = (CreditCardPaymentInent)response.Data;
+
+                    trip.CreditCardPaymentIntent = paymentIntentDetails.PaymentIntentId;
+                    trip.CreditCardBrand = model.Brand;
+                    trip.CreditCardLast4Digits = model.Last4Digits;
+                }
+
+                else if (int.Parse(model.CurrentPaymentModeId) == (int)PaymentModes.Wallet &&
+                    int.Parse(model.NewPaymentModeId) == (int)PaymentModes.Cash)
+                {
+                    //await PaymentsServices.ReleaseWalletScrewedAmount(model.PassengerId, decimal.Parse(model.TotalFare));
+                    userProfile.AvailableWalletBalance += decimal.Parse(model.TotalFare);
+                    trip.PaymentModeId = (int)PaymentModes.Cash;
+                    trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), int.Parse(model.NewPaymentModeId));
+                }
+
+                //await dbcontext.Database.ExecuteSqlCommandAsync("UPDATE Trips SET PaymentModeId = @paymentmodeid WHERE TripID = @tripId AND UserID = @passengerId",
+                //                                                                      new SqlParameter("@paymentmodeid", model.NewPaymentModeId),
+                //                                                                      new SqlParameter("@tripId", model.TripId),
+                //                                                                      new SqlParameter("@passengerId", model.PassengerId)));
+
+                dbContext.Entry(AutoMapperConfig._mapper.Map<PassengerProfileDTO, UserProfile>(userProfile)).State = EntityState.Modified;
+                dbContext.Entry(trip).State = EntityState.Modified;
+
+                dbContext.SaveChanges();
+
+                var fbPaymentModeDetails = new TripPaymentMode
+                {
+                    PaymentModeId = trip.PaymentModeId.ToString(),
+                    PaymentMethod = trip.TripPaymentMode
+                };
+
+                switch (trip.PaymentModeId)
+                {
+                    case (int)PaymentModes.Wallet:
+                        fbPaymentModeDetails.WalletBalance = userProfile.WalletBalance.ToString();
+                        fbPaymentModeDetails.AvailableWalletBalance = userProfile.AvailableWalletBalance.ToString();
+                        break;
+
+                    case (int)PaymentModes.CreditCard:
+                        fbPaymentModeDetails.Brand = trip.CreditCardBrand;
+                        fbPaymentModeDetails.Last4Digits = trip.CreditCardLast4Digits;
+                        fbPaymentModeDetails.CustomerId = userProfile.CreditCardCustomerID;
+                        break;
+                }
+
+                await FirebaseService.UpdateTripPaymentMode(trip.TripID.ToString(), trip.UserID.ToString(), trip.CaptainID == null ? "" : trip.CaptainID.ToString(), fbPaymentModeDetails);
+
+                return new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess
+                };
+            }
+        }
+
+        public static async Task<ResponseWrapper> UserSubmitFeedback(UpdateTripUserFeedbackRequest model)
+        {
+            using (CangooEntities dbContext = new CangooEntities())
+            {
+                var resellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
+                var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
+
+                var trip = await GetTripById(model.TripId);
+                var userProfile = await UserService.GetProfileByIdAsync(model.PassengerId, applicationId, resellerId);
+
+                trip.DriverRating = Convert.ToInt32(Convert.ToDouble(model.Rating));
+                trip.VehicleRating = Convert.ToInt32(Convert.ToDouble(model.Rating));
+                trip.UserSubmittedFeedback = model.UserFeedBack;
+
+                bool isTipPaid = false;
+
+                if (trip.PaymentModeId == (int)PaymentModes.CreditCard)
+                {
+                    var paymentIntent = await PaymentsServices.CaptureTipFromTripCreditCard("Tip : " + trip.TripID.ToString(), userProfile.CreditCardCustomerID, (long)(decimal.Parse(model.TipAmount) * 100), trip.CreditCardPaymentIntent);
+
+                    if (paymentIntent.Status.Equals(TransactionStatus.succeeded))
+                    {
+                        trip.Tip = decimal.Parse(model.TipAmount);
+                        isTipPaid = true;
+                    }
+                }
+                else if (trip.PaymentModeId == (int)PaymentModes.Wallet)
+                {
+                    if (userProfile.AvailableWalletBalance >= decimal.Parse(model.TipAmount))
+                    {
+                        isTipPaid = true;
+                        trip.Tip = decimal.Parse(model.TipAmount);
+                        userProfile.WalletBalance -= decimal.Parse(model.TipAmount);
+                        userProfile.AvailableWalletBalance -= decimal.Parse(model.TipAmount);
+                    }
+                }
+
+                var captain = await DriverService.GetDriverById(trip.CaptainID.ToString()); //dbContext.Captains.Where(c => c.CaptainID == trip.CaptainID).FirstOrDefault();
+                int captainTrips = (int)((captain.NoOfTrips == null ? 0 : captain.NoOfTrips) + (captain.NoOfTripsMobilePay == null ? 0 : captain.NoOfTripsMobilePay));
+                captain.Rating = Math.Round((double)((((captain.Rating == null ? 0 : captain.Rating) * (captainTrips - 1)) + trip.DriverRating) / captainTrips), 1, MidpointRounding.ToEven);
+
+                var vehicle = await VehiclesService.GetVehicleById(trip.VehicleID.ToString());
+                int vehicleTrips = (int)(vehicle.TotalRides == null ? 0 : vehicle.TotalRides);
+                vehicle.Rating = Math.Round((double)((((vehicle.Rating == null ? 0 : vehicle.Rating) * (vehicleTrips - 1)) + trip.VehicleRating) / vehicleTrips), 1, MidpointRounding.ToEven);
+
+                dbContext.Entry(AutoMapperConfig._mapper.Map<PassengerProfileDTO, UserProfile>(userProfile)).State = EntityState.Modified;
+                dbContext.Entry(trip).State = EntityState.Modified;
+                dbContext.Entry(captain).State = EntityState.Modified;
+                dbContext.Entry(vehicle).State = EntityState.Modified;
+
+                dbContext.SaveChanges();
+
+                if (trip.PaymentModeId == (int)PaymentModes.Cash)
+                {
+                    return new ResponseWrapper
+                    {
+                        Error = false,
+                        Message = ResponseKeys.msgSuccess
+                    };
+                }
+                else
+                {
+                    return new ResponseWrapper
+                    {
+                        Error = isTipPaid ? false : true,
+                        Message = isTipPaid ? ResponseKeys.msgSuccess : ResponseKeys.tipNotPaid
+                    };
+                }
             }
         }
 
@@ -820,27 +805,6 @@ namespace Services
             using (var dbContext = new CangooEntities())
             {
                 return dbContext.spGetRideDetail(tripID, (int)TripStatuses.Picked, isWeb).FirstOrDefault();
-            }
-        }
-
-        private static async Task LogReRoutedTrip(BookTripRequest model, string applicationId, Trip tp)
-        {
-            using (var dbContext = new CangooEntities())
-            {
-                //TBD: Add captain priority points
-                dbContext.ReroutedRidesLogs.Add(new ReroutedRidesLog()
-                {
-                    CaptainID = Guid.Parse(model.DriverId),
-                    ReroutedLogID = Guid.NewGuid(),
-                    LogTime = DateTime.UtcNow,
-                    TripID = tp.TripID,
-                    CancelID = tp.CancelID ?? null,
-                    RideAcceptanceTime = tp.PickUpBookingDateTime,
-                    isLaterBooking = bool.Parse(model.IsLaterBooking),//(bool)tp.isLaterBooking,
-                    ApplicationID = Guid.Parse(applicationId)
-                });
-
-                await dbContext.SaveChangesAsync();
             }
         }
 
@@ -927,5 +891,106 @@ namespace Services
                 return dbContext.spGetTripPassengerDetailsByTripID(tripId).FirstOrDefault();
             }
         }
+
+        private static async Task<Trip> GetPassengerTripById(string tripId, string passengerId)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                return await dbContext.Trips.Where(t => t.TripID.ToString().Equals(tripId) && t.UserID.ToString().Equals(passengerId)).FirstOrDefaultAsync();
+            }
+        }
+
+        private static async Task LogReRoutedTrip(BookTripRequest model, string applicationId, Trip tp)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                //TBD: Add captain priority points
+                dbContext.ReroutedRidesLogs.Add(new ReroutedRidesLog()
+                {
+                    CaptainID = Guid.Parse(model.DriverId),
+                    ReroutedLogID = Guid.NewGuid(),
+                    LogTime = DateTime.UtcNow,
+                    TripID = tp.TripID,
+                    CancelID = tp.CancelID ?? null,
+                    RideAcceptanceTime = tp.PickUpBookingDateTime,
+                    isLaterBooking = bool.Parse(model.IsLaterBooking),//(bool)tp.isLaterBooking,
+                    ApplicationID = Guid.Parse(applicationId)
+                });
+
+                await dbContext.SaveChangesAsync();
+            }
+        }
+
+        private static async Task<ResponseWrapper> SetCreditCardPaymentMethod(string isPaidClientSide, string stripePaymentIntentId, string customerId, string cardId, string totalFare, string description)
+        {
+            if (string.IsNullOrEmpty(customerId) || string.IsNullOrEmpty(cardId) || string.IsNullOrEmpty(totalFare))
+            {
+                return new ResponseWrapper
+                {
+                    Message = ResponseKeys.invalidParameters
+                };
+            }
+
+            if (bool.Parse(isPaidClientSide))
+            {
+                return new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    Data = new CreditCardPaymentInent
+                    {
+                        PaymentIntentId = stripePaymentIntentId,
+                        Status = TransactionStatus.requiresCapture
+                    }
+                };
+            }
+
+            var details = await PaymentsServices.AuthoizeCreditCardPayment(customerId, cardId, totalFare, description);
+
+            if (!details.Status.Equals(TransactionStatus.requiresCapture))
+            {
+                return new ResponseWrapper
+                {
+                    Message = ResponseKeys.paymentGetwayError,
+                    Data = details
+                };
+            }
+
+            return new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = details
+            };
+        }
+
+        private static async Task<ResponseWrapper> SetWalletPaymentMethod(PassengerProfileDTO userProfile, string totalFare)
+        {
+            if (userProfile.AvailableWalletBalance < decimal.Parse(totalFare))
+            {
+                return new ResponseWrapper
+                {
+                    Message = ResponseKeys.insufficientWalletBalance
+                };
+            }
+            else
+            {
+                userProfile.AvailableWalletBalance -= decimal.Parse(totalFare);
+                return new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess
+                };
+            }
+        }
+
+        private static async Task<CompanyVoucher> GetVoucherDetails(Guid voucherId)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                return await dbContext.CompanyVouchers.Where(cv => cv.VoucherID == voucherId && cv.isUsed == false).FirstOrDefaultAsync();
+            }
+        }
+
     }
 }

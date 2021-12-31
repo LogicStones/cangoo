@@ -64,7 +64,7 @@ namespace Services
             }
         }
 
-        #region Credit Card
+        #region Manage Cards
 
         public static async Task<string> GetSetupIntentSecret(string customerId, string email, string passengerId)
         {
@@ -77,42 +77,15 @@ namespace Services
             return StripeIntegration.GetSetupIntentClientSecret(customerId);
         }
 
-        //public static async Task<ResponseWrapper> UpdateDefaultCreditCard(string cardToken, string customerId)
-        public static async Task UpdateDefaultCreditCard(string cardToken, string customerId)
-        {
-            StripeIntegration.UpdateDefaultPaymentMethod(cardToken, customerId);
-            //var cust = StripeIntegration.UpdateDefaultPaymentMethod(cardToken, customerId);
-
-            //if (!string.IsNullOrEmpty(cust.Id))
-            //{
-            //    return new ResponseWrapper
-            //    {
-            //        Error = false,
-            //        Data = new UpdateDefaultCreditCardResponse
-            //        {
-            //            CustomerId = cust.Id,
-            //            DefaultCardId = cust.InvoiceSettings.DefaultPaymentMethodId,
-            //            CardsList = StripeIntegration.GetCardsList(cust.Id)
-            //        },
-            //        Message = ResponseKeys.msgSuccess
-            //    };
-            //}
-            //else
-            //{
-            //    return new ResponseWrapper
-            //    {
-            //        Message = ResponseKeys.paymentGetwayError
-            //    };
-            //}
-        }
-
         public static async Task<ResponseWrapper> DeleteCreditCard(string cardToken, string customerId)
         {
-            var card = StripeIntegration.DeleteCard(cardToken, customerId);
+            StripeIntegration.DeleteCard(cardToken, customerId);
 
-            if (!string.IsNullOrEmpty(card.Id))
-            {
-                var customer = StripeIntegration.GetCustomer(customerId);
+            //var card = StripeIntegration.DeleteCard(cardToken, customerId);
+
+            //if (!string.IsNullOrEmpty(card.Id))
+            //{
+            var customer = StripeIntegration.GetCustomer(customerId);
                 if (!string.IsNullOrEmpty(customer.Id))
                 {
                     return new ResponseWrapper
@@ -122,7 +95,7 @@ namespace Services
                         Data = new DeleteCreditCardResponse
                         {
                             CustomerId = customer.Id,
-                            DefaultSourceId = customer.InvoiceSettings.DefaultPaymentMethodId,
+                            //DefaultSourceId = customer.InvoiceSettings.DefaultPaymentMethodId,
                             CardsList = StripeIntegration.GetCardsList(customer.Id)
                         }
                     };
@@ -134,78 +107,19 @@ namespace Services
                         Message = ResponseKeys.paymentGetwayError
                     };
                 }
-            }
-            else
-            {
-                return new ResponseWrapper
-                {
-                    Message = ResponseKeys.paymentGetwayError
-                };
-            }
+            //}
+            //else
+            //{
+            //    return new ResponseWrapper
+            //    {
+            //        Message = ResponseKeys.paymentGetwayError
+            //    };
+            //}
         }
 
-        public static async Task<ResponseWrapper> SetCreditCardPaymentMethod(string isPaidClientSide, string stripePaymentIntentId, string customerId, string cardId, string totalFare, string description)
-        {
-            if (string.IsNullOrEmpty(customerId) || string.IsNullOrEmpty(cardId) || string.IsNullOrEmpty(totalFare))
-            {
-                return new ResponseWrapper
-                {
-                    Message = ResponseKeys.invalidParameters
-                };
-            }
+        #endregion
 
-            if (bool.Parse(isPaidClientSide))
-            {
-                return new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess,
-                    Data = new CreditCardPaymentInent
-                    {
-                        PaymentIntentId = stripePaymentIntentId,
-                        Status = TransactionStatus.requiresCapture
-                    }
-                };
-            }
-
-            var details = await AuthoizeCreditCardPayment(customerId, cardId, totalFare, description);
-
-            if (!details.Status.Equals(TransactionStatus.requiresCapture))
-            {
-                return new ResponseWrapper
-                {
-                    Message = ResponseKeys.paymentGetwayError,
-                    Data = details
-                };
-            }
-
-            return new ResponseWrapper
-            {
-                Error = false,
-                Message = ResponseKeys.msgSuccess,
-                Data = details
-            };
-        }
-
-        public static async Task<ResponseWrapper> SetWalletPaymentMethod(PassengerProfileDTO userProfile, string totalFare)
-        {
-            if (userProfile.AvailableWalletBalance < decimal.Parse(totalFare))
-            {
-                return new ResponseWrapper
-                {
-                    Message = ResponseKeys.insufficientWalletBalance
-                };
-            }
-            else
-            {
-                userProfile.AvailableWalletBalance -= decimal.Parse(totalFare);
-                return new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess
-                };
-            }
-        }
+        #region Trip Payments
 
         public static async Task<CreditCardPaymentInent> AuthoizeCreditCardPayment(string customerId, string cardId, string fareAmount, string description)
         {
@@ -248,6 +162,7 @@ namespace Services
             var usedPaymentIntent = StripeIntegration.GetPaymentIntentDetails(paymentIntentId);
 
             var paymentIntent = StripeIntegration.CreatePaymentIntent(description, customerId, amount, usedPaymentIntent.PaymentMethodId);
+
             if (paymentIntent == null)
                 return new CreditCardPaymentInent
                 {
@@ -265,9 +180,21 @@ namespace Services
             };
         }
 
+        public static async Task ReleaseWalletScrewedAmount(string passengerId, decimal amount)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                var userProfile = await dbContext.UserProfiles.Where(up => up.UserID.Equals(passengerId)).FirstOrDefaultAsync();
+                userProfile.AvailableWalletBalance += amount;
+                dbContext.SaveChanges();
+            }
+        }
+
         #endregion
 
         #region Wallet Recharge
+
+        #region Coupon Code Recharge
 
         public static async Task<ResponseWrapper> RedeemCouponCode(string passengerId, string couponCode)
         {
@@ -338,6 +265,15 @@ namespace Services
             }
         }
 
+        #endregion
+
+        #region  using Card | Apple Pay | Google Pay
+
+        public static async Task<string> GetPaymentIntentSecret(string email, string passengerId, string amount)
+        {
+            return StripeIntegration.CreatePaymentIntent(string.Format("Wallet Recharge : {0} | {1}", email, passengerId), (long)(decimal.Parse(amount) * 100));
+        }
+
         public static async Task<ResponseWrapper> MobilePaymentWalletRecharge(MobilePaymentWalletRechargeRequest model)
         {
             using (CangooEntities dbcontext = new CangooEntities())
@@ -386,6 +322,8 @@ namespace Services
                 };
             }
         }
+
+        #endregion
 
         #region In App Transfer
 
@@ -449,22 +387,41 @@ namespace Services
 
         #endregion
 
-        public static async Task ReleaseWalletScrewedAmount(string passengerId, decimal amount)
-        {
-            using (var dbContext = new CangooEntities())
-            {
-                var userProfile = await dbContext.UserProfiles.Where(up => up.UserID.Equals(passengerId)).FirstOrDefaultAsync();
-                userProfile.AvailableWalletBalance += amount;
-                dbContext.SaveChanges();
-            }
-        }
-
         private static void UpdateWalletBalance(decimal amount, UserProfile userProfile)
         {
             userProfile.LastRechargedAt = DateTime.UtcNow;
             userProfile.WalletBalance = userProfile.WalletBalance == null ? amount : userProfile.WalletBalance + amount;
             userProfile.AvailableWalletBalance += amount;
         }
+
+
+        //public static async Task UpdateDefaultCreditCard(string cardToken, string customerId)
+        //{
+        //    StripeIntegration.UpdateDefaultPaymentMethod(cardToken, customerId);
+        //    //var cust = StripeIntegration.UpdateDefaultPaymentMethod(cardToken, customerId);
+
+        //    //if (!string.IsNullOrEmpty(cust.Id))
+        //    //{
+        //    //    return new ResponseWrapper
+        //    //    {
+        //    //        Error = false,
+        //    //        Data = new UpdateDefaultCreditCardResponse
+        //    //        {
+        //    //            CustomerId = cust.Id,
+        //    //            DefaultCardId = cust.InvoiceSettings.DefaultPaymentMethodId,
+        //    //            CardsList = StripeIntegration.GetCardsList(cust.Id)
+        //    //        },
+        //    //        Message = ResponseKeys.msgSuccess
+        //    //    };
+        //    //}
+        //    //else
+        //    //{
+        //    //    return new ResponseWrapper
+        //    //    {
+        //    //        Message = ResponseKeys.paymentGetwayError
+        //    //    };
+        //    //}
+        //}
 
     }
 }

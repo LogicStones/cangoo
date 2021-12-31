@@ -106,10 +106,23 @@ namespace DTOs.API
         public List<StripeCard> CardsList { get; set; } = new List<StripeCard>();
     }
 
-    //string pID, string email, string customerID
-
-    public class StripeClientSecretRequest
+    public class StripePaymentIntentClientSecretRequest
     {
+        [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
+        public string PassengerId { get; set; }
+
+        [Required]
+        [DefaultValue("test.logicstones@gmail.com")]
+        public string Email { get; set; }
+
+        [Required]
+        [DefaultValue("10.00")]
+        public string Amount { get; set; }
+    }
+
+    public class StripeSetupIntentClientSecretRequest
+{
         [Required]
         [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string PassengerId { get; set; }
