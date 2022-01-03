@@ -735,6 +735,9 @@
     <Compile Include="UserPromo.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>
+    <Compile Include="UserReadNotification.cs">
+      <DependentUpon>CangooEntities.tt</DependentUpon>
+    </Compile>
     <Compile Include="Vehicle.cs">
       <DependentUpon>CangooEntities.tt</DependentUpon>
     </Compile>

@@ -22,5 +22,7 @@ namespace DatabaseModel
         public System.DateTime ExpiryDate { get; set; }
         public int ApplicationUserTypeID { get; set; }
         public System.Guid ApplicationID { get; set; }
+        public string Image { get; set; }
+        public string OriginalImage { get; set; }
     }
 }

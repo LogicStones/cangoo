@@ -716,6 +716,8 @@
           <Property Name="ExpiryDate" Type="datetime" Nullable="false" />
           <Property Name="ApplicationUserTypeID" Type="int" Nullable="false" />
           <Property Name="ApplicationID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="Image" Type="varchar" MaxLength="500" />
+          <Property Name="OriginalImage" Type="varchar" MaxLength="100" />
         </EntityType>
         <EntityType Name="PassengerPlaces">
           <Key>
@@ -1281,6 +1283,15 @@
           <Property Name="isActive" Type="bit" Nullable="false" />
           <Property Name="ApplicationID" Type="uniqueidentifier" Nullable="false" />
           <Property Name="NoOfUsage" Type="int" Nullable="false" />
+        </EntityType>
+        <EntityType Name="UserReadNotifications">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="FeedId" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="UserId" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="ReadDateTime" Type="datetime" Nullable="false" />
         </EntityType>
         <EntityType Name="Vehicle">
           <Key>
@@ -2676,6 +2687,7 @@
           <EntitySet Name="UserInvites" EntityType="Self.UserInvites" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="UserProfile" EntityType="Self.UserProfile" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="UserPromos" EntityType="Self.UserPromos" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="UserReadNotifications" EntityType="Self.UserReadNotifications" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Vehicle" EntityType="Self.Vehicle" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="VehicleCategory" EntityType="Self.VehicleCategory" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="VehicleMake" EntityType="Self.VehicleMake" Schema="dbo" store:Type="Tables" />
@@ -3880,7 +3892,6 @@
           <EntitySet Name="Languages" EntityType="CangooModel.Language" />
           <EntitySet Name="LogCaptainOnlineVehicles" EntityType="CangooModel.LogCaptainOnlineVehicle" />
           <EntitySet Name="Modules" EntityType="CangooModel.Module" />
-          <EntitySet Name="Notifications" EntityType="CangooModel.Notification" />
           <EntitySet Name="PassengerPlaces" EntityType="CangooModel.PassengerPlace" />
           <EntitySet Name="PaymentModes" EntityType="CangooModel.PaymentMode" />
           <EntitySet Name="PaymentStatus" EntityType="CangooModel.PaymentStatu" />
@@ -3954,6 +3965,8 @@
             <Parameter Name="fleetID" Mode="In" Type="String" />
             <Parameter Name="pickUpDateTime" Mode="In" Type="DateTime" />
           </FunctionImport>
+          <EntitySet Name="Notifications" EntityType="CangooModel.Notification" />
+          <EntitySet Name="UserReadNotifications" EntityType="CangooModel.UserReadNotification" />
           </EntityContainer>
         <ComplexType Name="FetchAdminAnnualEarningAndProfit_Result">
           <Property Type="String" Name="Month" Nullable="true" MaxLength="30" />
@@ -6770,19 +6783,6 @@
           <Property Name="ModuleName" Type="String" Nullable="false" MaxLength="200" FixedLength="false" Unicode="true" />
           <Property Name="ModulePrice" Type="Decimal" Precision="19" Scale="4" />
         </EntityType>
-        <EntityType Name="Notification">
-          <Key>
-            <PropertyRef Name="FeedID" />
-          </Key>
-          <Property Name="FeedID" Type="Guid" Nullable="false" />
-          <Property Name="Title" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
-          <Property Name="ShortDescription" Type="String" Nullable="false" MaxLength="500" FixedLength="false" Unicode="false" />
-          <Property Name="Detail" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="false" />
-          <Property Name="CreationDate" Type="DateTime" Nullable="false" Precision="3" />
-          <Property Name="ExpiryDate" Type="DateTime" Nullable="false" Precision="3" />
-          <Property Name="ApplicationUserTypeID" Type="Int32" Nullable="false" />
-          <Property Name="ApplicationID" Type="Guid" Nullable="false" />
-        </EntityType>
         <EntityType Name="PassengerPlace">
           <Key>
             <PropertyRef Name="ID" />
@@ -7549,6 +7549,30 @@
           <Property Type="String" Name="PhoneNumber" Nullable="true" />
           <Property Type="String" Name="PassengerName" Nullable="true" MaxLength="201" />
         </ComplexType>
+        <EntityType Name="Notification">
+          <Key>
+            <PropertyRef Name="FeedID" />
+          </Key>
+          <Property Name="FeedID" Type="Guid" Nullable="false" />
+          <Property Name="Title" Type="String" Nullable="false" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Name="ShortDescription" Type="String" Nullable="false" MaxLength="500" FixedLength="false" Unicode="false" />
+          <Property Name="Detail" Type="String" Nullable="false" MaxLength="Max" FixedLength="false" Unicode="false" />
+          <Property Name="CreationDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="ExpiryDate" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="ApplicationUserTypeID" Type="Int32" Nullable="false" />
+          <Property Name="ApplicationID" Type="Guid" Nullable="false" />
+          <Property Name="Image" Type="String" MaxLength="500" FixedLength="false" Unicode="false" />
+          <Property Name="OriginalImage" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
+        </EntityType>
+        <EntityType Name="UserReadNotification">
+          <Key>
+            <PropertyRef Name="Id" />
+          </Key>
+          <Property Name="Id" Type="Guid" Nullable="false" />
+          <Property Name="FeedId" Type="Guid" Nullable="false" />
+          <Property Name="UserId" Type="Guid" Nullable="false" />
+          <Property Name="ReadDateTime" Type="DateTime" Nullable="false" Precision="3" />
+        </EntityType>
         </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -10969,20 +10993,6 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="Notifications">
-            <EntityTypeMapping TypeName="CangooModel.Notification">
-              <MappingFragment StoreEntitySet="Notifications">
-                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
-                <ScalarProperty Name="ApplicationUserTypeID" ColumnName="ApplicationUserTypeID" />
-                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
-                <ScalarProperty Name="CreationDate" ColumnName="CreationDate" />
-                <ScalarProperty Name="Detail" ColumnName="Detail" />
-                <ScalarProperty Name="ShortDescription" ColumnName="ShortDescription" />
-                <ScalarProperty Name="Title" ColumnName="Title" />
-                <ScalarProperty Name="FeedID" ColumnName="FeedID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
           <EntitySetMapping Name="PassengerPlaces">
             <EntityTypeMapping TypeName="CangooModel.PassengerPlace">
               <MappingFragment StoreEntitySet="PassengerPlaces">
@@ -11776,6 +11786,32 @@
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>
+          <EntitySetMapping Name="Notifications">
+            <EntityTypeMapping TypeName="CangooModel.Notification">
+              <MappingFragment StoreEntitySet="Notifications">
+                <ScalarProperty Name="OriginalImage" ColumnName="OriginalImage" />
+                <ScalarProperty Name="Image" ColumnName="Image" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="ApplicationUserTypeID" ColumnName="ApplicationUserTypeID" />
+                <ScalarProperty Name="ExpiryDate" ColumnName="ExpiryDate" />
+                <ScalarProperty Name="CreationDate" ColumnName="CreationDate" />
+                <ScalarProperty Name="Detail" ColumnName="Detail" />
+                <ScalarProperty Name="ShortDescription" ColumnName="ShortDescription" />
+                <ScalarProperty Name="Title" ColumnName="Title" />
+                <ScalarProperty Name="FeedID" ColumnName="FeedID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="UserReadNotifications">
+            <EntityTypeMapping TypeName="CangooModel.UserReadNotification">
+              <MappingFragment StoreEntitySet="UserReadNotifications">
+                <ScalarProperty Name="ReadDateTime" ColumnName="ReadDateTime" />
+                <ScalarProperty Name="UserId" ColumnName="UserId" />
+                <ScalarProperty Name="FeedId" ColumnName="FeedId" />
+                <ScalarProperty Name="Id" ColumnName="Id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
           </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

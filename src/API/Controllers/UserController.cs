@@ -607,10 +607,7 @@ namespace API.Controllers
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
-                Data = new GetLanguageRequestRespose
-                {
-                    Languages = await LanguageService.GetAllLanguages()
-                }
+                Data = await LanguageService.GetAllLanguages()
             });
         }
 
@@ -618,23 +615,7 @@ namespace API.Controllers
         [Route("update-language")]
         public async Task<HttpResponseMessage> UpdateLanguage([FromBody] UpdateLanguageRequest model)
         {
-            var result = await LanguageService.UpdatePassengerLanguage(model);
-
-            if (result == 0)
-            {
-                return Request.CreateResponse(HttpStatusCode.NotModified, new ResponseWrapper
-                {
-                    Message = ResponseKeys.failedToUpdate
-                });
-            }
-            else
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = false,
-                    Message = ResponseKeys.msgSuccess
-                });
-            }
+            return Request.CreateResponse(HttpStatusCode.OK, await LanguageService.UpdatePassengerLanguage(model));
         }
 
         #endregion
@@ -645,15 +626,11 @@ namespace API.Controllers
         [Route("get-trusted-contact")]
         public async Task<HttpResponseMessage> GetTrustedContact([FromUri] GetTrustedContactRequest model)
         {
-            var lstTrustedContact = await TrustedContactManagerService.GetTrustedContact(model.PassengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
-                Data = new GetTrustedContactResponse
-                {
-                    Contact = lstTrustedContact
-                }
+                Data = await TrustedContactManagerService.GetTrustedContact(model.PassengerId)
             });
         }
 
@@ -1115,14 +1092,13 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("notifications-list")]
-        public async Task<HttpResponseMessage> GetNotificationsList([FromUri] NotificationListRequest model)
+        public async Task<HttpResponseMessage> GetNotificationsList([FromUri] GetNotificationsListRequest model)
         {
-            var lstNotifications = await NotificationServices.GetNotifications(model.ReceiverId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
-                Data = lstNotifications
+                Data = await NotificationServices.GetValidNotifications(((int)ApplicationUserTypes.Passenger).ToString(), model.PassengerId)
             });
         }
 
@@ -1130,12 +1106,11 @@ namespace API.Controllers
         [Route("read-notification")]
         public async Task<HttpResponseMessage> ReadNotification([FromBody] ReadNotificationRequest model)
         {
-            var FullNotifications = await NotificationServices.GetFullReadNotification(model.FeedId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
-                Data = FullNotifications
+                Data = await NotificationServices.GetNotificationdetails(model.FeedId, model.PassengerId)
             });
         }
 
@@ -1262,8 +1237,8 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [Route("current-utc-datetime")]
-        public HttpResponseMessage getCurrentUTCDateTime()
+        [Route("dashboard")]
+        public async Task<HttpResponseMessage> GetMiscData()
         {
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
@@ -1271,10 +1246,27 @@ namespace API.Controllers
                 Message = ResponseKeys.msgSuccess,
                 Data = new Dictionary<dynamic, dynamic>
                             {
-                                {"currentDateTime", DateTime.UtcNow.ToString(Formats.DateTimeFormat) }
+                                {"TotalNotifications", await NotificationServices.GetValidNotificationsCount() },
+                                {"CurrentUTCDateTime", DateTime.UtcNow.ToString(Formats.DateTimeFormat) },
                             }
             });
         }
+
+
+        //[HttpGet]
+        //[Route("current-utc-datetime")]
+        //public HttpResponseMessage getCurrentUTCDateTime()
+        //{
+        //    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+        //    {
+        //        Error = false,
+        //        Message = ResponseKeys.msgSuccess,
+        //        Data = new Dictionary<dynamic, dynamic>
+        //                    {
+        //                        {"currentDateTime", DateTime.UtcNow.ToString(Formats.DateTimeFormat) }
+        //                    }
+        //    });
+        //}
 
         #endregion
     }

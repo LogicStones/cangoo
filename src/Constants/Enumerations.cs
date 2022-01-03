@@ -17,6 +17,13 @@ namespace Constants
 		ApplicationAdmin
 	}
 
+	public enum ApplicationUserTypes
+	{
+		Passenger = 1,
+		Captain,
+		Go4Module
+	}
+
 	public enum Languages
 	{
 		German = 1,

@@ -236,7 +236,9 @@ Update Userprofile Set CountryCode = {1} where UserID = {2};", phoneNumber, coun
                     await UpdateDeviceTokenAsync(deviceToken, userProfile.UserID);
                 }
 
-                PassengerAuthenticationResponse passengerModel = new PassengerAuthenticationResponse
+                var trustedContact = await TrustedContactManagerService.GetTrustedContact(userId);
+
+                PassengerAuthenticationResponse response = new PassengerAuthenticationResponse
                 {
                     PassengerId = userProfile.UserID.ToString(),
                     FirstName = userProfile.FirstName,
@@ -252,13 +254,16 @@ Update Userprofile Set CountryCode = {1} where UserID = {2};", phoneNumber, coun
                     Spendings = string.Format("{0:0.00}", userProfile.Spendings.ToString()),
                     ResellerId = resellerId,
                     ApplicationId = applicationId,
-                    AccessToken = ""
+                    AccessToken = "",
+                    DefaultLanguageId = userProfile.LanguageID.ToString(),
+                    DefaultLanguageName = Enum.GetName(typeof(Languages), (int)userProfile.LanguageID),
+                    TrustedContactName = trustedContact == null ? "" : trustedContact.FirstName
                 };
 
                 if (!isExistingUser || (isExistingUser && !isUserProfileUpdated) || isLogin)
                 {
-                    passengerModel.AccessToken = await GetAccesToken(userName, password);
-                    if (string.IsNullOrEmpty(passengerModel.AccessToken))
+                    response.AccessToken = await GetAccesToken(userName, password);
+                    if (string.IsNullOrEmpty(response.AccessToken))
                     {
                         return new ResponseWrapper
                         {
@@ -269,16 +274,16 @@ Update Userprofile Set CountryCode = {1} where UserID = {2};", phoneNumber, coun
 
                 var applicationData = context.spGetApplicationArea(applicationId).FirstOrDefault();
 
-                passengerModel.IsUserProfileUpdated = isUserProfileUpdated.ToString();
-                passengerModel.IsVerified = true.ToString();
-                passengerModel.ApplicationId = applicationData.ApplicationID.ToString();
-                passengerModel.ApplicationAuthorizeArea = applicationData.AuthorizedArea;
+                response.IsUserProfileUpdated = isUserProfileUpdated.ToString();
+                response.IsVerified = true.ToString();
+                response.ApplicationId = applicationData.ApplicationID.ToString();
+                response.ApplicationAuthorizeArea = applicationData.AuthorizedArea;
 
                 return new ResponseWrapper
                 {
                     Error = false,
                     Message = ResponseKeys.msgSuccess,
-                    Data = passengerModel
+                    Data = response
                 };
             }
         }

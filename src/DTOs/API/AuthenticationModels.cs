@@ -64,6 +64,9 @@ namespace DTOs.API
 		public string CountryCode { get; set; } = "";
 		public string Spendings { get; set; } = "";
 		public string AccessToken { get; set; } = "";
+		public string DefaultLanguageId { get; set; } = "";
+		public string DefaultLanguageName { get; set; } = "";
+		public string TrustedContactName { get; set; } = "";
 		public string IsBlocked { get; set; } = "";
 		public string IsUserProfileUpdated { get; set; } = "";
 		public string IsVerified { get; set; } = "";

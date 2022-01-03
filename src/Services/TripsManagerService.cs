@@ -719,26 +719,32 @@ namespace Services
                 trip.VehicleRating = Convert.ToInt32(Convert.ToDouble(model.Rating));
                 trip.UserSubmittedFeedback = model.UserFeedBack;
 
-                bool isTipPaid = false;
+                bool isTipPaid = true;
+                trip.Tip = 0;
 
-                if (trip.PaymentModeId == (int)PaymentModes.CreditCard)
+                if (decimal.Parse(model.TipAmount) > 0)
                 {
-                    var paymentIntent = await PaymentsServices.CaptureTipFromTripCreditCard("Tip : " + trip.TripID.ToString(), userProfile.CreditCardCustomerID, (long)(decimal.Parse(model.TipAmount) * 100), trip.CreditCardPaymentIntent);
+                    isTipPaid = false;
 
-                    if (paymentIntent.Status.Equals(TransactionStatus.succeeded))
+                    if (trip.PaymentModeId == (int)PaymentModes.CreditCard)
                     {
-                        trip.Tip = decimal.Parse(model.TipAmount);
-                        isTipPaid = true;
+                        var paymentIntent = await PaymentsServices.CaptureTipFromTripCreditCard("Tip : " + trip.TripID.ToString(), userProfile.CreditCardCustomerID, (long)(decimal.Parse(model.TipAmount) * 100), trip.CreditCardPaymentIntent);
+
+                        if (paymentIntent.Status.Equals(TransactionStatus.succeeded))
+                        {
+                            trip.Tip = decimal.Parse(model.TipAmount);
+                            isTipPaid = true;
+                        }
                     }
-                }
-                else if (trip.PaymentModeId == (int)PaymentModes.Wallet)
-                {
-                    if (userProfile.AvailableWalletBalance >= decimal.Parse(model.TipAmount))
+                    else if (trip.PaymentModeId == (int)PaymentModes.Wallet)
                     {
-                        isTipPaid = true;
-                        trip.Tip = decimal.Parse(model.TipAmount);
-                        userProfile.WalletBalance -= decimal.Parse(model.TipAmount);
-                        userProfile.AvailableWalletBalance -= decimal.Parse(model.TipAmount);
+                        if (userProfile.AvailableWalletBalance >= decimal.Parse(model.TipAmount))
+                        {
+                            isTipPaid = true;
+                            trip.Tip = decimal.Parse(model.TipAmount);
+                            userProfile.WalletBalance -= decimal.Parse(model.TipAmount);
+                            userProfile.AvailableWalletBalance -= decimal.Parse(model.TipAmount);
+                        }
                     }
                 }
 

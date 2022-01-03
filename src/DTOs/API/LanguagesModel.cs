@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
@@ -7,29 +8,21 @@ using System.Threading.Tasks;
 
 namespace DTOs.API
 {
-
-    public class GetLanguageRequestRespose
-    {
-        public List<LanguagesDetail> Languages { get; set; } = new List<LanguagesDetail>();
-    }
-
     public class LanguagesDetail
     {
-        [Required]
         public string Id { get; set; } = "";
-        [Required]
         public string Language { get; set; } = "";
-        [Required]
         public string ShortName { get; set; } = "";
-        [Required]
-        public string Format { get; set; } = "";
     }
 
     public class UpdateLanguageRequest
     {
         [Required]
-        public string Id { get; set; } = "";
+        [DefaultValue("1")]
+        public string LanguageId { get; set; } = "";
+
         [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
         public string PassengerId { get; set; } = "";
     }
 }
