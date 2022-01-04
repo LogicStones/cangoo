@@ -16,8 +16,9 @@ namespace DatabaseModel
     {
         public System.Guid UserInvitesID { get; set; }
         public System.Guid UserID { get; set; }
-        public System.Guid CaptainID { get; set; }
+        public System.Guid ReferralID { get; set; }
         public System.DateTime DateTime { get; set; }
         public System.Guid ApplicationID { get; set; }
+        public bool IsReferredByDriver { get; set; }
     }
 }

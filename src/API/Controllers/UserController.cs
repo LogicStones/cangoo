@@ -278,7 +278,7 @@ namespace API.Controllers
         {
             return Request.CreateResponse(HttpStatusCode.OK);
         }
-        
+
         #endregion
 
         #region Profile
@@ -672,15 +672,11 @@ namespace API.Controllers
         [Route("passenger-earned-reward-points")]
         public async Task<HttpResponseMessage> PassengerEarnedRewardPoints([FromUri] GetPassengerCangoosRequest model)
         {
-            var result = await RewardPointService.GetPassengerRewardPoint(model.PassengerId);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
-                Data = new PassengerEarnedRewardRespose
-                {
-                    RewardPoint = result.RewardPoint
-                }
+                Data = await RewardPointService.GetPassengerRewardPoint(model.PassengerId)
             });
         }
 
@@ -688,7 +684,7 @@ namespace API.Controllers
         [Route("redeem-reward-points")]
         public async Task<HttpResponseMessage> RedeemRewardPoints([FromBody] ReedemPassengerCangoosRequsest model)
         {
-            var result = await RewardPointService.ReedemPassengerPoints(model);
+            var result = await RewardPointService.ReedemRewardPoints(model);
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
@@ -710,10 +706,7 @@ namespace API.Controllers
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
-                Data = new RewardPointResponse
-                {
-                    Rewards = await RewardPointService.GetRewards()
-                }
+                Data = await RewardPointService.GetRewardPointsList()
             });
         }
 
@@ -952,9 +945,9 @@ namespace API.Controllers
         [Route("delete-credit-card")]
         public async Task<HttpResponseMessage> DeleteCreditCard([FromBody] DeleteCreditCardRequest model)
         {
-            return Request.CreateResponse(HttpStatusCode.OK, PaymentsServices.DeleteCreditCard(model.CardToken, model.CustomerId)) ;
-            
-            
+            return Request.CreateResponse(HttpStatusCode.OK, PaymentsServices.DeleteCreditCard(model.CardToken, model.CustomerId));
+
+
         }
 
         #endregion
@@ -1122,42 +1115,7 @@ namespace API.Controllers
         [Route("apply-invite-code")]
         public async Task<HttpResponseMessage> ApplyInviteCode([FromBody] ApplyInviteCodeRequest model)
         {
-            if (InvitationService.IsUserInviteCodeApplicable(model.PassengerId))
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = true,
-                    Message = ResponseKeys.inviteCodeNotApplicable,
-                });
-            }
-            else if (InvitationService.IsUserInviteCodeAlreadyApplied(model.PassengerId))
-            {
-                return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                {
-                    Error = true,
-                    Message = ResponseKeys.inviteCodeAlreadyApplied,
-                });
-            }
-            else
-            {
-                var result = await InvitationService.ApplyInvitation(model);
-                if (result > 0)
-                {
-                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                    {
-                        Error = false,
-                        Message = ResponseKeys.msgSuccess,
-                    });
-                }
-                else
-                {
-                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-                    {
-                        Error = true,
-                        Message = ResponseKeys.invalidInviteCode,
-                    });
-                }
-            }
+            return Request.CreateResponse(HttpStatusCode.OK, await InvitationService.ApplyShareCode(model.InviteCode, model.PassengerId));
         }
 
         #endregion
@@ -1238,20 +1196,20 @@ namespace API.Controllers
 
         [HttpGet]
         [Route("dashboard")]
-        public async Task<HttpResponseMessage> GetMiscData()
+        public async Task<HttpResponseMessage> GetMiscData([FromUri] DashboardDataRequest model)
         {
             return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
             {
                 Error = false,
                 Message = ResponseKeys.msgSuccess,
-                Data = new Dictionary<dynamic, dynamic>
-                            {
-                                {"TotalNotifications", await NotificationServices.GetValidNotificationsCount() },
-                                {"CurrentUTCDateTime", DateTime.UtcNow.ToString(Formats.DateTimeFormat) },
-                            }
+                Data = new DashboardDataResponse
+                {
+                    CurrentUTCDateTime = DateTime.UtcNow.ToString(Formats.DateTimeFormat),
+                    TotalNotifications = (await NotificationServices.GetValidNotificationsCount()).ToString(),
+                    RewardPoint = (await RewardPointService.GetPassengerRewardPoint(model.PassengerId)).RewardPoint.ToString()
+                }
             });
         }
-
 
         //[HttpGet]
         //[Route("current-utc-datetime")]

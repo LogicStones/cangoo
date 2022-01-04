@@ -67,12 +67,27 @@ namespace DTOs.API
 		public string DefaultLanguageId { get; set; } = "";
 		public string DefaultLanguageName { get; set; } = "";
 		public string TrustedContactName { get; set; } = "";
+		public string ShareCode { get; set; } = "";
 		public string IsBlocked { get; set; } = "";
 		public string IsUserProfileUpdated { get; set; } = "";
 		public string IsVerified { get; set; } = "";
 		public string ResellerId { get; set; } = "";
 		public string ApplicationId { get; set; } = "";
 		public string ApplicationAuthorizeArea { get; set; } = "";
+	}
+
+	public class DashboardDataRequest
+	{
+		[Required]
+		[DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
+		public string PassengerId { get; set; }
+	}
+
+	public class DashboardDataResponse
+	{
+		public string TotalNotifications { get; set; } = "";
+		public string CurrentUTCDateTime { get; set; } = "";
+		public string RewardPoint { get; set; } = ""; 
 	}
 
 	public class PassengerForgetPasswordRequest

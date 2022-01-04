@@ -75,8 +75,6 @@
         <EntityTypeShape EntityType="CangooModel.TripStatu" Width="1.5" PointX="26.75" PointY="0.75" />
         <EntityTypeShape EntityType="CangooModel.TrustedContact" Width="1.5" PointX="26.75" PointY="3.75" />
         <EntityTypeShape EntityType="CangooModel.UserFavoriteCaptain" Width="1.5" PointX="4.75" PointY="26.75" />
-        <EntityTypeShape EntityType="CangooModel.UserInvite" Width="1.5" PointX="6.75" PointY="26.75" />
-        <EntityTypeShape EntityType="CangooModel.UserProfile" Width="1.5" PointX="26.75" PointY="7.75" />
         <EntityTypeShape EntityType="CangooModel.UserPromo" Width="1.5" PointX="8.75" PointY="26.75" />
         <EntityTypeShape EntityType="CangooModel.Vehicle" Width="1.5" PointX="26.75" PointY="14.75" />
         <EntityTypeShape EntityType="CangooModel.VehicleCategory" Width="1.5" PointX="26.75" PointY="20.75" />
@@ -89,6 +87,8 @@
         <EntityTypeShape EntityType="CangooModel.Trip" Width="1.5" PointX="23.375" PointY="27.75" />
         <EntityTypeShape EntityType="CangooModel.Notification" Width="1.5" PointX="25.375" PointY="27.75" />
         <EntityTypeShape EntityType="CangooModel.UserReadNotification" Width="1.5" PointX="27.375" PointY="27.75" />
+        <EntityTypeShape EntityType="CangooModel.UserProfile" Width="1.5" PointX="27.375" PointY="7.75" />
+        <EntityTypeShape EntityType="CangooModel.UserInvite" Width="1.5" PointX="29.375" PointY="0.75" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>

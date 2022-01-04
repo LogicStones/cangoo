@@ -17,11 +17,6 @@ namespace DTOs.API
         public string ExpiryDate { get; set; } = "";
     }
 
-    public class RewardPointResponse
-    {
-        public List<RewardDetails> Rewards { get; set; } = new List<RewardDetails>();
-    }
-
     public class GetPassengerCangoosRequest
     {
         [Required]

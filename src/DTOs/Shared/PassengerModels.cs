@@ -43,5 +43,6 @@ namespace DTOs.Shared
         public System.DateTime MemberSince { get; set; }
         public int RewardPoints { get; set; }
         public Nullable<int> LanguageID { get; set; }
+        public string ShareCode { get; set; }
     }
 }

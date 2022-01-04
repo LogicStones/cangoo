@@ -38,22 +38,22 @@ namespace Services
                     LastName = "",
                     ProfilePicture = "~/Images/User/userAvatar.png",
                     OriginalPicture = "",
-                    Rating = 5,
-                    Spendings = 0,
-                    NumberDriverFavourites = 0,
-                    NoOfTrips = 0,
-                    isWalletPreferred = false,
-                    WalletBalance = 0,
-                    AvailableWalletBalance = 0,
-                    RewardPoints = 0,
                     LanguageID = (int)Languages.German,
                     PreferredPaymentMethod = "Cash",
                     CountryCode = countryCode,
                     CreditCardCustomerID = "",
-                    isCoWorker = false,
                     DeviceToken = deviceToken,
+                    Rating = 5,
+                    Spendings = 0,
+                    NumberDriverFavourites = 0,
+                    NoOfTrips = 0,
+                    WalletBalance = 0,
+                    RewardPoints = 0,
+                    AvailableWalletBalance = 0,
+                    isWalletPreferred = false,
                     IsActive = true,
                     isSharedBookingEnabled = false,
+                    isCoWorker = false,
                     LastRechargedAt = null,
                     ApplicationID = Guid.Parse(applicationId),
                     ResellerID = Guid.Parse(resellerId),
@@ -69,14 +69,26 @@ namespace Services
         {
             using (var dbContext = new CangooEntities())
             {
-               var profile = await dbContext.UserProfiles.Where(up => up.UserID.Equals(userId) 
-               && up.ApplicationID.ToString().ToLower().Equals(applicationId)
-               && up.ResellerID.ToString().ToLower().Equals(resellerId)).FirstOrDefaultAsync();
+                var profile = await dbContext.UserProfiles.Where(up => up.UserID.Equals(userId)
+                && up.ApplicationID.ToString().ToLower().Equals(applicationId)
+                && up.ResellerID.ToString().ToLower().Equals(resellerId)).FirstOrDefaultAsync();
 
                 return AutoMapperConfig._mapper.Map<UserProfile, PassengerProfileDTO>(profile);
             }
         }
-        
+
+        public static async Task<PassengerProfileDTO> GetProfileByShareCodeAsync(string shareCode, string applicationId, string resellerId)
+        {
+            using (var dbContext = new CangooEntities())
+            {
+                var profile = await dbContext.UserProfiles.Where(up => up.ShareCode.Equals(shareCode)
+                && up.ApplicationID.ToString().ToLower().Equals(applicationId)
+                && up.ResellerID.ToString().ToLower().Equals(resellerId)).FirstOrDefaultAsync();
+
+                return AutoMapperConfig._mapper.Map<UserProfile, PassengerProfileDTO>(profile);
+            }
+        }
+
         //public static async Task UpdateUserWalletBalance(string lastRechargeAt,string walletBalance, string passengerId)
         //{
         //    using (var dbcontext=new CangooEntities())
@@ -257,7 +269,8 @@ Update Userprofile Set CountryCode = {1} where UserID = {2};", phoneNumber, coun
                     AccessToken = "",
                     DefaultLanguageId = userProfile.LanguageID.ToString(),
                     DefaultLanguageName = Enum.GetName(typeof(Languages), (int)userProfile.LanguageID),
-                    TrustedContactName = trustedContact == null ? "" : trustedContact.FirstName
+                    TrustedContactName = trustedContact == null ? "" : trustedContact.FirstName,
+                    ShareCode = userProfile.ShareCode
                 };
 
                 if (!isExistingUser || (isExistingUser && !isUserProfileUpdated) || isLogin)

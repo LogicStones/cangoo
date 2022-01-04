@@ -1,4 +1,5 @@
-﻿using DatabaseModel;
+﻿using Constants;
+using DatabaseModel;
 using DTOs.API;
 using System;
 using System.Collections.Generic;
@@ -11,22 +12,46 @@ namespace Services
 {
     public class InvitationService
     {
-        public static async Task<int> ApplyInvitation(ApplyInviteCodeRequest model)
+        public static async Task<ResponseWrapper> ApplyShareCode(string shareCode, string passengerId)
         {
-            using (CangooEntities dbcontext = new CangooEntities())
+            using (var dbContext = new CangooEntities())
             {
-                var AppID = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString());
-                var ResellerId= Guid.Parse(ConfigurationManager.AppSettings["ResellerID"].ToString());
-                var result = await DriverService.GetDriverByInviteCode(model.InviteCode);
+                //IsUserEligible
+                if (dbContext.Trips.Where(x => x.UserID.ToString().Equals(passengerId)).Any())
+                {
+                    return new ResponseWrapper
+                    {
+                        Error = true,
+                        Message = ResponseKeys.inviteCodeNotApplicable,
+                    };
+                }
+
+                //IsUserAlreadyInvited
+                if (dbContext.UserInvites.Where(x => x.UserID.ToString().Equals(passengerId)).Any())
+                {
+                    return new ResponseWrapper
+                    {
+                        Error = true,
+                        Message = ResponseKeys.inviteCodeAlreadyApplied,
+                    };
+                }
+
+
+                //Validate and Apply
+                var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
+                var resellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
+
+                var result = await DriverService.GetDriverByInviteCode(shareCode);
                 if (result != null)
                 {
                     UserInvite userInvite = new UserInvite
                     {
                         UserInvitesID = Guid.NewGuid(),
-                        UserID = Guid.Parse(model.PassengerId),
-                        CaptainID = result.CaptainID,
+                        UserID = Guid.Parse(passengerId),
+                        ReferralID = result.CaptainID,
                         DateTime = DateTime.UtcNow,
-                        ApplicationID = AppID,
+                        ApplicationID = Guid.Parse(applicationId),
+                        IsReferredByDriver = true
                     };
 
                     result.EarningPoints = result.EarningPoints == null ? 50 : result.EarningPoints + 50 <= 300 ? result.EarningPoints + 50 : 300;
@@ -37,13 +62,13 @@ namespace Services
                         RechargeDate = DateTime.UtcNow,
                         WalletTransferID = Guid.NewGuid(),
                         Referrence = "Reward: Captain invite code applied.",
-                        TransferredBy = AppID,
-                        TransferredTo = Guid.Parse(model.PassengerId),
-                        ApplicationID = AppID,
-                        ResellerID = ResellerId,
+                        TransferredBy = Guid.Parse(applicationId),
+                        TransferredTo = Guid.Parse(passengerId),
+                        ApplicationID = Guid.Parse(applicationId),
+                        ResellerID = Guid.Parse(resellerId),
                     };
 
-                    var userProfile = dbcontext.UserProfiles.Where(x => x.UserID.ToString().Equals(model.PassengerId)).FirstOrDefault();
+                    var userProfile = dbContext.UserProfiles.Where(x => x.UserID.ToString().Equals(passengerId)).FirstOrDefault();
                     if (userProfile != null)
                     {
                         userProfile.LastRechargedAt = DateTime.UtcNow;
@@ -51,32 +76,33 @@ namespace Services
                         userProfile.AvailableWalletBalance += 10;
                     }
 
-                    dbcontext.UserInvites.Add(userInvite);
-                    dbcontext.WalletTransfers.Add(wallet);
+                    dbContext.UserInvites.Add(userInvite);
+                    dbContext.WalletTransfers.Add(wallet);
 
-                    await dbcontext.SaveChangesAsync();
-                    return (int)userProfile.WalletBalance;
+                    await dbContext.SaveChangesAsync();
                 }
                 else
                 {
-                    return 0;
+                    var user = await UserService.GetProfileByShareCodeAsync(shareCode, applicationId, resellerId);
+                    if (result != null)
+                    {
+                        //TBD : What to reward
+                    }
+                    else
+                    {
+                        return new ResponseWrapper
+                        {
+                            Error = true,
+                            Message = ResponseKeys.invalidInviteCode,
+                        };
+                    }
                 }
-            }
-        }
 
-        public static bool IsUserInviteCodeApplicable(string passengerId)
-        {
-            using (CangooEntities dbcontext=new CangooEntities())
-            {
-                return dbcontext.Trips.Where(x => x.UserID.ToString().Equals(passengerId)).Any();
-            }
-        }
-
-        public static bool IsUserInviteCodeAlreadyApplied(string passengerId)
-        {
-            using (CangooEntities dbcontext=new CangooEntities())
-            {
-                return dbcontext.UserInvites.Where(x => x.UserID.ToString().Equals(passengerId)).Any();
+                return new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                };
             }
         }
     }

@@ -40,5 +40,6 @@ namespace DatabaseModel
         public int RewardPoints { get; set; }
         public Nullable<int> LanguageID { get; set; }
         public Nullable<decimal> AvailableWalletBalance { get; set; }
+        public string ShareCode { get; set; }
     }
 }

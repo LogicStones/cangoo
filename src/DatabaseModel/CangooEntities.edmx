@@ -1238,9 +1238,10 @@
           </Key>
           <Property Name="UserInvitesID" Type="uniqueidentifier" Nullable="false" />
           <Property Name="UserID" Type="uniqueidentifier" Nullable="false" />
-          <Property Name="CaptainID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="ReferralID" Type="uniqueidentifier" Nullable="false" />
           <Property Name="DateTime" Type="datetime" Nullable="false" />
           <Property Name="ApplicationID" Type="uniqueidentifier" Nullable="false" />
+          <Property Name="IsReferredByDriver" Type="bit" Nullable="false" />
         </EntityType>
         <EntityType Name="UserProfile">
           <Key>
@@ -1272,6 +1273,7 @@
           <Property Name="RewardPoints" Type="int" Nullable="false" />
           <Property Name="LanguageID" Type="int" />
           <Property Name="AvailableWalletBalance" Type="money" />
+          <Property Name="ShareCode" Type="varchar" MaxLength="10" />
         </EntityType>
         <EntityType Name="UserPromos">
           <Key>
@@ -3922,8 +3924,6 @@
           <EntitySet Name="TripStatus" EntityType="CangooModel.TripStatu" />
           <EntitySet Name="TrustedContacts" EntityType="CangooModel.TrustedContact" />
           <EntitySet Name="UserFavoriteCaptains" EntityType="CangooModel.UserFavoriteCaptain" />
-          <EntitySet Name="UserInvites" EntityType="CangooModel.UserInvite" />
-          <EntitySet Name="UserProfiles" EntityType="CangooModel.UserProfile" />
           <EntitySet Name="UserPromos" EntityType="CangooModel.UserPromo" />
           <EntitySet Name="Vehicles" EntityType="CangooModel.Vehicle" />
           <EntitySet Name="VehicleCategories" EntityType="CangooModel.VehicleCategory" />
@@ -3967,6 +3967,8 @@
           </FunctionImport>
           <EntitySet Name="Notifications" EntityType="CangooModel.Notification" />
           <EntitySet Name="UserReadNotifications" EntityType="CangooModel.UserReadNotification" />
+          <EntitySet Name="UserProfiles" EntityType="CangooModel.UserProfile" />
+          <EntitySet Name="UserInvites" EntityType="CangooModel.UserInvite" />
           </EntityContainer>
         <ComplexType Name="FetchAdminAnnualEarningAndProfit_Result">
           <Property Type="String" Name="Month" Nullable="true" MaxLength="30" />
@@ -7197,47 +7199,6 @@
           <Property Name="IsFavByCaptain" Type="Boolean" />
           <Property Name="ApplicationID" Type="Guid" Nullable="false" />
         </EntityType>
-        <EntityType Name="UserInvite">
-          <Key>
-            <PropertyRef Name="UserInvitesID" />
-          </Key>
-          <Property Name="UserInvitesID" Type="Guid" Nullable="false" />
-          <Property Name="UserID" Type="Guid" Nullable="false" />
-          <Property Name="CaptainID" Type="Guid" Nullable="false" />
-          <Property Name="DateTime" Type="DateTime" Nullable="false" Precision="3" />
-          <Property Name="ApplicationID" Type="Guid" Nullable="false" />
-        </EntityType>
-        <EntityType Name="UserProfile">
-          <Key>
-            <PropertyRef Name="UserID" />
-          </Key>
-          <Property Name="UserID" Type="String" Nullable="false" MaxLength="256" FixedLength="false" Unicode="true" />
-          <Property Name="ResellerID" Type="Guid" />
-          <Property Name="ApplicationID" Type="Guid" />
-          <Property Name="ProfilePicture" Type="String" MaxLength="250" FixedLength="false" Unicode="true" />
-          <Property Name="OriginalPicture" Type="String" MaxLength="250" FixedLength="false" Unicode="true" />
-          <Property Name="FirstName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="LastName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="WalletBalance" Type="Decimal" Precision="19" Scale="4" />
-          <Property Name="Rating" Type="Double" />
-          <Property Name="PhoneVerificationCode" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="NumberDriverFavourites" Type="Int32" />
-          <Property Name="CreditCardCustomerID" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
-          <Property Name="PreferredPaymentMethod" Type="String" MaxLength="200" FixedLength="false" Unicode="false" />
-          <Property Name="isWalletPreferred" Type="Boolean" />
-          <Property Name="isCoWorker" Type="Boolean" />
-          <Property Name="CountryCode" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
-          <Property Name="LastRechargedAt" Type="DateTime" Precision="3" />
-          <Property Name="Spendings" Type="Decimal" Precision="19" Scale="4" />
-          <Property Name="NoOfTrips" Type="Int32" />
-          <Property Name="DeviceToken" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
-          <Property Name="IsActive" Type="Boolean" />
-          <Property Name="isSharedBookingEnabled" Type="Boolean" />
-          <Property Name="MemberSince" Type="DateTime" Nullable="false" Precision="3" />
-          <Property Name="RewardPoints" Type="Int32" Nullable="false" />
-          <Property Name="LanguageID" Type="Int32" />
-          <Property Name="AvailableWalletBalance" Type="Decimal" Precision="19" Scale="4" />
-        </EntityType>
         <EntityType Name="UserPromo">
           <Key>
             <PropertyRef Name="ID" />
@@ -7572,6 +7533,49 @@
           <Property Name="FeedId" Type="Guid" Nullable="false" />
           <Property Name="UserId" Type="Guid" Nullable="false" />
           <Property Name="ReadDateTime" Type="DateTime" Nullable="false" Precision="3" />
+        </EntityType>
+        <EntityType Name="UserProfile">
+          <Key>
+            <PropertyRef Name="UserID" />
+          </Key>
+          <Property Name="UserID" Type="String" Nullable="false" MaxLength="256" FixedLength="false" Unicode="true" />
+          <Property Name="ResellerID" Type="Guid" />
+          <Property Name="ApplicationID" Type="Guid" />
+          <Property Name="ProfilePicture" Type="String" MaxLength="250" FixedLength="false" Unicode="true" />
+          <Property Name="OriginalPicture" Type="String" MaxLength="250" FixedLength="false" Unicode="true" />
+          <Property Name="FirstName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="LastName" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="WalletBalance" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="Rating" Type="Double" />
+          <Property Name="PhoneVerificationCode" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="NumberDriverFavourites" Type="Int32" />
+          <Property Name="CreditCardCustomerID" Type="String" MaxLength="100" FixedLength="false" Unicode="false" />
+          <Property Name="PreferredPaymentMethod" Type="String" MaxLength="200" FixedLength="false" Unicode="false" />
+          <Property Name="isWalletPreferred" Type="Boolean" />
+          <Property Name="isCoWorker" Type="Boolean" />
+          <Property Name="CountryCode" Type="String" MaxLength="50" FixedLength="false" Unicode="false" />
+          <Property Name="LastRechargedAt" Type="DateTime" Precision="3" />
+          <Property Name="Spendings" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="NoOfTrips" Type="Int32" />
+          <Property Name="DeviceToken" Type="String" MaxLength="Max" FixedLength="false" Unicode="true" />
+          <Property Name="IsActive" Type="Boolean" />
+          <Property Name="isSharedBookingEnabled" Type="Boolean" />
+          <Property Name="MemberSince" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="RewardPoints" Type="Int32" Nullable="false" />
+          <Property Name="LanguageID" Type="Int32" />
+          <Property Name="AvailableWalletBalance" Type="Decimal" Precision="19" Scale="4" />
+          <Property Name="ShareCode" Type="String" MaxLength="10" FixedLength="false" Unicode="false" />
+        </EntityType>
+        <EntityType Name="UserInvite">
+          <Key>
+            <PropertyRef Name="UserInvitesID" />
+          </Key>
+          <Property Name="UserInvitesID" Type="Guid" Nullable="false" />
+          <Property Name="UserID" Type="Guid" Nullable="false" />
+          <Property Name="ReferralID" Type="Guid" Nullable="false" />
+          <Property Name="DateTime" Type="DateTime" Nullable="false" Precision="3" />
+          <Property Name="ApplicationID" Type="Guid" Nullable="false" />
+          <Property Name="IsReferredByDriver" Type="Boolean" Nullable="false" />
         </EntityType>
         </Schema>
     </edmx:ConceptualModels>
@@ -11437,49 +11441,6 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
-          <EntitySetMapping Name="UserInvites">
-            <EntityTypeMapping TypeName="CangooModel.UserInvite">
-              <MappingFragment StoreEntitySet="UserInvites">
-                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
-                <ScalarProperty Name="DateTime" ColumnName="DateTime" />
-                <ScalarProperty Name="CaptainID" ColumnName="CaptainID" />
-                <ScalarProperty Name="UserID" ColumnName="UserID" />
-                <ScalarProperty Name="UserInvitesID" ColumnName="UserInvitesID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
-          <EntitySetMapping Name="UserProfiles">
-            <EntityTypeMapping TypeName="CangooModel.UserProfile">
-              <MappingFragment StoreEntitySet="UserProfile">
-                <ScalarProperty Name="AvailableWalletBalance" ColumnName="AvailableWalletBalance" />
-                <ScalarProperty Name="LanguageID" ColumnName="LanguageID" />
-                <ScalarProperty Name="RewardPoints" ColumnName="RewardPoints" />
-                <ScalarProperty Name="MemberSince" ColumnName="MemberSince" />
-                <ScalarProperty Name="isSharedBookingEnabled" ColumnName="isSharedBookingEnabled" />
-                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
-                <ScalarProperty Name="DeviceToken" ColumnName="DeviceToken" />
-                <ScalarProperty Name="NoOfTrips" ColumnName="NoOfTrips" />
-                <ScalarProperty Name="Spendings" ColumnName="Spendings" />
-                <ScalarProperty Name="LastRechargedAt" ColumnName="LastRechargedAt" />
-                <ScalarProperty Name="CountryCode" ColumnName="CountryCode" />
-                <ScalarProperty Name="isCoWorker" ColumnName="isCoWorker" />
-                <ScalarProperty Name="isWalletPreferred" ColumnName="isWalletPreferred" />
-                <ScalarProperty Name="PreferredPaymentMethod" ColumnName="PreferredPaymentMethod" />
-                <ScalarProperty Name="CreditCardCustomerID" ColumnName="CreditCardCustomerID" />
-                <ScalarProperty Name="NumberDriverFavourites" ColumnName="NumberDriverFavourites" />
-                <ScalarProperty Name="PhoneVerificationCode" ColumnName="PhoneVerificationCode" />
-                <ScalarProperty Name="Rating" ColumnName="Rating" />
-                <ScalarProperty Name="WalletBalance" ColumnName="WalletBalance" />
-                <ScalarProperty Name="LastName" ColumnName="LastName" />
-                <ScalarProperty Name="FirstName" ColumnName="FirstName" />
-                <ScalarProperty Name="OriginalPicture" ColumnName="OriginalPicture" />
-                <ScalarProperty Name="ProfilePicture" ColumnName="ProfilePicture" />
-                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
-                <ScalarProperty Name="ResellerID" ColumnName="ResellerID" />
-                <ScalarProperty Name="UserID" ColumnName="UserID" />
-              </MappingFragment>
-            </EntityTypeMapping>
-          </EntitySetMapping>
           <EntitySetMapping Name="UserPromos">
             <EntityTypeMapping TypeName="CangooModel.UserPromo">
               <MappingFragment StoreEntitySet="UserPromos">
@@ -11809,6 +11770,51 @@
                 <ScalarProperty Name="UserId" ColumnName="UserId" />
                 <ScalarProperty Name="FeedId" ColumnName="FeedId" />
                 <ScalarProperty Name="Id" ColumnName="Id" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="UserProfiles">
+            <EntityTypeMapping TypeName="CangooModel.UserProfile">
+              <MappingFragment StoreEntitySet="UserProfile">
+                <ScalarProperty Name="ShareCode" ColumnName="ShareCode" />
+                <ScalarProperty Name="AvailableWalletBalance" ColumnName="AvailableWalletBalance" />
+                <ScalarProperty Name="LanguageID" ColumnName="LanguageID" />
+                <ScalarProperty Name="RewardPoints" ColumnName="RewardPoints" />
+                <ScalarProperty Name="MemberSince" ColumnName="MemberSince" />
+                <ScalarProperty Name="isSharedBookingEnabled" ColumnName="isSharedBookingEnabled" />
+                <ScalarProperty Name="IsActive" ColumnName="IsActive" />
+                <ScalarProperty Name="DeviceToken" ColumnName="DeviceToken" />
+                <ScalarProperty Name="NoOfTrips" ColumnName="NoOfTrips" />
+                <ScalarProperty Name="Spendings" ColumnName="Spendings" />
+                <ScalarProperty Name="LastRechargedAt" ColumnName="LastRechargedAt" />
+                <ScalarProperty Name="CountryCode" ColumnName="CountryCode" />
+                <ScalarProperty Name="isCoWorker" ColumnName="isCoWorker" />
+                <ScalarProperty Name="isWalletPreferred" ColumnName="isWalletPreferred" />
+                <ScalarProperty Name="PreferredPaymentMethod" ColumnName="PreferredPaymentMethod" />
+                <ScalarProperty Name="CreditCardCustomerID" ColumnName="CreditCardCustomerID" />
+                <ScalarProperty Name="NumberDriverFavourites" ColumnName="NumberDriverFavourites" />
+                <ScalarProperty Name="PhoneVerificationCode" ColumnName="PhoneVerificationCode" />
+                <ScalarProperty Name="Rating" ColumnName="Rating" />
+                <ScalarProperty Name="WalletBalance" ColumnName="WalletBalance" />
+                <ScalarProperty Name="LastName" ColumnName="LastName" />
+                <ScalarProperty Name="FirstName" ColumnName="FirstName" />
+                <ScalarProperty Name="OriginalPicture" ColumnName="OriginalPicture" />
+                <ScalarProperty Name="ProfilePicture" ColumnName="ProfilePicture" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="ResellerID" ColumnName="ResellerID" />
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="UserInvites">
+            <EntityTypeMapping TypeName="CangooModel.UserInvite">
+              <MappingFragment StoreEntitySet="UserInvites">
+                <ScalarProperty Name="IsReferredByDriver" ColumnName="IsReferredByDriver" />
+                <ScalarProperty Name="ApplicationID" ColumnName="ApplicationID" />
+                <ScalarProperty Name="DateTime" ColumnName="DateTime" />
+                <ScalarProperty Name="ReferralID" ColumnName="ReferralID" />
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="UserInvitesID" ColumnName="UserInvitesID" />
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
