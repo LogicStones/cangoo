@@ -29,6 +29,6 @@ namespace Constants
         public const string cap_rideDispatched = "cap_rideDispatched";
         public const string cap_30MinutesLeft = "cap_30MinutesLeft";
         public const string cap_20MinutesLeft = "cap_20MinutesLeft";
-        public const string cap_paymentSuccess = "cap_paymentSuccess";
+        public const string cap_tipPaid = "cap_tipPaid";
     }
 }

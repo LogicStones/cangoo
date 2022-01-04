@@ -763,6 +763,15 @@ namespace Services
 
                 dbContext.SaveChanges();
 
+                if (isTipPaid)
+                {
+                    await PushyService.UniCast(captain.DeviceToken, new TipPaymentNotification
+                    {
+                        TipAmount = model.TipAmount,
+                        PassengerName = userProfile.FirstName + " " + userProfile.LastName
+                    }, NotificationKeys.cap_tipPaid);
+                }
+
                 if (trip.PaymentModeId == (int)PaymentModes.Cash)
                 {
                     return new ResponseWrapper

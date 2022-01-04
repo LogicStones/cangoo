@@ -103,11 +103,10 @@ namespace DTOs.API
 		public string AvailableWalletBalance { get; set; }
 	}
 
-	public class CreditCardPaymentNotification
+	public class TipPaymentNotification
 	{
-		public string tripID { get; set; }
-		public string tip { get; set; }
-		public string amount { get; set; }
+		public string TipAmount { get; set; }
+		public string PassengerName { get; set; }
 	}
 
 	public class DriverBookingRequestNotification : TripPaymentMode //: DiscountTypeDTO

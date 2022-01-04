@@ -133,7 +133,6 @@ namespace API.Controllers
             });
         }
 
-
         [HttpGet]
         [Route("UpdatePendingLaterBookings")]
         public async Task<HttpResponseMessage> UpdatePendingLaterBookings()

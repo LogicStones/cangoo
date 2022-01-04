@@ -1536,23 +1536,11 @@ namespace API.Controllers
                    model.tripID, transactionId, (int)TripStatuses.Completed, trip.UserID.ToString(), ApplicationID,
                    model.totalFare, DateTime.UtcNow, (int)PaymentStatuses.Paid).FirstOrDefault();
 
-
-                dic = new Dictionary<dynamic, dynamic>
-                                        {
-                                            { "tripID", model.tripID },
-                                            { "tip", "0.00" },
-                                            { "amount", string.Format("{0:0.00}", Convert.ToDouble(model.totalFare)) }
-                                            //{ "tip", model.tipAmount },
-                                            //{ "amount", string.Format("{0:0.00}", Convert.ToDouble(model.totalFare) - Convert.ToDouble(model.tipAmount) + Convert.ToDouble(model.walletUsedAmount) + Convert.ToDouble(model.promoDiscountAmount)) }
-                                        };
-
                 //if (!isAlreadyPaid)
                 //{
-                await PushyService.UniCast(updatedTrip.DeviceToken, dic, NotificationKeys.cap_paymentSuccess);
 
                 if (!string.IsNullOrEmpty(updatedTrip.PassengerDeviceToken))
                 {
-
                     var notificationPayload = new MobilePaymentNotification()
                     {
                         PromoDiscountAmount = trip.PromoDiscount.ToString(),
