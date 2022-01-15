@@ -36,11 +36,11 @@ namespace DTOs.API
     public class EstimateFareRequest : PolyLineDetails
     {
         [Required]
-        [DefaultValue("32.1348011158146")]
+        [DefaultValue("32.1354161")]
         public string PickUpLatitude { get; set; }
 
         [Required]
-        [DefaultValue("74.2097900505854")]
+        [DefaultValue("74.2100534")]
         public string PickUpLongitude { get; set; }
         
         [Required]
@@ -57,11 +57,11 @@ namespace DTOs.API
         public string MidwayStop1PostalCode { get; set; }
 
         [Required]
-        [DefaultValue("32.1374413236167")]
+        [DefaultValue("32.135440755180824")]
         public string DropOffLatitude { get; set; }
         
         [Required]
-        [DefaultValue("74.2070284762054")]
+        [DefaultValue("74.21016342937946")]
         public string DropOffLongitude { get; set; }
         
         [Required]
@@ -100,46 +100,43 @@ namespace DTOs.API
     public class VehicleCategoryFareEstimate : FareBreakDownDTO
     {
         public string CategoryId { get; set; } = "";
+        public string IsAvailable { get; set; } = false.ToString();
         public string ETA { get; set; } = "0";
         public string InBoundRSFMId { get; set; } = "";
         public string OutBoundRSFMId { get; set; } = "";
     }
-    
+
     public class FareBreakDownDTO
     {
         [DefaultValue("15.00")]
         public string BaseFare { get; set; } = "0.0";
-        
+
         [DefaultValue("15.00")]
         public string BookingFare { get; set; } = "0.0";
-        
+
         [DefaultValue("0.00")]
         public string WaitingFare { get; set; } = "0.0";
-        
+
         [DefaultValue("20.24")]
         public string SurchargeAmount { get; set; } = "0.0";
-        
+
         [DefaultValue("3.68")]
         public string InBoundDistanceFare { get; set; } = "0.0";
-        
+
         [DefaultValue("86.25")]
         public string InBoundTimeFare { get; set; } = "0.0";
-        
+
         [DefaultValue("0.0")]
         public string OutBoundDistanceFare { get; set; } = "0.0";
-        
+
         [DefaultValue("0.0")]
         public string OutBoundTimeFare { get; set; } = "0.0";
-        
+
         [DefaultValue("140.20")]
         public string TotalFare { get; set; } = "0.0";
 
         [DefaultValue("0.03")]
         public string FormattingAdjustment { get; set; } = "0.0";
-
-
-
-
     }
 
     public class DistanceAndTimeFareDTO
