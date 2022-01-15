@@ -1359,28 +1359,17 @@ namespace API.Controllers
         {
             using (CangooEntities context = new CangooEntities())
             {
-                //if (await CheckIfAlreadyPaid(model.totalFare, model.tripID, model.driverID, dic, false))
-                //{
-                //    //TBD: send fcm to user - if required.
-                //    response.data = dic;
-                //    response.error = true;
-                //    response.message = ResponseKeys.fareAlreadyPaid;
-                //    return Request.CreateResponse(HttpStatusCode.OK, response);
-                //}
-
                 string passengerDeviceToken = "";
                 var trip = context.Trips.Where(t => t.TripID.ToString().Equals(model.tripID)).FirstOrDefault();
 
                 trip.CompanyID = Guid.Parse(model.fleetID);
                 trip.isOverRided = false;
-                trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes),(int)PaymentModes.Cash);
+                trip.TripPaymentMode = Enum.GetName(typeof(PaymentModes), (int)PaymentModes.Cash);
                 trip.PaymentModeId = (int)PaymentModes.Cash;
                 trip.Tip = 0;
                 trip.TripStatusID = (int)TripStatuses.Completed;
 
                 model.userID = trip.UserID.ToString();
-
-                //ApplyPromoCode(model.promoDiscountAmount, trip, context);
 
                 Transaction tr = new Transaction()
                 {
@@ -1388,7 +1377,7 @@ namespace API.Controllers
                     DebitedFrom = Guid.Parse(trip.UserID.ToString()),
                     CreditedTo = Guid.Parse(ApplicationID),
                     DateTime = DateTime.UtcNow,
-                    Amount = Convert.ToDecimal(model.collectedAmount), //Adjusted wallet amount and voucher amount is considered as mobile payment - RECEIVABLE
+                    Amount = Convert.ToDecimal(model.collectedAmount),
                     PaymentModeID = (int)PaymentModes.Cash,
                     Reference = "Trip cash payment received."
                 };
@@ -1396,28 +1385,21 @@ namespace API.Controllers
                 context.Transactions.Add(tr);
                 context.SaveChanges();
 
-                //var result = context.spGetTripPassengerTokenByTripIDOnCollectPayment(model.tripID, (int)TripStatuses.Completed).FirstOrDefault();
-                //passengerDeviceToken = result.DeviceToken;
-
                 passengerDeviceToken = context.UserProfiles.Where(up => up.UserID.Equals(trip.UserID.ToString())).FirstOrDefault().DeviceToken;
 
-                var notificationPayload = new CashPaymentNotification()
+                var notificationPayload = new PaymentNotification()
                 {
-                    //CollectedAmount = model.collectedAmount,
-                    //PromoDiscountAmount = model.promoDiscountAmount,
-                    //VoucherUsedAmount = "0.00",  //In case of vouchered ride, user don't have passenger application
-                    //WalletAmountUsed = model.walletUsedAmount,
-                    TotalFare = (decimal.Parse(model.collectedAmount) + decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString(),
-                    DriverId = model.driverID,
                     TripId = model.tripID,
+                    DriverId = model.driverID,
+                    IsDriverFavorite = context.UserFavoriteCaptains.Any(ufc => ufc.CaptainID == trip.CaptainID && ufc.UserID.Equals(trip.UserID.ToString())).ToString(),
                     PaymentModeId = trip.PaymentModeId.ToString(),
                     SelectedTipAmount = await FirebaseService.GetTipAmount(model.tripID),
-                    IsDriverFavorite = context.UserFavoriteCaptains.Any(ufc => ufc.CaptainID == trip.CaptainID && ufc.UserID.Equals(trip.UserID.ToString())).ToString()
+                    TotalFare = model.collectedAmount,
+                    DiscountedFare = model.collectedAmount
+                    //DiscountedFare = (decimal.Parse(model.collectedAmount) + decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString(),
+                    //TotalFare = (decimal.Parse(model.collectedAmount) + decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString()
                 };
 
-                //await FirebaseService.SetDriverFree(model.driverID, model.tripID);
-                //await FirebaseService.FreePassengerFromCurrentTrip(trip.UserID.ToString(), model.tripID);
-                //await FirebaseService.DeleteTrip(model.tripID);
                 await FreePassengerAndDriver(model.driverID, model.tripID, trip.UserID.ToString());
 
                 //In case of Request from Business it'll be empty. isWeb check can be applied here.
@@ -1435,44 +1417,13 @@ namespace API.Controllers
         [Route("collectCreditCardPayment")]
         public async Task<HttpResponseMessage> MobilePayment([FromBody] MobilePaymentRequest model)
         {
-            /*
-             req.estimatedFare = discountType,
-             req.promoDiscountAmount = discountAmount,
-             req.walletUsedAmount = isWalletPreferred
-             */
             Dictionary<dynamic, dynamic> dic = new Dictionary<dynamic, dynamic>();
 
-            //var isAlreadyPaid = await CheckIfAlreadyPaid(model.totalFare, model.tripID, model.driverID, dic, false);
-
-            //if (isAlreadyPaid)
-            //{
-            //    response.data = dic;
-            //    response.error = true;
-            //    response.message = ResponseKeys.fareAlreadyPaid;
-            //    return Request.CreateResponse(HttpStatusCode.OK, response);
-            //}
-            //else
-            //{
             using (var context = new CangooEntities())
             {
                 var trip = context.Trips.Where(t => t.TripID.ToString().Equals(model.tripID)).FirstOrDefault();
 
                 decimal chargeblePayment = decimal.Parse(model.totalFare);
-
-                //if (trip.isSpecialPromotionApplied == false && trip.PromoCodeID != null)
-                //{
-                //    trip.PromoDiscount = context.PromoManagers.Where(pm => pm.PromoID == trip.PromoCodeID && pm.isSpecialPromo == false).FirstOrDefault().Amount;
-
-                //    var userPromo = context.UserPromos.Where(up => up.PromoID.ToString().Equals(trip.PromoCodeID.ToString())
-                //    && up.UserID.ToString().ToLower().Equals(trip.UserID.ToString().ToLower())).FirstOrDefault();
-
-                //    if (userPromo != null)
-                //    {
-                //        userPromo.NoOfUsage += 1;
-                //    }
-
-                //    chargeblePayment -= (decimal)trip.PromoDiscount;
-                //}
 
                 chargeblePayment -= (decimal)trip.PromoDiscount;
 
@@ -1514,42 +1465,22 @@ namespace API.Controllers
 
                 }
 
-
-                //If already paid, trip will not update the trip data but returns required info.
-                //var updatedTrip = context.spAfterMobilePayment(false,//Convert.ToBoolean(model.isOverride), 
-                //    model.tripID,
-                //    transactionId,
-                //    (int)TripStatuses.Completed,
-                //    trip.UserID.ToString(),
-                //    ApplicationID,
-                //    model.totalFare,
-                //    "0",//VoucherUsedAmount
-                //    trip.PromoDiscount.ToString(),// model.promoDiscountAmount,
-                //    "0",//model.walletUsedAmount,
-                //    "0",//model.tipAmount.ToString(),
-                //    DateTime.UtcNow,
-                //    trip.PaymentModeId,//(int)PaymentModes.CreditCard,
-                //    (int)PaymentStatuses.Paid,
-                //    model.fleetID).FirstOrDefault();
-
-                var updatedTrip = context.spAfterMobilePayment(//Convert.ToBoolean(model.isOverride), 
-                   model.tripID, transactionId, (int)TripStatuses.Completed, trip.UserID.ToString(), ApplicationID,
+                var updatedTrip = context.spAfterMobilePayment(model.tripID, transactionId, (int)TripStatuses.Completed,
+                    trip.UserID.ToString(), ApplicationID,
                    model.totalFare, DateTime.UtcNow, (int)PaymentStatuses.Paid).FirstOrDefault();
-
-                //if (!isAlreadyPaid)
-                //{
 
                 if (!string.IsNullOrEmpty(updatedTrip.PassengerDeviceToken))
                 {
-                    var notificationPayload = new MobilePaymentNotification()
+                    var notificationPayload = new PaymentNotification()
                     {
-                        PromoDiscountAmount = trip.PromoDiscount.ToString(),
-                        TotalFare = model.totalFare, //+ decimal.Parse(model.walletUsedAmount) + decimal.Parse(model.promoDiscountAmount)).ToString(),
-                        DriverId = model.driverID,
                         TripId = model.tripID,
+                        DriverId = model.driverID,
                         PaymentModeId = trip.PaymentModeId.ToString(),
+                        TotalFare = model.totalFare,
+                        PromoDiscountAmount = ((decimal)trip.PromoDiscount).ToString("0.00"),
+                        DiscountedFare = (decimal.Parse(model.totalFare) - (decimal)trip.PromoDiscount).ToString("0.00"),
                         SelectedTipAmount = await FirebaseService.GetTipAmount(model.tripID),
-                        WalletBalance = ((decimal)updatedTrip.WalletBalance).ToString("0.00"), // "",
+                        WalletBalance = ((decimal)updatedTrip.WalletBalance).ToString("0.00"),
                         AvailableWalletBalance = ((decimal)updatedTrip.AvailableWalletBalance).ToString("0.00"),
                         Brand = trip.CreditCardBrand,
                         Last4Digits = trip.CreditCardLast4Digits,
@@ -1558,19 +1489,16 @@ namespace API.Controllers
 
                     await PushyService.UniCast(updatedTrip.PassengerDeviceToken, notificationPayload, NotificationKeys.pas_MobilePaymentPaid);
                 }
-                //}
 
                 await FreePassengerAndDriver(model.driverID, model.tripID, trip.UserID.ToString());
 
-
-                //if (!isAlreadyPaid)
                 await SendInvoice(new InvoiceModel
                 {
-                    CustomerEmail = updatedTrip.CustomerEmail,// context.AspNetUsers.Where(u => u.Id.Equals(model.passengerID)).FirstOrDefault().Email,
-                    TotalAmount = (Convert.ToDouble(model.totalFare) + Convert.ToDouble(trip.PromoDiscount)).ToString(),
-                    WalletUsedAmount = "0.00",// model.walletUsedAmount,
+                    CashAmount = "0.00",
+                    TotalAmount = model.totalFare,
+                    WalletUsedAmount = trip.PaymentModeId == (int)PaymentModes.Wallet ? (decimal.Parse(model.totalFare) - (decimal)trip.PromoDiscount).ToString("0.00") : "0.00",
                     PromoDiscountAmount = trip.PromoDiscount.ToString(),
-                    CashAmount = "0",
+                    CustomerEmail = updatedTrip.CustomerEmail,
                     CaptainName = updatedTrip.CaptainName,
                     CustomerName = updatedTrip.CustomerName,
                     TripDate = updatedTrip.TripDate,
@@ -1590,15 +1518,10 @@ namespace API.Controllers
                     FleetEmail = updatedTrip.FleetEmail
                 });
 
-
-                //trip.TripStatusID = (int)TripStatuses.Completed;
-                //context.SaveChanges();
-
                 response.error = false;
                 response.message = ResponseKeys.msgSuccess;
                 return Request.CreateResponse(HttpStatusCode.OK, response);
             }
-            //}
         }
 
         [HttpPost]

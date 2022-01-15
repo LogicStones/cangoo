@@ -78,29 +78,20 @@ namespace DTOs.API
 		public string PaymentModeId { get; set; }
 	}
 
-	public class CashPaymentNotification
+	public class PaymentNotification
 	{
 		public string TripId { get; set; }
-		public string SelectedTipAmount { get; set; }
-		public string DriverId { get; set; }
-		public string TotalFare { get; set; }
-		public string IsDriverFavorite { get; set; }
-		public string PaymentModeId { get; set; }
-	}
-
-	public class MobilePaymentNotification
-	{
-		public string TripId { get; set; }
-		public string SelectedTipAmount { get; set; }
-		public string PromoDiscountAmount { get; set; }
-		public string PaymentModeId { get; set; }
-		public string TotalFare { get; set; }
 		public string DriverId { get; set; }
 		public string IsDriverFavorite { get; set; }
-		public string Brand { get; set; }
-		public string Last4Digits { get; set; }
-		public string WalletBalance { get; set; }
-		public string AvailableWalletBalance { get; set; }
+		public string PaymentModeId { get; set; }
+		public string TotalFare { get; set; } = "0.00";
+		public string DiscountedFare { get; set; } = "0.00";
+		public string PromoDiscountAmount { get; set; } = "0.00";
+		public string SelectedTipAmount { get; set; } = "0.00";
+		public string WalletBalance { get; set; } = "0.00";
+		public string AvailableWalletBalance { get; set; } = "0.00";
+		public string Brand { get; set; } = "";
+		public string Last4Digits { get; set; } = "";
 	}
 
 	public class TipPaymentNotification

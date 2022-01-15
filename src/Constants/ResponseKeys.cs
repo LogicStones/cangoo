@@ -58,8 +58,9 @@ namespace Constants
         public const string promoLimitExceeded = "promoLimitExceeded";
         public const string promoExpired = "promoExpired";
         public const string invalidPromo = "invalidPromo";
-        public const string promoCodeApplied = "promoCodeApplied";
-        public const string promoCodeRemoved = "promoCodeRemoved";
+        //public const string promoCodeApplied = "promoCodeApplied";
+        //public const string promoCodeRemoved = "promoCodeRemoved";
+        public const string promoAlreadyApplied = "promoAlreadyApplied";
         public const string invalidInviteCode = "invalidInviteCode";
         public const string inviteCodeNotApplicable = "inviteCodeNotApplicable";
         public const string inviteCodeAlreadyApplied = "inviteCodeAlreadyApplied";

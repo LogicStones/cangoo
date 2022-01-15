@@ -48,63 +48,42 @@ namespace Services
 
                 var AppID = Guid.Parse(ConfigurationManager.AppSettings["ApplicationID"].ToString());
                 var userpromos = dbcontext.UserPromos.Where(x => x.UserID.ToLower().Equals(model.PassengerId.ToLower())).ToList();
-                var alreadyApplied = userpromos.Where(up => up.PromoID == promo.PromoID).FirstOrDefault();
-
-                if (alreadyApplied == null)
-                {
-                    var promodata = new UserPromo
-                    {
-                        ID = Guid.NewGuid(),
-                        isActive = true,
-                        UserID = model.PassengerId,
-                        PromoID = promo.PromoID,
-                        ApplicationID = AppID,
-                        NoOfUsage = 0
-                    };
-
-                    dbcontext.UserPromos.Add(promodata);
-                    await dbcontext.SaveChangesAsync();
-
-                    return new ResponseWrapper
-                    {
-                        Error = false,
-                        Message = ResponseKeys.msgSuccess,
-                        Data = new AddUserPromoResponse
-                        {
-                            Amount = string.Format("{0:0.00}", promo.Amount),
-                            PromoType = (bool)promo.isFixed ? "Fixed" : "Percentage",
-                            PromoCode = model.PromoCode,
-                            ExpiryDate = ((DateTime)promo.ExpiryDate).ToString(),
-                            AllowedRepition = promo.Repetition.ToString(),
-                            NoOfUsage = promodata.NoOfUsage.ToString()
-                        }
-                    };
-                }
-
-                if (alreadyApplied.NoOfUsage >= promo.Repetition)
+                
+                if (userpromos.Where(up => up.PromoID == promo.PromoID).Any())
                 {
                     return new ResponseWrapper
                     {
-                        Message = ResponseKeys.promoLimitExceeded
+                        Message = ResponseKeys.promoAlreadyApplied,
                     };
                 }
-                else
+
+                var promodata = new UserPromo
                 {
-                    return new ResponseWrapper
+                    ID = Guid.NewGuid(),
+                    isActive = true,
+                    UserID = model.PassengerId,
+                    PromoID = promo.PromoID,
+                    ApplicationID = AppID,
+                    NoOfUsage = 0
+                };
+
+                dbcontext.UserPromos.Add(promodata);
+                await dbcontext.SaveChangesAsync();
+
+                return new ResponseWrapper
+                {
+                    Error = false,
+                    Message = ResponseKeys.msgSuccess,
+                    Data = new AddUserPromoResponse
                     {
-                        Error = false,
-                        Message = ResponseKeys.msgSuccess,
-                        Data = new AddUserPromoResponse
-                        {
-                            Amount = string.Format("{0:0.00}", promo.Amount),
-                            PromoType = (bool)promo.isFixed ? "Fixed" : "Percentage",
-                            PromoCode = model.PromoCode,
-                            ExpiryDate = ((DateTime)promo.ExpiryDate).ToString(),
-                            AllowedRepition = promo.Repetition.ToString(),
-                            NoOfUsage = alreadyApplied.NoOfUsage.ToString(),
-                        }
-                    };
-                }
+                        Amount = string.Format("{0:0.00}", promo.Amount),
+                        PromoType = (bool)promo.isFixed ? "Fixed" : "Percentage",
+                        PromoCode = model.PromoCode,
+                        ExpiryDate = ((DateTime)promo.ExpiryDate).ToString(),
+                        AllowedRepition = promo.Repetition.ToString(),
+                        NoOfUsage = promodata.NoOfUsage.ToString()
+                    }
+                };
             }
         }
 

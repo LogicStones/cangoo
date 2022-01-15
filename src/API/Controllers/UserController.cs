@@ -807,18 +807,7 @@ namespace API.Controllers
         [Route("add-promo-code")]
         public async Task<HttpResponseMessage> AddPromoCode([FromBody] AddPromoCodeRequest model)
         {
-            var response = await PromoCodeService.AddUserPromoCode(model);
-
-            if (response.Message.Equals(ResponseKeys.invalidPromo))
-                return Request.CreateResponse(HttpStatusCode.NotFound, response);
-
-            else if (response.Message.Equals(ResponseKeys.promoExpired))
-                return Request.CreateResponse(HttpStatusCode.NoContent, response);
-
-            else if (response.Message.Equals(ResponseKeys.promoLimitExceeded))
-                return Request.CreateResponse(HttpStatusCode.NoContent, response);
-
-            return Request.CreateResponse(HttpStatusCode.OK, response);
+            return Request.CreateResponse(HttpStatusCode.OK, await PromoCodeService.AddUserPromoCode(model));
         }
 
         [HttpGet]
