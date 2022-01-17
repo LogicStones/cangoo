@@ -83,13 +83,6 @@ namespace DTOs.API
 		public string PassengerId { get; set; }
 	}
 
-	public class DashboardDataResponse
-	{
-		public string TotalNotifications { get; set; } = "";
-		public string CurrentUTCDateTime { get; set; } = "";
-		public string RewardPoint { get; set; } = ""; 
-	}
-
 	public class PassengerForgetPasswordRequest
 	{
 		[Required]

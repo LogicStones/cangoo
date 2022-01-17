@@ -13,6 +13,13 @@ namespace DTOs.API
 		public string DeviceToken { get; set; }
 	}
 
+	public class ReRoutedRequestNotification
+	{
+		public string TripId { get; set; }
+		public string RequestTimeOut { get; set; }
+		public string ReRouteRequestTime { get; set; }
+	}
+
 	public class PassengerRequestAcceptedNotification : TripPaymentMode
 	{
 		public string TripId { get; set; }

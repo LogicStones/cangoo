@@ -83,23 +83,6 @@ namespace Services
                 var resellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
                 var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
 
-                //Object to add / update trip in database
-                //Trip tp = new Trip();
-
-                //if later booking then write in pending later bookings to send FCM 2 min before pickup time if no one accepts booking
-                //FireBaseController fc = new FireBaseController();
-
-                //var lstcr = await CancelReasonsService.GetCancelReasons(tp.BookingTypeID == (int)BookingTypes.Normal ? true : false, tp.BookingTypeID == (int)BookingTypes.Later ? true : false, false);
-
-                //List<FacilitiyDTO> facilities = new List<FacilitiyDTO>();
-
-                //if (!string.IsNullOrEmpty(model.RequiredFacilities))
-                //{
-                //    facilities = await FacilitiesService.GetFacilitiesDetailByIds(model.RequiredFacilities);
-                //}
-                //else
-                //    model.RequiredFacilities = "";
-
                 int timeOut = await ApplicationSettingService.GetRequestTimeOut(applicationId);
 
                 //Object to be used to populate captains FCM object
@@ -118,8 +101,8 @@ namespace Services
                     BookingModeId = model.BookingModeId,
                     bookingMode = Enum.GetName(typeof(BookingModes), int.Parse(model.BookingModeId)).ToLower(),
 
-                    discountType = model.DiscountType,// Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Normal).ToLower(),
-                    discountAmount = model.DiscountAmount,// "0.0",
+                    discountType = model.DiscountType,
+                    discountAmount = model.DiscountAmount,
 
                     estimatedPrice = model.TotalFare,
 
@@ -149,6 +132,7 @@ namespace Services
                 {
                     tp = await GetTripById(model.TripId);
                     tp.isReRouted = true;
+                    tp.TripStatusID = (int)TripStatuses.ReRouting;
 
                     //If trip was On The Way / Arrived, then during rerouting status is set to cancel.
                     if (bool.Parse(model.IsLaterBooking))
@@ -172,8 +156,9 @@ namespace Services
 
                     brNotificationPayload.description = tp.Description;
                     brNotificationPayload.previousCaptainId = model.DriverId;
-                    //bookingRN.DeviceToken = model.DeviceToken;
+                    brNotificationPayload.deviceToken = model.DeviceToken;
 
+                    dbContext.Entry(tp).State = EntityState.Modified;
                     await dbContext.SaveChangesAsync();
                 }
                 else
@@ -456,7 +441,7 @@ namespace Services
                 return new ResponseWrapper { Message = ResponseKeys.notFound };
             }
 
-            if (tp.TripStatusID != (int)TripStatuses.RequestSent) //Ride already cancelled or accepted.
+            if (tp.TripStatusID != (int)TripStatuses.RequestSent || tp.TripStatusID != (int)TripStatuses.ReRouting) //Ride already cancelled or accepted.
             {
                 return new ResponseWrapper { Message = ResponseKeys.tripAlreadyBooked };
             }
@@ -477,10 +462,11 @@ namespace Services
             {
                 tp.TripStatusID = (int)TripStatuses.TimeOut;
                 tp.TripEndDatetime = DateTime.UtcNow;
+                dbContext.Entry(tp).State = EntityState.Modified;
                 await dbContext.SaveChangesAsync();
             }
 
-            return new ResponseWrapper { Error = false, Message = ResponseKeys.tripAlreadyBooked };
+            return new ResponseWrapper { Message = ResponseKeys.msgSuccess };
         }
 
         public static async Task<ResponseWrapper> CancelTripByPassenger(string tripId, string passengerId, string distanceTravelled, string cancelId, string isLaterBooking)
@@ -880,8 +866,8 @@ namespace Services
                 BookingModeId = tp.BookingModeID.ToString(),
                 DiscountAmount = discountDetails.DiscountAmount,
                 DiscountType = discountDetails.DiscountType,
-                TotalFare = (await FareManagerService.GetTripCalculatedFare(tp.TripID.ToString())).ToString("0.00")
-                //DeviceToken = tp.DeviceToken,
+                TotalFare = (await FareManagerService.GetTripCalculatedFare(tp.TripID.ToString())).ToString("0.00"),
+                DeviceToken = tp.DeviceToken,
                 //resellerArea = req.resellerArea,
             };
 

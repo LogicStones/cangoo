@@ -1193,27 +1193,26 @@ namespace API.Controllers
                 Message = ResponseKeys.msgSuccess,
                 Data = new DashboardDataResponse
                 {
-                    CurrentUTCDateTime = DateTime.UtcNow.ToString(Formats.DateTimeFormat),
                     TotalNotifications = (await NotificationServices.GetValidNotificationsCount()).ToString(),
                     RewardPoint = (await RewardPointService.GetPassengerRewardPoint(model.PassengerId)).RewardPoint.ToString()
                 }
             });
         }
 
-        //[HttpGet]
-        //[Route("current-utc-datetime")]
-        //public HttpResponseMessage getCurrentUTCDateTime()
-        //{
-        //    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
-        //    {
-        //        Error = false,
-        //        Message = ResponseKeys.msgSuccess,
-        //        Data = new Dictionary<dynamic, dynamic>
-        //                    {
-        //                        {"currentDateTime", DateTime.UtcNow.ToString(Formats.DateTimeFormat) }
-        //                    }
-        //    });
-        //}
+        [HttpGet]
+        [Route("current-utc-datetime")]
+        public HttpResponseMessage getCurrentUTCDateTime()
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
+            {
+                Error = false,
+                Message = ResponseKeys.msgSuccess,
+                Data = new Dictionary<dynamic, dynamic>
+                            {
+                                {"CurrentUTCDateTime", DateTime.UtcNow.ToString(Formats.DateTimeFormat) }
+                            }
+            });
+        }
 
         #endregion
     }

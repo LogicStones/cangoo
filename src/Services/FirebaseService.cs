@@ -169,7 +169,6 @@ namespace Services
         {
             try
             {
-
                 //Passenger data
                 if (bookingRN.isReRouteRequest)
                 {
@@ -538,20 +537,16 @@ namespace Services
 
         private static async Task SendReRouteNotfication(string bookingModeId, string reRouteRequestTime, string requestTimeOut, string captainId, string tripId, string deviceToken)
         {
-            //step 1 : Free current captain
-            await SetDriverFree(captainId, tripId);
             await RemoveDriverFromTrip(captainId, tripId);
 
-            //step 2 : update passenger about trip status
             if (int.Parse(bookingModeId) == (int)BookingModes.UserApplication)
             {
-                Dictionary<string, string> dic = new Dictionary<string, string>
-                    {
-                        { "tripID", tripId },
-                        { "requestTimeOut", requestTimeOut },
-                        { "reRouteRequestTime", reRouteRequestTime }
-                    };
-                await PushyService.UniCast(deviceToken, dic, NotificationKeys.pas_rideReRouted);
+                await PushyService.UniCast(deviceToken, new ReRoutedRequestNotification
+                {
+                    TripId = tripId,
+                    RequestTimeOut = requestTimeOut,
+                    ReRouteRequestTime = reRouteRequestTime
+                }, NotificationKeys.pas_rideReRouted);
             }
         }
 

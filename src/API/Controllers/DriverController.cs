@@ -874,7 +874,7 @@ namespace API.Controllers
                     else if (tp.PaymentModeId == (int)PaymentModes.Wallet)
                     {
                         await PaymentsServices.ReleaseWalletScrewedAmount(tp.UserID.ToString(), await FareManagerService.GetTripCalculatedFare(tp.TripID.ToString()));
-                        context.SaveChanges();
+                        //context.SaveChanges();
                     }
                     else if (tp.BookingModeID == (int)BookingModes.Voucher)
                     {
@@ -909,8 +909,7 @@ namespace API.Controllers
                             { "isLaterBooking", model.isLaterBooking }
                         };
 
-                //in normal booking if captain is arrived and cancels the ride then don't reroute
-                //in later booking if less than or equal to 2 min are remainig, captain cancels trip after arrival then don't reroute
+                //After arrival, if captain cancels normal booking or later booking within 2 min before pick up time then don't reroute
 
                 if (!model.isLaterBooking && tp.ArrivalDateTime != null)
                 {
