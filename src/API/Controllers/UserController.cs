@@ -1194,7 +1194,8 @@ namespace API.Controllers
                 Data = new DashboardDataResponse
                 {
                     TotalNotifications = (await NotificationServices.GetValidNotificationsCount()).ToString(),
-                    RewardPoint = (await RewardPointService.GetPassengerRewardPoint(model.PassengerId)).RewardPoint.ToString()
+                    RewardPoint = (await RewardPointService.GetPassengerRewardPoint(model.PassengerId)).RewardPoint.ToString(),
+                    PopUp = await PopupService.GetValidPopupDetails((int)ApplicationUserTypes.Passenger)
                 }
             });
         }
