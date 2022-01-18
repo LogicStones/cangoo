@@ -466,7 +466,7 @@ namespace Services
                 await dbContext.SaveChangesAsync();
             }
 
-            return new ResponseWrapper { Message = ResponseKeys.msgSuccess };
+            return new ResponseWrapper { Error = false, Message = ResponseKeys.msgSuccess };
         }
 
         public static async Task<ResponseWrapper> CancelTripByPassenger(string tripId, string passengerId, string distanceTravelled, string cancelId, string isLaterBooking)
@@ -492,56 +492,47 @@ namespace Services
                     await PaymentsServices.ReleaseWalletScrewedAmount(passengerId, await FareManagerService.GetTripCalculatedFare(trip.TripID.ToString()));
                 }
 
-                var tp = dbContext.spPassengerCancelRide(tripId, int.Parse(cancelId), (int)TripStatuses.Cancel,
+                var captainDetails = dbContext.spPassengerCancelRide(tripId, int.Parse(cancelId), (int)TripStatuses.Cancel,
                         (double.Parse(distanceTravelled) <= estimatedDistance ? double.Parse(distanceTravelled) : estimatedDistance) / 100).FirstOrDefault();
 
-                //In case later booking was not accepted by any captain then that is not an error.
-                if (tp == null)
+                //In case of rerouting and pending later booking result will be null.
+                if (captainDetails == null)
                 {
                     if (bool.Parse(isLaterBooking))
-                    {
                         await FirebaseService.DeletePendingLaterBooking(tripId);
-                        await FirebaseService.DeleteTrip(tripId);
-                    }
 
-                    return new ResponseWrapper
-                    {
-                        Message = ResponseKeys.msgSuccess,
-                        Error = false,
-                        Data = response
-                    };
-                }
-
-                await FirebaseService.UpdateDriverEarnedPoints(tp.CaptainID.ToString(), tp.EarningPoints.ToString());
-
-                //TBD: Check online driver in case of later booking.
-
-                if (bool.Parse(isLaterBooking))
-                {
-                    await FirebaseService.DeleteUpcomingLaterBooking(tp.CaptainID.ToString());
-                    await FirebaseService.DeletePendingLaterBooking(tripId);
                     await FirebaseService.DeleteTrip(tripId);
-
-                    var upcomingBooking = await DriverService.GetUpcomingLaterBooking(tp.CaptainID.ToString());
-                    await FirebaseService.DeleteUpcomingLaterBooking(tp.CaptainID.ToString());
-                    await FirebaseService.AddUpcomingLaterBooking(tp.CaptainID.ToString(), upcomingBooking);
-                }
-                else
-                {
-                    await FirebaseService.DeleteTrip(tripId);
-                    //driver set as busy
-                    await FirebaseService.SetDriverFree(tp.CaptainID.ToString(), tripId);
-                    //to avoid login on another device during trip
                     await FirebaseService.DeletePassengerTrip(passengerId);
                 }
+                else //Laterbooking was accepted or driver was on the way
+                {
+                    //In case driver was on the way
+                    await FirebaseService.UpdateDriverEarnedPoints(captainDetails.CaptainID.ToString(), captainDetails.EarningPoints.ToString());
 
-                await PushyService.UniCast(tp.deviceToken,
-                    new DriverCancelRequestNotification
+                    if (bool.Parse(isLaterBooking))
                     {
-                        tripID = tripId,
-                        isLaterBooking = bool.Parse(isLaterBooking)
-                    },
-                    NotificationKeys.cap_rideCancel);
+                        await FirebaseService.DeleteUpcomingLaterBooking(captainDetails.CaptainID.ToString());
+                        await FirebaseService.DeletePendingLaterBooking(tripId);
+
+                        var upcomingBooking = await DriverService.GetUpcomingLaterBooking(captainDetails.CaptainID.ToString());
+                        await FirebaseService.AddUpcomingLaterBooking(captainDetails.CaptainID.ToString(), upcomingBooking);
+                    }
+                    else
+                    {
+                        await FirebaseService.SetDriverFree(captainDetails.CaptainID.ToString(), tripId);
+                        await FirebaseService.DeletePassengerTrip(passengerId);
+                    }
+
+                    await FirebaseService.DeleteTrip(tripId);
+
+                    await PushyService.UniCast(captainDetails.deviceToken,
+                        new DriverCancelRequestNotification
+                        {
+                            tripID = tripId,
+                            isLaterBooking = bool.Parse(isLaterBooking)
+                        },
+                        NotificationKeys.cap_rideCancel);
+                }
 
                 return new ResponseWrapper
                 {
