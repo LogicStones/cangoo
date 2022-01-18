@@ -87,7 +87,21 @@ namespace DTOs.API
 		public bool isSend20MinutSendFCM { get; set; } = false;
 		public string isWeb { get; set; } = "";
 	}
-	
+
+	public class FirebaseTripDriverDestination
+	{
+		public string dropOffLocationLongitude { get; set; }
+		public string dropOffLocationLatitude { get; set; }
+		public string dropOffLocation { get; set; }
+	}
+
+	public class FirebaseTripPassengerDestination
+	{
+		public string DropOffLatitude { get; set; }
+		public string DropOffLongitude { get; set; }
+		public string DropOffLocation { get; set; }
+	}
+
 	public class FirebaseDriver : DriverStatus
 	{
 		public string driverID { get; set; }

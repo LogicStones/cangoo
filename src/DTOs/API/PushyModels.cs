@@ -107,6 +107,14 @@ namespace DTOs.API
 		public string PassengerName { get; set; }
 	}
 
+	public class DestinationChangeNotification
+	{
+		public string DropOffLatitude { get; set; }
+		public string DropOffLongitude { get; set; }
+		public string DropOffLocation { get; set; }
+		public string TotalFare { get; set; }
+	}
+
 	public class DriverBookingRequestNotification : TripPaymentMode //: DiscountTypeDTO
 	{
 		public string tripID { get; set; }

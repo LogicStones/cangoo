@@ -150,6 +150,7 @@ namespace DTOs.API
         [Required]
         [DefaultValue("52988B66-46D5-4CFC-BF9E-6D42BEC3529C")]
         public string OutBoundRSFMId { get; set; }
+
         [Required]
         [DefaultValue("345")]
         public string InBoundTimeInSeconds { get; set; }
@@ -307,6 +308,65 @@ namespace DTOs.API
         public string TripId { get; set; }
     }
 
+    public class TripChangeDestinationRequest: PolyLineDetails
+    {
+        [Required]
+        [DefaultValue("")]
+        public string TripId { get; set; }
+
+        [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
+        public string PassengerId { get; set; }
+
+        [Required]
+        [DefaultValue("32.1374413236167")]
+        public string DropOffLatitude { get; set; }
+
+        [Required]
+        [DefaultValue("74.2070284762054")]
+        public string DropOffLongitude { get; set; }
+
+        [Required]
+        [DefaultValue("52250")]
+        public string DropOffPostalCode { get; set; }
+
+        [Required]
+        [DefaultValue("Street 21, Sector Y Peoples Colony, Gujranwala, Punjab, Pakistan")]
+        public string DropOffLocation { get; set; }
+
+        //[DefaultValue("cus_KjxHHoj7dM4wh2")]
+        //public string CustomerId { get; set; }
+
+        //[DefaultValue("pm_1K4TNUJeFP4nLZjMVYpOYylA")]
+        //public string CardId { get; set; }
+
+        //[DefaultValue("Visa")]
+        //public string Brand { get; set; }
+
+        //[DefaultValue("4242")]
+        //public string Last4Digits { get; set; }
+
+        //[DefaultValue("EUR")]
+        //public string Currency { get; set; }
+
+        [DefaultValue("False")]
+        public string IsPaidClientSide { get; set; }
+
+        [DefaultValue("False")]
+        public string StripePaymentIntentId { get; set; }
+    }
+
+
+    public class TripChangeDestinationResponse
+    {
+        [Required]
+        [DefaultValue("edf49e84-06fb-4a6d-9448-6011fc1bc611")]
+        public string PassengerId { get; set; }
+
+        [Required]
+        [DefaultValue("")]
+        public string TripId { get; set; }
+    }
     public class CancelTripRequest
     {
         [Required]

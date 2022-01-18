@@ -469,6 +469,169 @@ namespace Services
             return new ResponseWrapper { Error = false, Message = ResponseKeys.msgSuccess };
         }
 
+        public static async Task<ResponseWrapper> ChangeDestination(TripChangeDestinationRequest model)
+        {
+            //TBD : Logging
+            using (var dbContext = new CangooEntities())
+            {
+                var trip = await GetPassengerTripById(model.TripId, model.PassengerId);
+
+                if (trip == null)
+                {
+                    return new ResponseWrapper { Message = ResponseKeys.notFound };
+                }
+
+                var estimatedFare = await FareManagerService.GetFareEstimate(trip.PickupLocationPostalCode, trip.PickupLocationLatitude, trip.PickupLocationLongitude,
+                                trip.MidwayStop1PostalCode, trip.MidwayStop1Latitude, trip.MidwayStop1Longitude, model.DropOffPostalCode, model.DropOffLatitude,
+                                model.DropOffLongitude, model.PolyLine, model.InBoundTimeInSeconds, model.InBoundDistanceInMeters, model.OutBoundTimeInSeconds, model.OutBoundDistanceInMeters);
+
+                var categoryFareDetails = estimatedFare.Categories.Where(c => c.CategoryId == trip.VehicleCategoryId.ToString()).FirstOrDefault();
+                var amountToBeCharged = trip.isLogisticRequest ? estimatedFare.Courier.Amount : categoryFareDetails.TotalFare;
+
+                if (trip.PaymentModeId != (int)PaymentModes.Cash)
+                {
+                    var screwedAmount = await FareManagerService.GetTripCalculatedFare(trip.TripID.ToString());
+
+                    if (trip.PaymentModeId == (int)PaymentModes.CreditCard)
+                    {
+                        var existingPaymentIntent = trip.CreditCardPaymentIntent;
+                        if (decimal.Parse(amountToBeCharged) > screwedAmount)
+                        {
+                            if (bool.Parse(model.IsPaidClientSide))
+                            {
+                                trip.CreditCardPaymentIntent = model.StripePaymentIntentId;
+                            }
+                            else
+                            {
+                                var usedPaymentIntent = await PaymentsServices.GetPaymentInentDetails(trip.CreditCardPaymentIntent);
+
+                                var details = await PaymentsServices.AuthoizeCreditCardPayment(usedPaymentIntent.CustomerId, usedPaymentIntent.CardId, amountToBeCharged, "Destination Changed. New Fare : " + trip.TripID.ToString());
+
+                                if (!details.Status.Equals(TransactionStatus.requiresCapture))
+                                {
+                                    return new ResponseWrapper
+                                    {
+                                        Message = ResponseKeys.paymentGetwayError,
+                                        Data = new BookTripResponse
+                                        {
+                                            CreditCardPaymentDetils = details
+                                        }
+                                    };
+                                }
+                                trip.CreditCardPaymentIntent = details.PaymentIntentId;
+                            }
+
+                            await PaymentsServices.CancelAuthorizedPayment(existingPaymentIntent);
+                        }
+                    }
+                    else if (trip.PaymentModeId == (int)PaymentModes.Wallet)
+                    {
+                        await PaymentsServices.ReleaseWalletScrewedAmount(model.PassengerId, await FareManagerService.GetTripCalculatedFare(trip.TripID.ToString()));
+
+                        var resellerId = ConfigurationManager.AppSettings["ResellerID"].ToString();
+                        var applicationId = ConfigurationManager.AppSettings["ApplicationID"].ToString();
+                        var userProfile = await UserService.GetProfileByIdAsync(model.PassengerId, applicationId, resellerId);
+
+                        if (userProfile.AvailableWalletBalance < decimal.Parse(categoryFareDetails.TotalFare))
+                        {
+                            userProfile.AvailableWalletBalance -= screwedAmount;
+                            dbContext.Entry(AutoMapperConfig._mapper.Map<PassengerProfileDTO, UserProfile>(userProfile)).State = EntityState.Modified;
+                            await dbContext.SaveChangesAsync();
+
+                            return new ResponseWrapper
+                            {
+                                Message = ResponseKeys.insufficientWalletBalance
+                            };
+                        }
+                        else
+                        {
+                            userProfile.AvailableWalletBalance -= decimal.Parse(categoryFareDetails.TotalFare);
+                            dbContext.Entry(AutoMapperConfig._mapper.Map<PassengerProfileDTO, UserProfile>(userProfile)).State = EntityState.Modified;
+                        }
+                    }
+                    else if (trip.PaymentModeId == (int)PaymentModes.Paypal)
+                    {
+
+                    }
+                    else
+                    {
+
+                    }
+                }
+
+                trip.DropOffLocationLatitude = model.DropOffLatitude;
+                trip.DropOffLocationLongitude = model.DropOffLongitude;
+                trip.DropOffLocationPostalCode = model.DropOffPostalCode;
+                trip.DropOffLocation = model.DropOffLocation;
+
+                trip.InBoundTimeInSeconds = int.Parse(model.InBoundTimeInSeconds);
+                trip.OutBoundTimeInSeconds = int.Parse(model.OutBoundTimeInSeconds);
+
+                trip.InBoundDistanceInMeters = int.Parse(model.InBoundDistanceInMeters);
+                trip.OutBoundDistanceInMeters = int.Parse(model.OutBoundDistanceInMeters);
+                trip.DistanceTraveled = trip.InBoundDistanceInMeters + trip.OutBoundDistanceInMeters;
+
+                trip.InBoundDistanceFare = trip.isLogisticRequest ? 0 : decimal.Parse(categoryFareDetails.InBoundDistanceFare);
+                trip.OutBoundDistanceFare = trip.isLogisticRequest ? 0 : decimal.Parse(categoryFareDetails.OutBoundDistanceFare);
+
+                trip.InBoundTimeFare = trip.isLogisticRequest ? 0 : decimal.Parse(categoryFareDetails.InBoundTimeFare);
+                trip.OutBoundTimeFare = trip.isLogisticRequest ? 0 : decimal.Parse(categoryFareDetails.OutBoundTimeFare);
+
+                trip.InBoundSurchargeAmount = trip.isLogisticRequest ? 0 : decimal.Parse(categoryFareDetails.SurchargeAmount);   //Quick Fix : Without adding new column
+                trip.OutBoundSurchargeAmount = 0;
+
+                //BaseFare and BookingFare will be added from InBound only - So we'll use BaseFare and BookingFare fields in database
+                trip.InBoundBaseFare = 0;
+                trip.OutBoundBaseFare = 0;
+
+                trip.BaseFare = trip.isLogisticRequest ? decimal.Parse(estimatedFare.Courier.Amount) : decimal.Parse(categoryFareDetails.BaseFare) + decimal.Parse(categoryFareDetails.FormattingAdjustment);
+                trip.BookingFare = trip.isLogisticRequest ? 0 : decimal.Parse(categoryFareDetails.BookingFare);
+                trip.WaitingFare = 0;// decimal.Parse(model.WaitingFare);
+                trip.PerKMFare = 0;
+
+                trip.FareManagerID = categoryFareDetails.InBoundRSFMId;
+
+                if (!string.IsNullOrEmpty(categoryFareDetails.OutBoundRSFMId))
+                    trip.DropOffFareMangerID = Guid.Parse(categoryFareDetails.OutBoundRSFMId);
+
+                trip.PromoDiscount = decimal.Parse(estimatedFare.DiscountAmount);// 0;
+                trip.isSpecialPromotionApplied = estimatedFare.DiscountType.Equals(Enum.GetName(typeof(DiscountTypes), (int)DiscountTypes.Special).ToLower());
+
+                trip.PolyLine = model.PolyLine;
+
+                if (!string.IsNullOrEmpty(estimatedFare.PromoCodeId))
+                {
+                    trip.PromoCodeID = Guid.Parse(estimatedFare.PromoCodeId);
+
+                    //if (!(model.DiscountType.Equals(DiscountTypes.Special) || model.DiscountType.Equals(DiscountTypes.Normal)) && !string.IsNullOrEmpty(model.UserPromoCodeId))
+                    //{
+                    //    await PromoCodeService.ApplyTripPromoCode(model.UserPromoCodeId);
+                    //}
+                }
+
+                dbContext.Trips.Add(trip);
+                dbContext.Entry(trip).State = EntityState.Modified;
+                await dbContext.SaveChangesAsync();
+
+                await FirebaseService.UpdateTripDestinationAddress(model.TripId, model.PassengerId, trip.CaptainID.ToString(),
+                    model.DropOffLatitude, model.DropOffLongitude, model.DropOffLocation);
+
+                DestinationChangeNotification payload = new DestinationChangeNotification
+                {
+                    TotalFare = amountToBeCharged,
+                    DropOffLatitude = model.DropOffLatitude,
+                    DropOffLocation = model.DropOffLocation,
+                    DropOffLongitude = model.DropOffLongitude
+                };
+
+                var deviceTokens = await GetDriverAndPassengerDeviceToken(trip.TripID.ToString());
+
+                await PushyService.UniCast(deviceTokens.captainDeviceToken, payload, NotificationKeys.cap_destinationChanged);
+
+                return new ResponseWrapper { Error = false, Message = ResponseKeys.msgSuccess, Data = payload };
+            }
+        }
+
         public static async Task<ResponseWrapper> CancelTripByPassenger(string tripId, string passengerId, string distanceTravelled, string cancelId, string isLaterBooking)
         {
             using (var dbContext = new CangooEntities())

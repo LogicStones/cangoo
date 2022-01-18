@@ -123,8 +123,6 @@ namespace Services
 
         public static async Task<CreditCardPaymentInent> AuthoizeCreditCardPayment(string customerId, string cardId, string fareAmount, string description)
         {
-            //await UpdateDefaultCreditCard(cardId, customerId);
-
             var paymentIntent = StripeIntegration.AuthorizePayment(customerId, cardId, (long)(float.Parse(fareAmount) * 100), description);
             return new CreditCardPaymentInent
             {
@@ -177,6 +175,25 @@ namespace Services
             {
                 PaymentIntentId = paymentIntent.Id,
                 Status = paymentIntent.Status
+            };
+        }
+     
+        public static async Task<CreditCardPaymentInent> GetPaymentInentDetails(string paymentIntentId)
+        {
+            var usedPaymentIntent = StripeIntegration.GetPaymentIntentDetails(paymentIntentId);
+
+            if (usedPaymentIntent == null)
+                return new CreditCardPaymentInent();
+
+
+            return new CreditCardPaymentInent
+            {
+                PaymentIntentId = usedPaymentIntent.Id,
+                Status = usedPaymentIntent.Status,
+                CardId = usedPaymentIntent.PaymentMethodId,
+                CustomerId = usedPaymentIntent.CustomerId,
+                ClientSecret = usedPaymentIntent.ClientSecret,
+                Description = usedPaymentIntent.Description
             };
         }
 

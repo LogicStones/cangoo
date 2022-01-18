@@ -160,10 +160,13 @@ namespace DTOs.API
 
     public class CreditCardPaymentInent
     {
-        public string PaymentIntentId { get; set; }
-        public string Status { get; set; }
-        public string ClientSecret { get; set; }
-        public string Description { get; set; }
+        public string PaymentIntentId { get; set; } = "";
+        public string Status { get; set; } = "";
+        public string ClientSecret { get; set; } = "";
+        public string Description { get; set; } = "";
+        public string CardId { get; set; } = "";
+        public string CustomerId { get; set; } = "";
+
         //public string Brand { get; set; }
         //public string Last4Digits { get; set; }
     }

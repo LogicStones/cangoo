@@ -1170,6 +1170,13 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Route("change-destination")]
+        public async Task<HttpResponseMessage> ChangeDestination([FromBody] TripChangeDestinationRequest model)
+        {
+            return Request.CreateResponse(HttpStatusCode.OK, await TripsManagerService.ChangeDestination(model));
+        }
+
+        [HttpPost]
         [Route("cancel-trip")]
         public async Task<HttpResponseMessage> CancelTrip([FromBody] CancelTripRequest model)
         {

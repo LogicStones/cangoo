@@ -697,6 +697,26 @@ namespace Services
             await FirebaseIntegration.Write("Trips/" + data.TripId + "/" + passengerId, data);
         }
 
+        public static async Task UpdateTripDestinationAddress(string tripId, string passengerId, string driverId, string latitude, string longitude, string location)
+        {
+            var passengerData = new FirebaseTripPassengerDestination
+            {
+                DropOffLatitude = latitude,
+                DropOffLongitude = longitude,
+                DropOffLocation = location
+            };
+
+            var driverData = new FirebaseTripDriverDestination
+            {
+                dropOffLocationLatitude = latitude,
+                dropOffLocationLongitude = longitude,
+                dropOffLocation = location
+            };
+
+            await FirebaseIntegration.Update("Trips/" + tripId + "/" + passengerId, passengerData);
+            await FirebaseIntegration.Update("Trips/" + tripId + "/" + driverId, driverData);
+        }
+
         public static async Task UpdateTripPaymentMode(string tripId, string passengerId, string driverId, TripPaymentMode data)
         {
             await FirebaseIntegration.Update("Trips/" + tripId + "/" + passengerId, data);

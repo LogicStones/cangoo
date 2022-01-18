@@ -30,5 +30,6 @@ namespace Constants
         public const string cap_30MinutesLeft = "cap_30MinutesLeft";
         public const string cap_20MinutesLeft = "cap_20MinutesLeft";
         public const string cap_tipPaid = "cap_tipPaid";
+        public const string cap_destinationChanged = "cap_destinationChanged";
     }
 }
