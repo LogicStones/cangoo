@@ -441,7 +441,7 @@ namespace Services
                 return new ResponseWrapper { Message = ResponseKeys.notFound };
             }
 
-            if (tp.TripStatusID != (int)TripStatuses.RequestSent || tp.TripStatusID != (int)TripStatuses.ReRouting) //Ride already cancelled or accepted.
+            if (tp.TripStatusID != (int)TripStatuses.RequestSent && tp.TripStatusID != (int)TripStatuses.ReRouting) //Ride already cancelled or accepted.
             {
                 return new ResponseWrapper { Message = ResponseKeys.tripAlreadyBooked };
             }
