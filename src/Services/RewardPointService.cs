@@ -14,11 +14,11 @@ namespace Services
 {
     public class RewardPointService
     {
-        public static async Task<List<RewardDetails>> GetRewardPointsList()
+        public static async Task<List<RewardDetail>> GetRewardPointsList()
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<RewardDetails>(@"
+                var query = dbContext.Database.SqlQuery<RewardDetail>(@"
 SELECT CAST(RewardID as VARCHAR(36)) RewardId, CAST(Deduction as VARCHAR(36)) Deduction, Description, IsActive,
 CAST(RedeemAmount as VARCHAR(36)) RedeemAmount, 
 CONVERT(VARCHAR, StartDate, 120) StartDate,

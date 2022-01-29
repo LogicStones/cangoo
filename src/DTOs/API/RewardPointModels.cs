@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DTOs.API
 {
-    public class RewardDetails
+    public class RewardDetail
     {
         public string RewardId { get; set; } = "";
         public string Deduction { get; set; } = "";

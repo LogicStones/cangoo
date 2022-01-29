@@ -54,11 +54,11 @@ namespace Services
             }
         }
 
-        public static async Task<TripDetails> GetFullTripById(string tripId)
+        public static async Task<TripDetail> GetFullTripById(string tripId)
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<TripDetails>("exec spGetTripDetails @TripId",
+                var query = dbContext.Database.SqlQuery<TripDetail>("exec spGetTripDetails @TripId",
                                                                 new SqlParameter("@TripId", tripId));
                 var details = await query.FirstOrDefaultAsync();
                 details.FacilitiesList = await FacilitiesService.GetPassengerFacilitiesDetailByIds(details.FacilityIds);

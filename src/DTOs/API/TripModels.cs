@@ -50,7 +50,7 @@ namespace DTOs.API
         public string TripId { get; set; }
     }
 
-    public class TripDetails
+    public class TripDetail
     {
         public string PickUpLocationLatitude { get; set; } = "";
         public string PickupLocationLongitude { get; set; } = "";

@@ -26,11 +26,11 @@ namespace Services
             }
         }
 
-        public static async Task<List<NotificationDetails>> GetValidNotifications(string userTypeId, string passengerId)
+        public static async Task<List<NotificationDetail>> GetValidNotifications(string userTypeId, string passengerId)
         {
             using (CangooEntities dbcontext = new CangooEntities())
             {
-                var query = dbcontext.Database.SqlQuery<NotificationDetails>(
+                var query = dbcontext.Database.SqlQuery<NotificationDetail>(
                     @"SELECT CAST(n.FeedID as varchar(36)) FeedID, Title, ShortDescription, 
 CASE WHEN urn.ID IS NULL THEN 'False' ELSE 'True' END IsRead, 
 ISNULL(CONVERT(VARCHAR, urn.ReadDateTime, 120), '') ReadDate, 
@@ -47,11 +47,11 @@ WHERE ApplicationUserTypeID = @userTypeId AND ExpiryDate >= @expiryDate",
             }
         }
 
-        public static async Task<NotificationDetails> GetNotificationdetails(string feedId, string passengerId)
+        public static async Task<NotificationDetail> GetNotificationdetails(string feedId, string passengerId)
         {
             using (CangooEntities dbcontext = new CangooEntities())
             {
-                var query = dbcontext.Database.SqlQuery<NotificationDetails>(@"
+                var query = dbcontext.Database.SqlQuery<NotificationDetail>(@"
 IF NOT EXISTS(SELECT ID FROM UserReadNotifications WHERE FeedID = @feedId AND UserId = @passengerId) 
     BEGIN 
         INSERT INTO UserReadNotifications VALUES (NEWID(), @feedId, @passengerId, @readDateTime) 

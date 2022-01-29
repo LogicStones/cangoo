@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DTOs.API
 {
-    public class NotificationDetails
+    public class NotificationDetail
     {
         public string FeedId { get; set; } = "";
         public string Title { get; set; } = "";
@@ -37,14 +37,5 @@ namespace DTOs.API
         [Required]
         [DefaultValue("")]
         public string FeedId { get; set; }
-    }
-
-    public class GetReadNotificationResponse
-    {
-        public string FeedId { get; set; } = "";
-        public string Title { get; set; } = "";
-        public string Detail { get; set; } = "";
-        public string ExpiryDate { get; set; } = "";
-        public string CreationDate { get; set; } = "";
     }
 }

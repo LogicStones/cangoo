@@ -13,11 +13,11 @@ namespace Services
 {
     public class PromoCodeService
     {
-        public static async Task<List<PromoCodeDetails>> GetPromoCodes(string passengerId)
+        public static async Task<List<PromoCodeDetail>> GetPromoCodes(string passengerId)
         {
             using (CangooEntities dbContext = new CangooEntities())
             {
-                var query = dbContext.Database.SqlQuery<PromoCodeDetails>("exec spGetUserPromos @passengerId,@active",
+                var query = dbContext.Database.SqlQuery<PromoCodeDetail>("exec spGetUserPromos @passengerId,@active",
                                                                                                         new SqlParameter("@passengerId", passengerId),
                                                                                                         new SqlParameter("@active", true));
 

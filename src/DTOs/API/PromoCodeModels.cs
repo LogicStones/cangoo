@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace DTOs.API
 {
-    public class PromoCodeDetails
+    public class PromoCodeDetail
     {
         public string UserPromoCodeId { get; set; } = "";
         public string PromoCodeId { get; set; } = "";
