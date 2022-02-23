@@ -610,6 +610,16 @@ namespace API.Controllers
         [Route("acceptRequest")]
         public async Task<HttpResponseMessage> acceptRequest([FromBody] DriverAcceptTripRequest model)
         {
+            //Update trip status in database
+            var detail = await DriverService.GetUpdatedTripDataOnAcceptRide(model.tripID, model.driverID, model.vehicleID, model.fleetID, model.isLaterBooking == true ? 1 : 0);
+
+            if (detail == null)
+            {
+                response.error = true;
+                response.message = ResponseKeys.tripNotFound;
+                return Request.CreateResponse(HttpStatusCode.OK, response);
+            }
+
             //int bookingStatus = 0;
 
             ////Get trip current status before any status change
@@ -642,151 +652,150 @@ namespace API.Controllers
 
             model.isWeb = trip.BookingModeID == (int)BookingModes.UserApplication ? false : true;
 
-            //Update trip status in database
-            var detail = await DriverService.GetUpdatedTripDataOnAcceptRide(model.tripID, model.driverID, model.vehicleID, model.fleetID, model.isLaterBooking == true ? 1 : 0);
+            var driverCancelReasons = await CancelReasonsService.GetDriverCancelReasons(!model.isLaterBooking, model.isLaterBooking, true);
 
-            if (detail != null)
+            //Object to be used to populate driver firebase node
+            AcceptRideDriverModel arm = new AcceptRideDriverModel
             {
-                var driverCancelReasons = await CancelReasonsService.GetDriverCancelReasons(!model.isLaterBooking, model.isLaterBooking, true);
+                tripID = model.tripID,
+                isWeb = model.isWeb,
+                isLaterBooking = model.isLaterBooking,
+                isDispatchedRide = model.isDispatchedRide,
 
-                //Object to be used to populate driver firebase node
-                AcceptRideDriverModel arm = new AcceptRideDriverModel
+                pickupLocationLatitude = detail.PickupLocationLatitude,
+                pickupLocationLongitude = detail.PickupLocationLongitude,
+                pickUpLocation = detail.PickUpLocation,
+                midwayStop1Location = detail.MidwayStop1Location,
+                midwayStop1LocationLatitude = detail.MidwayStop1Latitude,
+                midwayStop1LocationLongitude = detail.MidwayStop1Longitude,
+                dropOffLocationLatitude = detail.dropoffLocationLatitude,
+                dropOffLocationLongitude = detail.dropofflocationLongitude,
+                dropOffLocation = detail.DropOffLocation,
+                vehicleCategory = detail.VehicleCategory,
+                totalFare = detail.TotalFare.ToString(),
+                requestTime = detail.RequestWaitingTime,
+
+                //UPDATE: After reverting google directions API, detail.ArrivedTime is distance in Meters - To enable arrived button on captain app before reaching pickup location
+
+                minDistance = detail.ArrivedTime,
+                passengerID = detail.UserID.ToString(),
+                passengerName = detail.PassengerName,
+                phone = detail.PhoneNumber,
+                lstCancel = driverCancelReasons,
+                laterBookingPickUpDateTime = Convert.ToDateTime(detail.PickUpBookingDateTime).ToString(Formats.DateTimeFormat),
+                distanceTraveled = "0.00",
+                isReRouteRequest = detail.isReRouted.ToString(),
+                description = detail.description,
+                voucherCode = detail.VoucherCode,
+                voucherAmount = detail.VoucherAmount.ToString(),
+                isFareChangePermissionGranted = "false",
+
+                numberOfPerson = trip.NoOfPerson.ToString(),
+                bookingMode = trip.BookingModeID == (int)BookingModes.Karhoo ? Enum.GetName(typeof(BookingModes), (int)BookingModes.Karhoo).ToLower() : ""
+            };
+
+            await FirebaseService.SetDriverBusy(model.driverID, model.tripID);
+            await FirebaseService.SetEstimateDistanceToPickUpLocation(model.driverID, string.IsNullOrEmpty(model.distanceToPickUpLocation) ? "0" : model.distanceToPickUpLocation);
+
+            var fd = await FirebaseService.GetOnlineDriverById(model.driverID);
+            var driverVehiclDetail = await DriverService.GetDriverVehicleDetail(model.driverID, fd == null ? "" : fd.vehicleID, detail.UserID.ToString(), model.isWeb);
+
+            await FirebaseService.WriteTripDriverDetails(arm, model.driverID);
+
+            var fbPassenger = await FirebaseService.GetTripPassengerDetails(model.tripID, trip.UserID.ToString());
+
+            //Object to be used to populate passenger FCM and firebase node data
+
+            var notificationPayLoad = new PassengerRequestAcceptedNotification
+            {
+                TripId = model.tripID,
+                IsWeb = model.isWeb.ToString(),
+                DriverId = model.driverID,
+
+                IsLaterBooking = arm.isLaterBooking.ToString(),
+                IsDispatchedRide = arm.isDispatchedRide,
+                IsReRouteRequest = arm.isReRouteRequest,
+                PickUpDateTime = arm.laterBookingPickUpDateTime,
+                Description = arm.description,
+                VoucherCode = arm.voucherCode,
+                VoucherAmount = arm.voucherAmount,
+                TotalFare = arm.totalFare,
+                PickUpLatitude = arm.pickupLocationLatitude,
+                PickUpLongitude = arm.pickupLocationLongitude,
+                PickUpLocation = arm.pickUpLocation,
+                MidwayStop1Latitude = arm.midwayStop1LocationLatitude,
+                MidwayStop1Longitude = arm.midwayStop1LocationLongitude,
+                MidwayStop1Location = arm.midwayStop1Location,
+                DropOffLatitude = arm.dropOffLocationLatitude,
+                DropOffLongitude = arm.dropOffLocationLongitude,
+                DropOffLocation = arm.dropOffLocation,
+                SeatingCapacity = arm.numberOfPerson,
+                VehicleCategory = arm.vehicleCategory,
+                VehicleCategoryId = detail.VehicleCategoryId.ToString(),
+
+                PickUpPostalCode = detail.PickupLocationPostalCode,
+                MidwayStop1PostalCode = detail.MidwayStop1PostalCode,
+                DropOffPostalCode = detail.DropOffLocationPostalCode,
+
+                VehicleNumber = driverVehiclDetail.PlateNumber,
+                DriverName = driverVehiclDetail.Name.Split(' ')[0],
+                DriverContactNumber = driverVehiclDetail.ContactNumber,
+                DriverRating = driverVehiclDetail.Rating.ToString(),
+                DriverPicture = driverVehiclDetail.Picture,
+                VehicleRating = driverVehiclDetail.vehicleRating.ToString(),
+                Make = driverVehiclDetail.Make,
+                Model = driverVehiclDetail.Model,// + " " + driverVehiclDetail.PlateNumber,
+                Color = driverVehiclDetail.Color,
+                FleetAddress = driverVehiclDetail.FleetAddress,
+                FleetName = driverVehiclDetail.FleetName,
+
+                PaymentModeId = fbPassenger.PaymentModeId,
+                PaymentMethod = fbPassenger.PaymentMethod,
+                CustomerId = fbPassenger.CustomerId,
+                CardId = fbPassenger.CardId,
+                Brand = fbPassenger.Brand,
+                Last4Digits = fbPassenger.Last4Digits,
+                WalletBalance = fbPassenger.WalletBalance,
+                AvailableWalletBalance = fbPassenger.AvailableWalletBalance,
+
+                CancelReasons = await CancelReasonsService.GetPassengerCancelReasons(!arm.isLaterBooking, arm.isLaterBooking, false),
+                Facilities = await FacilitiesService.GetPassengerFacilitiesDetailByIds(trip.facilities)
+            };
+
+            await FirebaseService.UpdateTripPassengerDetailsOnAccepted(notificationPayLoad, detail.UserID.ToString());
+
+            await FirebaseService.SetTripStatus(model.tripID, Enum.GetName(typeof(TripStatuses), TripStatuses.OnTheWay));
+
+            if (!model.isWeb)
+            {
+                await PushyService.UniCast(driverVehiclDetail.DeviceToken, notificationPayLoad, NotificationKeys.pas_rideAccepted);
+            }
+
+            if (model.isDispatchedRide.ToLower().Equals("true"))
+            {
+                await FirebaseService.SendNotificationsAfterDispatchingRide(previousDriverDeviceToken, previousDriverId, model.tripID);
+
+                //TBD: Log previous captain priority points
+                await TripsManagerService.LogDispatchedTrips(new DispatchedRideLogDTO
                 {
-                    tripID = model.tripID,
-                    isWeb = model.isWeb,
-                    isLaterBooking = model.isLaterBooking,
-                    isDispatchedRide = model.isDispatchedRide,
+                    DispatchedBy = Guid.Parse(model.dispatcherID),
+                    CaptainID = Guid.Parse(previousDriverId),
+                    DispatchLogID = Guid.NewGuid(),
+                    LogTime = DateTime.UtcNow,
+                    TripID = Guid.Parse(model.tripID)
+                });
 
-                    pickupLocationLatitude = detail.PickupLocationLatitude,
-                    pickupLocationLongitude = detail.PickupLocationLongitude,
-                    pickUpLocation = detail.PickUpLocation,
-                    midwayStop1Location = detail.MidwayStop1Location,
-                    midwayStop1LocationLatitude = detail.MidwayStop1Latitude,
-                    midwayStop1LocationLongitude = detail.MidwayStop1Longitude,
-                    dropOffLocationLatitude = detail.dropoffLocationLatitude,
-                    dropOffLocationLongitude = detail.dropofflocationLongitude,
-                    dropOffLocation = detail.DropOffLocation,
-                    vehicleCategory = detail.VehicleCategory,
-                    totalFare = detail.TotalFare.ToString(),
-                    requestTime = detail.RequestWaitingTime,
-
-                    //UPDATE: After reverting google directions API, detail.ArrivedTime is distance in Meters - To enable arrived button on captain app before reaching pickup location
-
-                    minDistance = detail.ArrivedTime,
-                    passengerID = detail.UserID.ToString(),
-                    passengerName = detail.PassengerName,
-                    phone = detail.PhoneNumber,
-                    lstCancel = driverCancelReasons,
-                    laterBookingPickUpDateTime = Convert.ToDateTime(detail.PickUpBookingDateTime).ToString(Formats.DateTimeFormat),
-                    distanceTraveled = "0.00",
-                    isReRouteRequest = detail.isReRouted.ToString(),
-                    description = detail.description,
-                    voucherCode = detail.VoucherCode,
-                    voucherAmount = detail.VoucherAmount.ToString(),
-                    isFareChangePermissionGranted = "false",
-
-                    numberOfPerson = trip.NoOfPerson.ToString(),
-                    bookingMode = trip.BookingModeID == (int)BookingModes.Karhoo ? Enum.GetName(typeof(BookingModes), (int)BookingModes.Karhoo).ToLower() : ""
-                };
-
-                await FirebaseService.SetDriverBusy(model.driverID, model.tripID);
-                await FirebaseService.SetEstimateDistanceToPickUpLocation(model.driverID, string.IsNullOrEmpty(model.distanceToPickUpLocation) ? "0" : model.distanceToPickUpLocation);
-
-                var fd = await FirebaseService.GetOnlineDriverById(model.driverID);
-                var driverVehiclDetail = await DriverService.GetDriverVehicleDetail(model.driverID, fd == null ? "" : fd.vehicleID, detail.UserID.ToString(), model.isWeb);
-
-                await FirebaseService.WriteTripDriverDetails(arm, model.driverID);
-
-                var fbPassenger = await FirebaseService.GetTripPassengerDetails(model.tripID, trip.UserID.ToString());
-
-                //Object to be used to populate passenger FCM and firebase node data
-
-                var notificationPayLoad = new PassengerRequestAcceptedNotification
+                var cap = await DriverService.GetDriverById(previousDriverId);
+                if (!(bool)cap.IsPriorityHoursActive)
                 {
-                    TripId = model.tripID,
-                    IsWeb = model.isWeb.ToString(),
-                    DriverId = model.driverID,
+                    //TBD: Fetch distance traveled from driver node and update points accordingly.
 
-                    IsLaterBooking = arm.isLaterBooking.ToString(),
-                    IsDispatchedRide = arm.isDispatchedRide,
-                    IsReRouteRequest = arm.isReRouteRequest,
-                    PickUpDateTime = arm.laterBookingPickUpDateTime,
-                    Description = arm.description,
-                    VoucherCode = arm.voucherCode,
-                    VoucherAmount = arm.voucherAmount,
-                    TotalFare = arm.totalFare,
-                    PickUpLatitude = arm.pickupLocationLatitude,
-                    PickUpLongitude = arm.pickupLocationLongitude,
-                    PickUpLocation = arm.pickUpLocation,
-                    MidwayStop1Latitude = arm.midwayStop1LocationLatitude,
-                    MidwayStop1Longitude = arm.midwayStop1LocationLongitude,
-                    MidwayStop1Location = arm.midwayStop1Location,
-                    DropOffLatitude = arm.dropOffLocationLatitude,
-                    DropOffLongitude = arm.dropOffLocationLongitude,
-                    DropOffLocation = arm.dropOffLocation,
-                    SeatingCapacity = arm.numberOfPerson,
-                    VehicleCategory = arm.vehicleCategory,
-                    VehicleCategoryId = detail.VehicleCategoryId.ToString(),
-
-                    VehicleNumber = driverVehiclDetail.PlateNumber,
-                    DriverName = driverVehiclDetail.Name.Split(' ')[0],
-                    DriverContactNumber = driverVehiclDetail.ContactNumber,
-                    DriverRating = driverVehiclDetail.Rating.ToString(),
-                    DriverPicture = driverVehiclDetail.Picture,
-                    VehicleRating = driverVehiclDetail.vehicleRating.ToString(),
-                    Make = driverVehiclDetail.Make,
-                    Model = driverVehiclDetail.Model,// + " " + driverVehiclDetail.PlateNumber,
-                    Color= driverVehiclDetail.Color,
-                    FleetAddress= driverVehiclDetail.FleetAddress,
-                    FleetName = driverVehiclDetail.FleetName,
-
-                    PaymentModeId = fbPassenger.PaymentModeId,
-                    PaymentMethod = fbPassenger.PaymentMethod,
-                    CustomerId = fbPassenger.CustomerId,
-                    CardId = fbPassenger.CardId,
-                    Brand = fbPassenger.Brand,
-                    Last4Digits = fbPassenger.Last4Digits,
-                    WalletBalance = fbPassenger.WalletBalance,
-                    AvailableWalletBalance = fbPassenger.AvailableWalletBalance,
-
-                    CancelReasons = await CancelReasonsService.GetPassengerCancelReasons(!arm.isLaterBooking, arm.isLaterBooking, false),
-                    Facilities = await FacilitiesService.GetPassengerFacilitiesDetailByIds(trip.facilities)
-                };
-
-                await FirebaseService.UpdateTripPassengerDetailsOnAccepted(notificationPayLoad, detail.UserID.ToString());
-
-                await FirebaseService.SetTripStatus(model.tripID, Enum.GetName(typeof(TripStatuses), TripStatuses.OnTheWay));
-
-                if (!model.isWeb)
-                {
-                    await PushyService.UniCast(driverVehiclDetail.DeviceToken, notificationPayLoad, NotificationKeys.pas_rideAccepted);
+                    await FirebaseService.UpdateDriverEarnedPoints(previousDriverId, cap.EarningPoints.ToString());
                 }
+            }
 
-                if (model.isDispatchedRide.ToLower().Equals("true"))
-                {
-                    await FirebaseService.SendNotificationsAfterDispatchingRide(previousDriverDeviceToken, previousDriverId, model.tripID);
-
-                    //TBD: Log previous captain priority points
-                    await TripsManagerService.LogDispatchedTrips(new DispatchedRideLogDTO
-                    {
-                        DispatchedBy = Guid.Parse(model.dispatcherID),
-                        CaptainID = Guid.Parse(previousDriverId),
-                        DispatchLogID = Guid.NewGuid(),
-                        LogTime = DateTime.UtcNow,
-                        TripID = Guid.Parse(model.tripID)
-                    });
-
-                    var cap = await DriverService.GetDriverById(previousDriverId);
-                    if (!(bool)cap.IsPriorityHoursActive)
-                    {
-                        //TBD: Fetch distance traveled from driver node and update points accordingly.
-
-                        await FirebaseService.UpdateDriverEarnedPoints(previousDriverId, cap.EarningPoints.ToString());
-                    }
-                }
-
-                //API response data
-                dic = new Dictionary<dynamic, dynamic>
+            //API response data
+            dic = new Dictionary<dynamic, dynamic>
                                     {
                                         { "lat", detail.PickupLocationLatitude },
                                         { "lon", detail.PickupLocationLongitude },
@@ -803,50 +812,43 @@ namespace API.Controllers
                                         { "bookingMode", arm.bookingMode}
                                     };
 
-                //In case of later booking update captain UpcomingLaterBookings
-                if (model.isLaterBooking)
-                {
-                    await FirebaseService.DeleteUpcomingLaterBooking(model.driverID);
+            //In case of later booking update captain UpcomingLaterBookings
+            if (model.isLaterBooking)
+            {
+                await FirebaseService.DeleteUpcomingLaterBooking(model.driverID);
 
-                    Dictionary<string, dynamic> dic = new Dictionary<string, dynamic>
+                Dictionary<string, dynamic> dic = new Dictionary<string, dynamic>
                                                                     {
                                                                         { "lstCancel", driverCancelReasons }
                                                                     };
 
-                    /*VERIFY:
-                     * If setting firebase node removes existing data which is not avaiable in new data then discount node should remove here.
-                     */
+                /*VERIFY:
+                 * If setting firebase node removes existing data which is not avaiable in new data then discount node should remove here.
+                 */
 
-                    /*REFACTOR
-                     * If trip node is not delted on accepting pending later booking then
-                     */
+                /*REFACTOR
+                 * If trip node is not delted on accepting pending later booking then
+                 */
 
-                    //Writer later booking on firebase in Trips node to deal ride flow as normal booking
-                    await FirebaseService.SetTripCancelReasonsForPassenger(model.tripID, detail.UserID.ToString(), dic);
+                //Writer later booking on firebase in Trips node to deal ride flow as normal booking
+                await FirebaseService.SetTripCancelReasonsForPassenger(model.tripID, detail.UserID.ToString(), dic);
 
-                    //NEW IMPLEMENTATION(No need to reset / recheck reset upcoming later bookings for all drivers, just adjust upcoming of current driver)
+                //NEW IMPLEMENTATION(No need to reset / recheck reset upcoming later bookings for all drivers, just adjust upcoming of current driver)
 
-                    await FirebaseService.AddUpcomingLaterBooking(model.driverID, await DriverService.GetUpcomingLaterBooking(model.driverID));
+                await FirebaseService.AddUpcomingLaterBooking(model.driverID, await DriverService.GetUpcomingLaterBooking(model.driverID));
 
-                    //Dictionary<string, LaterBooking> dicLaterBooking = new Dictionary<string, LaterBooking>();
-                    ////check if driver have any other later booking then save the record on fb as UpcomingLaterBooking
-                    //fc.getUpcomingLaterBooking(dicLaterBooking);
-                }
-
-                //For user application state management
-                await FirebaseService.SetPassengerTrip(detail.UserID.ToString(), model.tripID);
-
-                response.error = false;
-                response.data = dic;
-                response.message = ResponseKeys.msgSuccess;
-                return Request.CreateResponse(HttpStatusCode.OK, response);
+                //Dictionary<string, LaterBooking> dicLaterBooking = new Dictionary<string, LaterBooking>();
+                ////check if driver have any other later booking then save the record on fb as UpcomingLaterBooking
+                //fc.getUpcomingLaterBooking(dicLaterBooking);
             }
-            else
-            {
-                response.error = true;
-                response.message = ResponseKeys.tripNotFound;
-                return Request.CreateResponse(HttpStatusCode.OK, response);
-            }
+
+            //For user application state management
+            await FirebaseService.SetPassengerTrip(detail.UserID.ToString(), model.tripID);
+
+            response.error = false;
+            response.data = dic;
+            response.message = ResponseKeys.msgSuccess;
+            return Request.CreateResponse(HttpStatusCode.OK, response);
         }
 
         [HttpPost]
@@ -1390,6 +1392,7 @@ namespace API.Controllers
                 {
                     TripId = model.tripID,
                     DriverId = model.driverID,
+                    DriverName = context.Captains.Where(c => c.CaptainID.ToString().Equals(model.driverID)).FirstOrDefault().Name,
                     IsDriverFavorite = context.UserFavoriteCaptains.Any(ufc => ufc.CaptainID == trip.CaptainID && ufc.UserID.Equals(trip.UserID.ToString())).ToString(),
                     PaymentModeId = trip.PaymentModeId.ToString(),
                     SelectedTipAmount = await FirebaseService.GetTipAmount(model.tripID),
@@ -1474,6 +1477,7 @@ namespace API.Controllers
                     {
                         TripId = model.tripID,
                         DriverId = model.driverID,
+                        DriverName = updatedTrip.CaptainName,
                         PaymentModeId = trip.PaymentModeId.ToString(),
                         TotalFare = model.totalFare,
                         PromoDiscountAmount = ((decimal)trip.PromoDiscount).ToString("0.00"),

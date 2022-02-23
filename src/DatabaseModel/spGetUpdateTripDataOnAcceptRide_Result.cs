@@ -22,12 +22,15 @@ namespace DatabaseModel
         public string PickupLocationLatitude { get; set; }
         public string PickupLocationLongitude { get; set; }
         public string PickUpLocation { get; set; }
+        public string PickupLocationPostalCode { get; set; }
         public string MidwayStop1Latitude { get; set; }
         public string MidwayStop1Longitude { get; set; }
         public string MidwayStop1Location { get; set; }
+        public string MidwayStop1PostalCode { get; set; }
         public string dropoffLocationLatitude { get; set; }
         public string dropofflocationLongitude { get; set; }
         public string DropOffLocation { get; set; }
+        public string DropOffLocationPostalCode { get; set; }
         public Nullable<System.DateTime> PickUpBookingDateTime { get; set; }
         public Nullable<System.DateTime> BookingDateTime { get; set; }
         public bool isReRouted { get; set; }

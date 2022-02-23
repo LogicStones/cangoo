@@ -26,6 +26,8 @@ namespace Constants
         public const string userNotVerified = "userNotVerified";    //User attemplts login without verification
 
         public const string tripAlreadyBooked = "tripAlreadyBooked";
+        public const string tripCannotCancel = "tripCannotCancel";
+        public const string tripAlreadyCancelled = "tripAlreadyCancelled";
         public const string invalidParameters = "invalidParameters"; //API hit with invalid parameters.
         public const string userAlreadyVerified = "userAlreadyVerified"; //User tries to verify phone number again.
         public const string captainNotRegistered = "captainNotRegistered";  //In PhoneVerification API if code is not found from db

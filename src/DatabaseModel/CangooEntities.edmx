@@ -2205,6 +2205,9 @@
         <Function Name="fnGetFacilityNames" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="varchar(max)">
           <Parameter Name="facilitiesIDs" Type="varchar(max)" Mode="In" />
         </Function>
+        <Function Name="fnGetFormattedDateTime" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="varchar">
+          <Parameter Name="dateTime" Type="datetime" Mode="In" />
+        </Function>
         <Function Name="FnGetRideServicesArea" Aggregate="false" BuiltIn="false" NiladicFunction="false" IsComposable="true" ParameterTypeSemantics="AllowImplicitConversion" Schema="dbo" ReturnType="varchar(max)">
           <Parameter Name="RSFMID" Type="uniqueidentifier" Mode="In" />
         </Function>
@@ -3956,6 +3959,10 @@
             <Parameter Name="trnsDate" Mode="In" Type="DateTime" />
             <Parameter Name="paymentStatusID" Mode="In" Type="Int32" />
           </FunctionImport>
+          <EntitySet Name="Notifications" EntityType="CangooModel.Notification" />
+          <EntitySet Name="UserReadNotifications" EntityType="CangooModel.UserReadNotification" />
+          <EntitySet Name="UserProfiles" EntityType="CangooModel.UserProfile" />
+          <EntitySet Name="UserInvites" EntityType="CangooModel.UserInvite" />
           <FunctionImport Name="spGetUpdateTripDataOnAcceptRide" ReturnType="Collection(CangooModel.spGetUpdateTripDataOnAcceptRide_Result)">
             <Parameter Name="tripID" Mode="In" Type="String" />
             <Parameter Name="driverID" Mode="In" Type="String" />
@@ -3965,10 +3972,6 @@
             <Parameter Name="fleetID" Mode="In" Type="String" />
             <Parameter Name="pickUpDateTime" Mode="In" Type="DateTime" />
           </FunctionImport>
-          <EntitySet Name="Notifications" EntityType="CangooModel.Notification" />
-          <EntitySet Name="UserReadNotifications" EntityType="CangooModel.UserReadNotification" />
-          <EntitySet Name="UserProfiles" EntityType="CangooModel.UserProfile" />
-          <EntitySet Name="UserInvites" EntityType="CangooModel.UserInvite" />
           </EntityContainer>
         <ComplexType Name="FetchAdminAnnualEarningAndProfit_Result">
           <Property Type="String" Name="Month" Nullable="true" MaxLength="30" />
@@ -7485,31 +7488,6 @@
           <Property Type="Double" Name="DistanceInKM" Nullable="false" />
           <Property Type="String" Name="PlateNumber" Nullable="true" MaxLength="100" />
         </ComplexType>
-        <ComplexType Name="spGetUpdateTripDataOnAcceptRide_Result">
-          <Property Type="Int32" Name="ArrivedTime" Nullable="true" />
-          <Property Type="Double" Name="RequestWaitingTime" Nullable="true" />
-          <Property Type="Guid" Name="UserID" Nullable="true" />
-          <Property Type="Int32" Name="VehicleCategoryId" Nullable="true" />
-          <Property Type="String" Name="VehicleCategory" Nullable="true" />
-          <Property Type="Decimal" Name="TotalFare" Nullable="true" Precision="10" Scale="2" />
-          <Property Type="String" Name="PickupLocationLatitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="PickupLocationLongitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="PickUpLocation" Nullable="true" MaxLength="500" />
-          <Property Type="String" Name="MidwayStop1Latitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="MidwayStop1Longitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="MidwayStop1Location" Nullable="true" MaxLength="1000" />
-          <Property Type="String" Name="dropoffLocationLatitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="dropofflocationLongitude" Nullable="true" MaxLength="100" />
-          <Property Type="String" Name="DropOffLocation" Nullable="true" MaxLength="500" />
-          <Property Type="DateTime" Name="PickUpBookingDateTime" Nullable="true" Precision="23" />
-          <Property Type="DateTime" Name="BookingDateTime" Nullable="true" Precision="23" />
-          <Property Type="Boolean" Name="isReRouted" Nullable="false" />
-          <Property Type="String" Name="description" Nullable="true" MaxLength="1000" />
-          <Property Type="String" Name="VoucherCode" Nullable="true" MaxLength="4" />
-          <Property Type="Decimal" Name="VoucherAmount" Nullable="true" Precision="19" />
-          <Property Type="String" Name="PhoneNumber" Nullable="true" />
-          <Property Type="String" Name="PassengerName" Nullable="true" MaxLength="201" />
-        </ComplexType>
         <EntityType Name="Notification">
           <Key>
             <PropertyRef Name="FeedID" />
@@ -7577,6 +7555,34 @@
           <Property Name="ApplicationID" Type="Guid" Nullable="false" />
           <Property Name="IsReferredByDriver" Type="Boolean" Nullable="false" />
         </EntityType>
+        <ComplexType Name="spGetUpdateTripDataOnAcceptRide_Result">
+          <Property Type="Int32" Name="ArrivedTime" Nullable="true" />
+          <Property Type="Double" Name="RequestWaitingTime" Nullable="true" />
+          <Property Type="Guid" Name="UserID" Nullable="true" />
+          <Property Type="Int32" Name="VehicleCategoryId" Nullable="true" />
+          <Property Type="String" Name="VehicleCategory" Nullable="true" />
+          <Property Type="Decimal" Name="TotalFare" Nullable="true" Precision="10" Scale="2" />
+          <Property Type="String" Name="PickupLocationLatitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="PickupLocationLongitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="PickUpLocation" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="PickupLocationPostalCode" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="MidwayStop1Latitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="MidwayStop1Longitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="MidwayStop1Location" Nullable="true" MaxLength="1000" />
+          <Property Type="String" Name="MidwayStop1PostalCode" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="dropoffLocationLatitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="dropofflocationLongitude" Nullable="true" MaxLength="100" />
+          <Property Type="String" Name="DropOffLocation" Nullable="true" MaxLength="500" />
+          <Property Type="String" Name="DropOffLocationPostalCode" Nullable="true" MaxLength="100" />
+          <Property Type="DateTime" Name="PickUpBookingDateTime" Nullable="true" Precision="23" />
+          <Property Type="DateTime" Name="BookingDateTime" Nullable="true" Precision="23" />
+          <Property Type="Boolean" Name="isReRouted" Nullable="false" />
+          <Property Type="String" Name="description" Nullable="true" MaxLength="1000" />
+          <Property Type="String" Name="VoucherCode" Nullable="true" MaxLength="4" />
+          <Property Type="Decimal" Name="VoucherAmount" Nullable="true" Precision="19" />
+          <Property Type="String" Name="PhoneNumber" Nullable="true" />
+          <Property Type="String" Name="PassengerName" Nullable="true" MaxLength="201" />
+        </ComplexType>
         </Schema>
     </edmx:ConceptualModels>
     <!-- C-S mapping content -->
@@ -11718,35 +11724,6 @@
               </ComplexTypeMapping>
             </ResultMapping>
           </FunctionImportMapping>
-          <FunctionImportMapping FunctionImportName="spGetUpdateTripDataOnAcceptRide" FunctionName="CangooModel.Store.spGetUpdateTripDataOnAcceptRide">
-            <ResultMapping>
-              <ComplexTypeMapping TypeName="CangooModel.spGetUpdateTripDataOnAcceptRide_Result">
-                <ScalarProperty Name="ArrivedTime" ColumnName="ArrivedTime" />
-                <ScalarProperty Name="RequestWaitingTime" ColumnName="RequestWaitingTime" />
-                <ScalarProperty Name="UserID" ColumnName="UserID" />
-                <ScalarProperty Name="VehicleCategoryId" ColumnName="VehicleCategoryId" />
-                <ScalarProperty Name="VehicleCategory" ColumnName="VehicleCategory" />
-                <ScalarProperty Name="TotalFare" ColumnName="TotalFare" />
-                <ScalarProperty Name="PickupLocationLatitude" ColumnName="PickupLocationLatitude" />
-                <ScalarProperty Name="PickupLocationLongitude" ColumnName="PickupLocationLongitude" />
-                <ScalarProperty Name="PickUpLocation" ColumnName="PickUpLocation" />
-                <ScalarProperty Name="MidwayStop1Latitude" ColumnName="MidwayStop1Latitude" />
-                <ScalarProperty Name="MidwayStop1Longitude" ColumnName="MidwayStop1Longitude" />
-                <ScalarProperty Name="MidwayStop1Location" ColumnName="MidwayStop1Location" />
-                <ScalarProperty Name="dropoffLocationLatitude" ColumnName="dropoffLocationLatitude" />
-                <ScalarProperty Name="dropofflocationLongitude" ColumnName="dropofflocationLongitude" />
-                <ScalarProperty Name="DropOffLocation" ColumnName="DropOffLocation" />
-                <ScalarProperty Name="PickUpBookingDateTime" ColumnName="PickUpBookingDateTime" />
-                <ScalarProperty Name="BookingDateTime" ColumnName="BookingDateTime" />
-                <ScalarProperty Name="isReRouted" ColumnName="isReRouted" />
-                <ScalarProperty Name="description" ColumnName="description" />
-                <ScalarProperty Name="VoucherCode" ColumnName="VoucherCode" />
-                <ScalarProperty Name="VoucherAmount" ColumnName="VoucherAmount" />
-                <ScalarProperty Name="PhoneNumber" ColumnName="PhoneNumber" />
-                <ScalarProperty Name="PassengerName" ColumnName="PassengerName" />
-              </ComplexTypeMapping>
-            </ResultMapping>
-          </FunctionImportMapping>
           <EntitySetMapping Name="Notifications">
             <EntityTypeMapping TypeName="CangooModel.Notification">
               <MappingFragment StoreEntitySet="Notifications">
@@ -11818,6 +11795,38 @@
               </MappingFragment>
             </EntityTypeMapping>
           </EntitySetMapping>
+          <FunctionImportMapping FunctionImportName="spGetUpdateTripDataOnAcceptRide" FunctionName="CangooModel.Store.spGetUpdateTripDataOnAcceptRide">
+            <ResultMapping>
+              <ComplexTypeMapping TypeName="CangooModel.spGetUpdateTripDataOnAcceptRide_Result">
+                <ScalarProperty Name="ArrivedTime" ColumnName="ArrivedTime" />
+                <ScalarProperty Name="RequestWaitingTime" ColumnName="RequestWaitingTime" />
+                <ScalarProperty Name="UserID" ColumnName="UserID" />
+                <ScalarProperty Name="VehicleCategoryId" ColumnName="VehicleCategoryId" />
+                <ScalarProperty Name="VehicleCategory" ColumnName="VehicleCategory" />
+                <ScalarProperty Name="TotalFare" ColumnName="TotalFare" />
+                <ScalarProperty Name="PickupLocationLatitude" ColumnName="PickupLocationLatitude" />
+                <ScalarProperty Name="PickupLocationLongitude" ColumnName="PickupLocationLongitude" />
+                <ScalarProperty Name="PickUpLocation" ColumnName="PickUpLocation" />
+                <ScalarProperty Name="PickupLocationPostalCode" ColumnName="PickupLocationPostalCode" />
+                <ScalarProperty Name="MidwayStop1Latitude" ColumnName="MidwayStop1Latitude" />
+                <ScalarProperty Name="MidwayStop1Longitude" ColumnName="MidwayStop1Longitude" />
+                <ScalarProperty Name="MidwayStop1Location" ColumnName="MidwayStop1Location" />
+                <ScalarProperty Name="MidwayStop1PostalCode" ColumnName="MidwayStop1PostalCode" />
+                <ScalarProperty Name="dropoffLocationLatitude" ColumnName="dropoffLocationLatitude" />
+                <ScalarProperty Name="dropofflocationLongitude" ColumnName="dropofflocationLongitude" />
+                <ScalarProperty Name="DropOffLocation" ColumnName="DropOffLocation" />
+                <ScalarProperty Name="DropOffLocationPostalCode" ColumnName="DropOffLocationPostalCode" />
+                <ScalarProperty Name="PickUpBookingDateTime" ColumnName="PickUpBookingDateTime" />
+                <ScalarProperty Name="BookingDateTime" ColumnName="BookingDateTime" />
+                <ScalarProperty Name="isReRouted" ColumnName="isReRouted" />
+                <ScalarProperty Name="description" ColumnName="description" />
+                <ScalarProperty Name="VoucherCode" ColumnName="VoucherCode" />
+                <ScalarProperty Name="VoucherAmount" ColumnName="VoucherAmount" />
+                <ScalarProperty Name="PhoneNumber" ColumnName="PhoneNumber" />
+                <ScalarProperty Name="PassengerName" ColumnName="PassengerName" />
+              </ComplexTypeMapping>
+            </ResultMapping>
+          </FunctionImportMapping>
           </EntityContainerMapping>
       </Mapping>
     </edmx:Mappings>

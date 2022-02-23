@@ -644,6 +644,33 @@ namespace Services
 
                 var trip = await GetPassengerTripById(tripId, passengerId);
 
+                if (trip == null)
+                {
+                    return new ResponseWrapper { Message = ResponseKeys.notFound };
+                }
+
+                //OnTheWay = 2,   //Start Ride | On The Way
+                //Arrived = 3,
+                //Picked = 5,
+                //LaterBookingAccepted = 9,
+                //PaymentRequested = 10,   //Payment Requested
+
+
+                if (trip.TripStatusID == (int)TripStatuses.Cancel) {
+                    return new ResponseWrapper { Message = ResponseKeys.tripAlreadyCancelled };
+                    
+                } 
+                else if (trip.TripStatusID == (int)TripStatuses.RequestSent
+                    || trip.TripStatusID == (int)TripStatuses.TimeOut
+                    || trip.TripStatusID == (int)TripStatuses.Completed
+                    || trip.TripStatusID == (int)TripStatuses.PaymentPending
+                    || trip.TripStatusID == (int)TripStatuses.PaymentRequested
+                    || trip.TripStatusID == (int)TripStatuses.ReRouting)
+                {
+                    return new ResponseWrapper { Message = ResponseKeys.tripCannotCancel };
+                }
+
+
                 double estimatedDistance = await FirebaseService.GetTripEstimatedDistanceOnArrival(trip.CaptainID.ToString());
 
                 if (trip.PaymentModeId == (int)PaymentModes.CreditCard)

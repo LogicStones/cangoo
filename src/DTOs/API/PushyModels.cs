@@ -26,12 +26,15 @@ namespace DTOs.API
 		public string PickUpLatitude { get; set; }
 		public string PickUpLongitude { get; set; }
 		public string PickUpLocation { get; set; }
+		public string PickUpPostalCode { get; set; }
 		public string MidwayStop1Latitude { get; set; }
 		public string MidwayStop1Longitude { get; set; }
 		public string MidwayStop1Location { get; set; }
+		public string MidwayStop1PostalCode { get; set; }
 		public string DropOffLatitude { get; set; }
 		public string DropOffLongitude { get; set; }
 		public string DropOffLocation { get; set; }
+		public string DropOffPostalCode { get; set; }
 		public string DriverId { get; set; }
 		public string DriverName { get; set; }
 		public string DriverPicture { get; set; }
@@ -89,6 +92,7 @@ namespace DTOs.API
 	{
 		public string TripId { get; set; }
 		public string DriverId { get; set; }
+		public string DriverName { get; set; }
 		public string IsDriverFavorite { get; set; }
 		public string PaymentModeId { get; set; }
 		public string TotalFare { get; set; } = "0.00";

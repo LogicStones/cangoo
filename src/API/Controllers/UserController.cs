@@ -373,13 +373,13 @@ namespace API.Controllers
                 {
                     //Extension check is applied on application end.
 
-                    string uploadedFilePath = "~/Images/User/" + FilesManagerService.SaveFile(postedFile, "~/Images/User/", userId);
+                    string uploadedFilePath = "~/Images/User/" + FilesManagerService.SaveFile(postedFile, "/Images/User/", userId);
 
                     await UserService.UpdateImageAsync(uploadedFilePath, postedFile.FileName, userId);
 
-                    return Request.CreateResponse(HttpStatusCode.BadRequest, new ResponseWrapper
+                    return Request.CreateResponse(HttpStatusCode.OK, new ResponseWrapper
                     {
-                        Message = ResponseKeys.profileImageNotFound,
+                        Message = ResponseKeys.msgSuccess,
                         Error = false,
                         Data = new UpdateProfileImageResponse
                         {
