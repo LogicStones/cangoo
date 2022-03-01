@@ -102,7 +102,13 @@
         <td class="value">-@decimal.Parse(Model.CashAmount).ToString("0.00") €</td>
     </tr>
     <tr>
-        @{netAmount = decimal.Parse(Model.TotalAmount) - decimal.Parse(Model.CashAmount) - decimal.Parse(Model.WalletUsedAmount) - decimal.Parse(Model.PromoDiscountAmount); }
+        @{
+            netAmount = (decimal.Parse(Model.TotalAmount) - decimal.Parse(Model.CashAmount) - decimal.Parse(Model.WalletUsedAmount) - decimal.Parse(Model.PromoDiscountAmount));
+            if (netAmount < 0)
+            {
+                netAmount = 0;
+            } 
+        }
         <td class="description">Zwischensumme</td>
         <td class="value">@(netAmount.ToString("0.00")) €</td>
     </tr>

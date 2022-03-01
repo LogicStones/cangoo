@@ -10,5 +10,6 @@ namespace Constants
     {
         public const string succeeded = "succeeded";
         public const string requiresCapture = "requires_capture";
+        public const string canceled = "canceled";
     }
 }

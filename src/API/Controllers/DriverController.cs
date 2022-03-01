@@ -1433,13 +1433,16 @@ namespace API.Controllers
 
                 if (trip.PaymentModeId == (int)PaymentModes.CreditCard)
                 {
-                    var paymentDetails = await PaymentsServices.CaptureAuthorizedPaymentPartially(trip.CreditCardPaymentIntent, chargeblePayment.ToString());
+                    var paymentDetails = chargeblePayment > 0 ? await PaymentsServices.CaptureAuthorizedPaymentPartially(trip.CreditCardPaymentIntent, chargeblePayment.ToString())
+                        : await PaymentsServices.CancelAuthorizedPayment(trip.CreditCardPaymentIntent);
 
-                    if (paymentDetails.Status.Equals(TransactionStatus.succeeded))
+                    if (paymentDetails.Status.Equals(TransactionStatus.succeeded) || paymentDetails.Status.Equals(TransactionStatus.canceled))
                     {
                         context.SaveChanges();
 
-                        transactionId = "Trip CreditCard payment received. Stripe transactionId = " + paymentDetails.PaymentIntentId;
+                        transactionId = paymentDetails.Status.Equals(TransactionStatus.succeeded) ? "Trip CreditCard payment received." 
+                            : "Trip screwed amount released. Paid using promo code."
+                            + " Stripe transactionId = " + paymentDetails.PaymentIntentId;
                     }
                     else
                     {
@@ -1458,8 +1461,16 @@ namespace API.Controllers
                 {
                     //Can be moved to spAfterMobilePayment sp
                     var userProfile = await context.UserProfiles.Where(up => up.UserID.Equals(trip.UserID.ToString())).FirstOrDefaultAsync();
-                    userProfile.WalletBalance -= chargeblePayment;
-                    userProfile.AvailableWalletBalance += (decimal.Parse(model.totalFare) - chargeblePayment);
+
+                    if (chargeblePayment > 0)
+                    {
+                        userProfile.WalletBalance -= chargeblePayment;
+                        userProfile.AvailableWalletBalance += decimal.Parse(model.totalFare) - chargeblePayment;
+                    }
+                    else
+                    {
+                        userProfile.AvailableWalletBalance += decimal.Parse(model.totalFare);
+                    }
                     context.SaveChanges();
                 }
                 else if (trip.PaymentModeId == (int)PaymentModes.Paypal)
@@ -1481,7 +1492,7 @@ namespace API.Controllers
                         PaymentModeId = trip.PaymentModeId.ToString(),
                         TotalFare = model.totalFare,
                         PromoDiscountAmount = ((decimal)trip.PromoDiscount).ToString("0.00"),
-                        DiscountedFare = (decimal.Parse(model.totalFare) - (decimal)trip.PromoDiscount).ToString("0.00"),
+                        DiscountedFare = chargeblePayment > 0 ? (decimal.Parse(model.totalFare) - (decimal)trip.PromoDiscount).ToString("0.00") : "0.00",
                         SelectedTipAmount = await FirebaseService.GetTipAmount(model.tripID),
                         WalletBalance = ((decimal)updatedTrip.WalletBalance).ToString("0.00"),
                         AvailableWalletBalance = ((decimal)updatedTrip.AvailableWalletBalance).ToString("0.00"),
